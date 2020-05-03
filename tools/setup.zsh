@@ -1,6 +1,6 @@
 export PATH=/usr/bin:/usr/local/bin:$PATH
 exit_code=0
-PROJECT_ROOT=$USER/profile
+PROJECT_ROOT=/Users/$USER/profile
 
 
 install_homebrew () {
