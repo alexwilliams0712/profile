@@ -35,7 +35,7 @@ install_brew_packagaes () {
 
 install_cask_packagaes () {
     # Ensure all relevant choco packages are installed
-    local required_packages=("iterm2" "visual-studio-code" "sublime-text" "vlc" "franz" "vuze" "cleanmymac" "dropbox" "webex-meetings" "microsoft-excel")
+    local required_packages=("google-chrome" "iterm2" "visual-studio-code" "sublime-text" "vlc" "franz" "vuze" "cleanmymac" "dropbox" "webex-meetings" "microsoft-excel")
 
     for package in "${required_packages[@]}"
     do 
