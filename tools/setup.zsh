@@ -46,7 +46,7 @@ install_cask_packagaes () {
         else
             echo "Not Found"
             echo "Attempting $package installation..."
-            brew install $package || {
+            brew cask install $package || {
                 echo "Installation of $package failed."
                 exit_code=1
                 exit_script
