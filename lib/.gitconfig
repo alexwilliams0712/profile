@@ -1,0 +1,7 @@
+[core]
+    autocrlf = true
+    editor = vim
+[http]
+    sslVerify = false
+[diff]
+    tool = bc3
