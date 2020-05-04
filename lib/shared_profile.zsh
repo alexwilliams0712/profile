@@ -36,7 +36,7 @@ mkdir -p $CODE_ROOT/git
 ##
 # PURE
 ##
-fpath+=~/.oh-my-zsh/pure
+fpath+=$ZSH/pure
 
 # move user to code root
 cd $CODE_ROOT
