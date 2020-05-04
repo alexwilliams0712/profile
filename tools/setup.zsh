@@ -15,7 +15,6 @@ install_homebrew () {
     	brew update && brew upgrade
     fi
     brew doctor
-    xcode-select --install
 }
 
 install_brew_packagaes () {
