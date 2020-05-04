@@ -54,13 +54,13 @@ install_cask_packagaes () {
     for package in "${required_packages[@]}"
     do 
         echo -n "Checking that $package is installed..."
-        if brew list $package | grep $package
+        if brew cask list $package | grep $package
         then
             echo "OK"
         else
             echo "Not Found"
             echo "Attempting $package installation..."
-            brew install $package || {
+            brew cask install $package || {
                 echo "Installation of $package failed."
                 exit_code=1
                 exit_script
