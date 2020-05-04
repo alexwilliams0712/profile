@@ -49,7 +49,8 @@ install_brew_packages () {
 install_cask_packages () {
     # Ensure all relevant homebrew packages are installed
     local required_packages=(
-    	"iterm2" 
+    	"google-chrome"
+	"iterm2" 
     	"visual-studio-code" 
         "sublime-text"
         "franz"
