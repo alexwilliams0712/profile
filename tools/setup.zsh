@@ -76,7 +76,6 @@ environment_variables () {
     # pip installs
     pip install virtualenv
     pip install virtualenvwrapper
-    pip install black
 
     # make directories
     mkdir -p ~/CODE/git
@@ -84,6 +83,8 @@ environment_variables () {
     mkdir -p ~/CODE/sandbox
     mkdir -p ~/CODE/.devtools
     mkdir -p ~/CODE/.virtualenvs
+    
+    
 
     # Point CODE_ROOT  to USER/CODE
     export CODE_ROOT=~/CODE
@@ -94,8 +95,7 @@ environment_variables () {
 
     [ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
     
-
-    
+    pip install --install-option="--prefix=$CODE_ROOT/.virtualenvs" black
 }
 
 
@@ -121,7 +121,7 @@ set_up_git () {
 install_zsh_pure () {
 	echo "Installing Oh My ZSH..."
 	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-	echo "Installing pure..."
+	echo "Installing Pure..."
     git clone https://github.com/sindresorhus/pure.git "~/.zsh/pure"
 
 }
