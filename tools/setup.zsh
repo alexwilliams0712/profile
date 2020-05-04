@@ -1,18 +1,27 @@
+#!/bin/zsh
+
 export PATH=/usr/bin:/usr/local/bin:$PATH
 exit_code=0
-PROJECT_ROOT=/Users/$USER/profile
+PROJECT_ROOT=$USER/profile
 
 
 install_homebrew () {
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)";
-    brew update && brew upgrade
+	which -s brew
+    if [[ $? != 0 ]] ; then
+    	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)";
+    else
+    	brew update && brew upgrade
+    fi
     brew doctor
 
 }
 
 install_brew_packagaes () {
     # Ensure all relevant choco packages are installed
-    local required_packages=("python" "git")
+    local required_packages=(
+    	"python" 
+    	"git"
+    	)
 
     for package in "${required_packages[@]}"
     do 
@@ -35,7 +44,18 @@ install_brew_packagaes () {
 
 install_cask_packagaes () {
     # Ensure all relevant choco packages are installed
-    local required_packages=("google-chrome" "iterm2" "visual-studio-code" "sublime-text" "vlc" "franz" "vuze" "cleanmymac" "dropbox" "webex-meetings" "microsoft-excel")
+    local required_packages=(
+    	"iterm2" 
+    	"visual-studio-code" 
+    	"sublime-text" 
+    	"vlc" 
+    	"franz" 
+    	"vuze" 
+    	"cleanmymac" 
+    	"dropbox" 
+    	"webex-meetings" 
+    	"microsoft-excel"
+    	)
 
     for package in "${required_packages[@]}"
     do 
@@ -46,7 +66,7 @@ install_cask_packagaes () {
         else
             echo "Not Found"
             echo "Attempting $package installation..."
-            brew cask install $package || {
+            brew install $package || {
                 echo "Installation of $package failed."
                 exit_code=1
                 exit_script
@@ -155,8 +175,10 @@ exit_script () {
 
 main () {
     install_homebrew
+    echo "Homebrew Installed"
     install_brew_packagaes
     install_cask_packagaes
+    echo "Packages Installed"
     environment_variables
     set_up_git
     install_pure
