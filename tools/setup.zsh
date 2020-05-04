@@ -1,8 +1,10 @@
-#!/bin/zsh
+#!/bin/env zsh
 
-export PATH=/usr/bin:/usr/local/bin:$PATH
+
+echo "setup running"
+export PATH="/usr/local/bin:$PATH"
 exit_code=0
-PROJECT_ROOT=$USER/profile
+PROJECT_ROOT=Users/$USER/profile
 
 
 install_homebrew () {
@@ -47,14 +49,6 @@ install_cask_packagaes () {
     local required_packages=(
     	"iterm2" 
     	"visual-studio-code" 
-    	"sublime-text" 
-    	"vlc" 
-    	"franz" 
-    	"vuze" 
-    	"cleanmymac" 
-    	"dropbox" 
-    	"webex-meetings" 
-    	"microsoft-excel"
     	)
 
     for package in "${required_packages[@]}"
@@ -76,17 +70,6 @@ install_cask_packagaes () {
 }
 
 environment_variables () {
-    # Check we have the relevant environmental variables
-    variables=("CODE_ROOT")
-    for variable in "${variables[@]}"
-    do 
-        if [ -z "${(P)variable}" ]; then
-            echo "$variable environment variable is not defined."
-            exit_code=1
-            exit_script
-        fi
-    done
-
     export PATH="/usr/local/opt/python/libexec/bin:/usr/local/bin:$PATH"
     
     # pip installs
@@ -94,16 +77,18 @@ environment_variables () {
     pip install virtualenvwrapper
     pip install black
 
-
+    echo $PROJECT_ROOT
     # make directories
-    mkdir -p $USER/CODE/git
-    mkdir -p $USER/CODE/preferences
-    mkdir -p $USER/CODE/sandbox
-    mkdir -p $USER/CODE/.devtools
-    mkdir -p $USER/CODE/.virtualenvs
+    cd ~
+    mkdir -p ~/CODE
+    mkdir -p ~/CODE/git
+    mkdir -p ~/CODE/preferences
+    mkdir -p ~/CODE/sandbox
+    mkdir -p ~/CODE/.devtools
+    mkdir -p ~/CODE/.virtualenvs
 
     # Point CODE_ROOT  to USER/CODE
-    export CODE_ROOT=$USER/CODE
+    export CODE_ROOT=~/CODE
     export WORKON_HOME=$CODE_ROOT/.virtualenvs
     export PROJECT_HOME=$CODE_ROOT
     source /usr/local/bin/virtualenvwrapper.sh
@@ -118,7 +103,7 @@ environment_variables () {
 
 set_up_git () {
     # Create a git config and add relevent settings
-    export PATH=/cygdrive/c/Program\ Files/Git/cmd:$PATH
+    export PATH="/usr/local/bin:${PATH}"
 
     if [ -f $CODE_ROOT/.gitconfig ] || [ -h $CODE_ROOT/.gitconfig ]; then
         echo -n "found ~/.gitconfig, backing up to ~/.gitconfig.old..."
@@ -129,8 +114,8 @@ set_up_git () {
     echo -n "Creating a new Git config and adding credentials..."
     touch $CODE_ROOT/.gitconfig
     git config --global user.name $USERNAME
-    git config --global core.hooksPath $(cygpath -m $PROJECT_ROOT)/hooks
-    git config --global include.path $(cygpath -m $PROJECT_ROOT)/lib/.gitconfig
+    git config --global core.hooksPath $PROJECT_ROOT/hooks
+    git config --global include.path $PROJECT_ROOT/lib/.gitconfig
     echo "OK"
 }
 
@@ -143,9 +128,9 @@ install_pure () {
 
 create_zshrc () {
     # Back up old and create new zshrc that sources the entrypoint
-    if [ -f $USER/.zshrc ]; then
+    if [ -f ~/.zshrc ]; then
         echo -n "found ~/.zshrc, backing up to ~/.zshrc.old..."
-        mv $USER/.zshrc $USER/.zshrc.old
+        mv ~/.zshrc ~/.zshrc.old
         echo "OK"
     fi
     echo -n "Creating zshrc in HOME..."
@@ -156,7 +141,6 @@ create_zshrc () {
 
 copy_postmkvirtualenv () {
     echo -n "Copying postmkvirtualenv hook to $CODE_ROOT/.virtualenvs..."
-    mkdir -p $CODE_ROOT/.virtualenvs
     cp $PROJECT_ROOT/lib/postmkvirtualenv $CODE_ROOT/.virtualenvs/postmkvirtualenv
     echo "OK"
 }
