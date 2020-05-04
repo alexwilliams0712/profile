@@ -83,7 +83,7 @@ environment_variables () {
     mkdir -p ~/CODE/sandbox
     mkdir -p ~/CODE/.devtools
     mkdir -p ~/CODE/.virtualenvs
-    mkdir -p ~/CODE/.tmp
+    mkdir -p ~/CODE/.tmp/black
     
     
 
