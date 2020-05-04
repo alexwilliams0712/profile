@@ -19,7 +19,7 @@ install_homebrew () {
 }
 
 install_brew_packagaes () {
-    # Ensure all relevant choco packages are installed
+    # Ensure all relevant homebrew packages are installed
     local required_packages=(
     	"python" 
     	"git"
@@ -45,7 +45,7 @@ install_brew_packagaes () {
 
 
 install_cask_packagaes () {
-    # Ensure all relevant choco packages are installed
+    # Ensure all relevant homebrew packages are installed
     local required_packages=(
     	"iterm2" 
     	"visual-studio-code" 
