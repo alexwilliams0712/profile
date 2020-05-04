@@ -22,7 +22,7 @@ install_brew_packages () {
     # Ensure all relevant homebrew packages are installed
     local required_packages=(
     	"zsh"
-	"python" 
+	    "python" 
     	"git"
     	)
 
@@ -50,6 +50,13 @@ install_cask_packages () {
     local required_packages=(
     	"iterm2" 
     	"visual-studio-code" 
+        "sublime-text"
+        "franz"
+        "webex-meetings"
+        "vuze"
+        "vlc"
+        "dropbox"
+        "microsoft-excel"
     	)
 
     for package in "${required_packages[@]}"
