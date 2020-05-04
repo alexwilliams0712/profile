@@ -1,16 +1,9 @@
 #!/bin/sh
 
-ORGANISATION=$(git config --get remote.origin.url | cut -d / -f 4)
-REPOSITORY=$(basename `git rev-parse --show-toplevel`)
-
-if [ ! $ORGANISATION = "Airain" ] && [ ! $REPOSITORY = "Airain" ]; then
-    exit 0
-fi
-
-TEMP_PATH=C:/Cygwin/tmp/black
+TEMP_PATH=~/CODE/.tmp/black
 REPOSITORY_ROOT=$(git rev-parse --show-toplevel)
 STAGED_PY_FILES=($(git diff --cached --name-only --diff-filter=ACM HEAD | grep \\.py\$))
-WINDOWS_CODE_ROOT=$(echo $CODE_ROOT | sed "s|/cygdrive/\([a-z]\)|\1:|")
+MAC_CODE_ROOT=$(echo $CODE_ROOT | sed "s|/cygdrive/\([a-z]\)|\1:|")
 BLACK=$WINDOWS_CODE_ROOT/.devtools/Scripts/black.exe
 
 rm -rf $TEMP_PATH
