@@ -27,7 +27,7 @@ install_brew_packages () {
     	"git"
     	)
 
-    for package in "${required_packages[@]}"
+    for package in "${required_packages[@]}" 
     do 
         echo -n "Checking that $package is installed..."
         if brew list $package | grep $package
@@ -134,7 +134,7 @@ install_zsh_pure () {
 	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     export ZSH=~/.oh-my-zsh
 	echo "Installing Pure..."
-    git clone https://github.com/sindresorhus/pure.git "~/.oh-my-zsh/pure"
+    git clone https://github.com/sindresorhus/pure.git "$ZSH/pure"
 
 }
 
@@ -187,10 +187,8 @@ exit_script () {
 
 main () {
     install_homebrew
-    echo "Homebrew Installed"
     install_brew_packages
     install_cask_packages
-    echo "Packages Installed"
     environment_variables
     set_up_git
     install_zsh_pure
