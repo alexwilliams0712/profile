@@ -12,8 +12,7 @@ install_homebrew () {
     if [[ $? != 0 ]] ; then
     	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)";
     else
-    	brew update --greedy
-        brew upgrade
+    	brew update && brew upgrade
     fi
     brew doctor
     
