@@ -46,6 +46,10 @@ function tailfix() {
 # EDITORS
 ##
 
+
+# VSCode
+code () { VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $* ;}
+
 # Sublime Text
 ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/sublime
 export PATH=/usr/local/bin:$PATH
