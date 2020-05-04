@@ -5,3 +5,8 @@
     sslVerify = false
 [diff]
     tool = bc3
+[alias]
+    co = checkout
+    br = branch
+    ci = commit
+    st = status
