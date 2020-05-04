@@ -1,12 +1,10 @@
-# Initialise the IMS ZSH Profile
-# A lot to be taken from https://gist.github.com/butlerx/753f754f854f7ae97783
+# Initialise ZSH Profile
 
 ##
 # PATH MANIPULATION
 ##
 path_append ()  { path_remove $1; export PATH="$PATH:$1"; }
 path_prepend () { path_remove $1; export PATH="$1:$PATH"; }
-
 # Careful to specify the full name or the delete will be partial!
 function path_remove {
   # delete any instances in the middle or at the end
@@ -18,96 +16,37 @@ function path_remove {
 
 # Pretty PATH - Show PATH in a more readable way than path1:path2:path3...
 alias ppath='for i ($path) { print $i }'
-
-# Put Cygwin bin, Git, Perl & Python on top of PATH - We want to use the system Python etc, not the Cygwin ones
+# Put HomeBrew Python first in PATH
 path_prepend "/usr/local/bin:/usr/bin"
-path_prepend "/cygdrive/c/Program Files/Git/cmd"
-path_prepend "/cygdrive/c/Perl/bin:/cygdrive/c/Perl/site/bin"
+path_prepend "/usr/local/opt/python/libexec/bin"
 
-if [ -d "/cygdrive/c/Python36" ]; then
-    # Replace Python2 by Python3 in PATH
-    path_remove "/cygdrive/c/Python27:/cygdrive/c/Python27/Scripts"
-    path_prepend "/cygdrive/c/Python36:/cygdrive/c/Python36/Scripts"
-else
-    echo "Python3 isn't installed on your machine! :( \nFix this by running 'choco install Python36'"
-fi
 
-# To use Python2, just create virtualenv using the below command
-# mkvirtualenv python2 -p C:/Python27/python.exe
-
-# Add Angular CLI location in PATH if it exists
-if [ -f "/cygdrive/c/Users/$USERNAME/AppData/Roaming/npm/ng" ]; then
-    path_prepend "/cygdrive/c/Users/$USERNAME/AppData/Roaming/npm"
-fi
-
-# Similar to virtualenv activate script, put Anaconda on top of PATH and handles deactivation. Expects the version in parameter (2 or 3)
-function anaconda_activation {
-    # Verify first that Anaconda is installed
-    if [ -d "/cygdrive/c/Anaconda$1" ]; then
-        # If we were previously in a venv or if this function was already called, deactivate it
-        deactivate 2> /dev/null
-        ANACONDA_PATH=/cygdrive/c/Anaconda$1:/cygdrive/c/Anaconda$1/Scripts:/cygdrive/c/Anaconda$1/Library/bin
-        path_prepend $ANACONDA_PATH
-        # This is so our function virtualenv_info() detects our change and adjust PROMPT
-        export VIRTUAL_ENV=Anaconda$1
-        # Reverts the changes when run
-        function deactivate () {
-            path_remove $ANACONDA_PATH
-            unset VIRTUAL_ENV
-            unset ANACONDA_PATH
-            # Self destruct!
-            unset -f deactivate
-        }
-    else
-        echo "Anaconda$1 is not installed in /cygdrive/c, run 'choco install Anaconda$1' or raise ITS"
-    fi
-}
-
-workon_anaconda2 () { anaconda_activation 2 }
-workon_anaconda3 () { anaconda_activation 3 }
+##
+# PURE
+##
+fpath+=$HOME/.zsh/pure
 
 
 ##
 # GLOBAL VARIABLES
 ##
-# Easy access to the Desktop
-export DESKTOP=/cygdrive/c/Users/$USERNAME/Desktop
+
+# Define CODE_ROOT 
+export CODE_ROOT=~/CODE
 
 
-# Check that CODE_ROOT variable is already set on a system level
-if [[ -z "${CODE_ROOT}" ]]; then
-    echo "CODE_ROOT environment variable is not defined. Contact ITSA."
-    exit 1
-fi
 
-# Define CODE_ROOT depending on what drives exist
-if [ -d "/cygdrive/d" ]; then
-    export CODE_ROOT=/cygdrive/d/Code
-fi
-
-if [ -d "/cygdrive/e" ]; then
-    export CODE_ROOT=/cygdrive/e/CODE
-fi
-
-
-# Also create subfolders git and svn if they do not exist.
+# Also create subfolders
 mkdir -p $CODE_ROOT/git
 
-# move user away from network homedrive: cd to code root if not already in a sub-dir
-test  ${PWD#*$CODE_ROOT} = $PWD && {
-    cd $CODE_ROOT
-}
+# move user to code root
+cd $CODE_ROOT
 
 
 # If virtualenvwrapper is installed in Python3:
-if [ -f "/cygdrive/c/Python36/Scripts/virtualenvwrapper.sh" ]; then
-    # Put in place virtualenvwrapper's architecture and logic in place.
-    mkdir -p $CODE_ROOT/.virtualenvs
-    export WORKON_HOME=$CODE_ROOT/.virtualenvs
-    source /cygdrive/c/Python36/Scripts/virtualenvwrapper.sh
-    # Override the below to have the correct value on Windows
-    VIRTUALENVWRAPPER_ENV_BIN_DIR="Scripts"
-fi
+export WORKON_HOME=$CODE_ROOT/.virtualenvs
+[ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
+
 
 
 autoload -U colors && colors
@@ -192,9 +131,6 @@ PROMPT="${NEWLINE}\$(virtualenv_info)%{$fg[green]%}%n@%m %{$reset_color%}%{$fg[y
 
 # Make title bar say something useful
 function chpwd { print -Pn "\e]2; %~\a" }
-
-# Disable Cygwin DOS-like paths warning messages
-export CYGWIN="nodosfilewarning"
 
 
 ##
