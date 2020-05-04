@@ -12,7 +12,8 @@ install_homebrew () {
     if [[ $? != 0 ]] ; then
     	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)";
     else
-    	brew update && brew upgrade
+    	brew update --greedy
+        brew upgrade
     fi
     brew doctor
     
@@ -22,7 +23,7 @@ install_brew_packages () {
     # Ensure all relevant homebrew packages are installed
     local required_packages=(
     	"zsh"
-	"python" 
+	    "python" 
     	"git"
     	)
 
@@ -50,6 +51,13 @@ install_cask_packages () {
     local required_packages=(
     	"iterm2" 
     	"visual-studio-code" 
+        "sublime-text"
+        "franz"
+        "webex-meetings"
+        "vuze"
+        "vlc"
+        "dropbox"
+        "microsoft-excel"
     	)
 
     for package in "${required_packages[@]}"
@@ -109,10 +117,12 @@ set_up_git () {
         mv $CODE_ROOT/.gitconfig $CODE_ROOT/.gitconfig.old
         echo "OK"
     fi
-
+    vared -p "Enter email for Git setup: " -c useremail
+    vared -p "Enter username for Git setup: " -c gitusername
     echo -n "Creating a new Git config and adding credentials..."
     touch $CODE_ROOT/.gitconfig
-    git config --global user.name $USERNAME
+    git config --global user.name $gitusername
+    git config --global user.email $useremail
     git config --global core.hooksPath $PROJECT_ROOT/hooks
     git config --global include.path $PROJECT_ROOT/lib/.gitconfig
     echo "OK"
@@ -122,6 +132,7 @@ set_up_git () {
 install_zsh_pure () {
 	echo "Installing Oh My ZSH..."
 	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    export ZSH=~/.oh-my-zsh
 	echo "Installing Pure..."
     git clone https://github.com/sindresorhus/pure.git "~/.oh-my-zsh/pure"
 
@@ -141,10 +152,25 @@ create_zshrc () {
 }
 
 
+install_vscode_exts () {
+    echo "Downloading extensions"
+    echo "Editing json"
+}
+
 copy_postmkvirtualenv () {
     echo -n "Copying postmkvirtualenv hook to $CODE_ROOT/.virtualenvs..."
     cp $PROJECT_ROOT/lib/postmkvirtualenv $CODE_ROOT/.virtualenvs/postmkvirtualenv
     echo "OK"
+}
+
+create_sandbox_venv () {
+    cd $CODE_ROOT/sandbox
+    mkvirtualenv jupyter
+    setvirtualenvproject
+    pip install --upgrade pip
+    pip install jupyter voila pandas requests matplotlib
+    deactivate
+    cd $CODE_ROOT
 }
 
 
@@ -169,7 +195,9 @@ main () {
     set_up_git
     install_zsh_pure
     create_zshrc
+    install_vscode_exts
     copy_postmkvirtualenv
+    create_sandbox_venv
     exit_script
 }
 
