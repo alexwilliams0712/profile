@@ -123,7 +123,7 @@ install_zsh_pure () {
 	echo "Installing Oh My ZSH..."
 	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 	echo "Installing Pure..."
-    git clone https://github.com/sindresorhus/pure.git "~/.zsh/pure"
+    git clone https://github.com/sindresorhus/pure.git "~/.oh-my-zsh/pure"
 
 }
 
