@@ -1,7 +1,7 @@
 #!/bin/env zsh
 
 
-echo "setup running"
+echo "Setup Running!"
 export PATH="/usr/local/bin:$PATH"
 exit_code=0
 PROJECT_ROOT=Users/$USER/profile
