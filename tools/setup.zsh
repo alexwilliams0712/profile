@@ -15,12 +15,14 @@ install_homebrew () {
     	brew update && brew upgrade
     fi
     brew doctor
+    
 }
 
-install_brew_packagaes () {
+install_brew_packages () {
     # Ensure all relevant homebrew packages are installed
     local required_packages=(
-    	"python" 
+    	"zsh"
+	"python" 
     	"git"
     	)
 
@@ -40,10 +42,12 @@ install_brew_packagaes () {
             }
         fi
         done
+	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
 }
 
 
-install_cask_packagaes () {
+install_cask_packages () {
     # Ensure all relevant homebrew packages are installed
     local required_packages=(
     	"iterm2" 
@@ -161,8 +165,8 @@ exit_script () {
 main () {
     install_homebrew
     echo "Homebrew Installed"
-    install_brew_packagaes
-    install_cask_packagaes
+    install_brew_packages
+    install_cask_packages
     echo "Packages Installed"
     environment_variables
     set_up_git
