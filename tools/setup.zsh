@@ -1,10 +1,10 @@
 #!/bin/env zsh
 
 
-echo "Setup Running!"
+echo "setup running"
 export PATH="/usr/local/bin:$PATH"
 exit_code=0
-PROJECT_ROOT=Users/$USER/profile
+PROJECT_ROOT=~/profile
 
 
 install_homebrew () {
@@ -121,7 +121,9 @@ set_up_git () {
 
 
 install_pure () {
-    git clone https://github.com/sindresorhus/pure.git "$CODE_ROOT/preferences"
+	echo "Installing pure..."
+	mkdir -p $CODE_ROOT/preferences/pure
+    git clone https://github.com/sindresorhus/pure.git "$CODE_ROOT/preferences/pure"
 
 }
 
@@ -134,7 +136,7 @@ create_zshrc () {
         echo "OK"
     fi
     echo -n "Creating zshrc in HOME..."
-    echo "source $PROJECT_ROOT/entrypoint.zsh" > $USER/.zshrc
+    echo "source $PROJECT_ROOT/entrypoint.zsh" > ~/.zshrc
     echo "OK"
 }
 
