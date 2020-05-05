@@ -153,6 +153,9 @@ create_zshrc () {
 
 
 install_vscode_exts () {
+    echo "Point Sublime to correct place..."
+    ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/sublime
+    export PATH=/usr/local/bin:$PATH
     echo "Downloading extensions"
     echo "Editing json"
 }
