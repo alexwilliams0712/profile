@@ -57,6 +57,7 @@ install_cask_packages () {
         "vuze"
         "vlc"
         "dropbox"
+	"cleanmymac"
         "microsoft-excel"
     	)
 
