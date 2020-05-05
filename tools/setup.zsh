@@ -149,6 +149,9 @@ create_zshrc () {
     fi
     echo -n "Creating zshrc in HOME..."
     echo "source $PROJECT_ROOT/entrypoint.zsh" > ~/.zshrc
+    cd /usr/local/share/
+    sudo chmod -R 755 zsh
+    sudo chown -R root:staff zsh
     echo "OK"
 }
 
