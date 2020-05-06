@@ -10,16 +10,14 @@
     "workbench.statusBar.visible": true,
     "extensions.ignoreRecommendations": true,
     "python.linting.enabled": true,
-    "python.venvPath": "E:\\CODE\\.virtualenvs",
-    "python.linting.pylintPath": "E:\\CODE\\.devtools\\Scripts\\pylint.exe",
+    "python.venvPath": "$CODE_ROOT\\.virtualenvs",
+    "python.linting.pylintPath": "$CODE_ROOT\\.devtools\\Scripts\\pylint.exe",
     "python.formatting.provider": "black",
-    "python.formatting.blackPath": "E:\\CODE\\.devtools\\Scripts\\black.exe",
+    "python.formatting.blackPath": "$CODE_ROOT\\.devtools\\Scripts\\black.exe",
     "autoDocstring.docstringFormat": "numpy",
     "explorer.confirmDelete": false,
     "editor.minimap.enabled": false,
-    "workbench.iconTheme": "file-icons",
     "window.zoomLevel": 0,
-    "terminal.integrated.shell.windows": "C:\\Cygwin\\bin\\zsh.exe",
     "editor.formatOnPaste": true,
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true,
@@ -28,5 +26,6 @@
     "terminal.integrated.rightClickBehavior": "copyPaste",
     "sql-formatter.uppercase": true,
     "python.dataScience.askForKernelRestart": false,
-    "python.dataScience.sendSelectionToInteractiveWindow": true
+    "python.dataScience.sendSelectionToInteractiveWindow": true,
+    "workbench.sideBar.location": "left"
 }
