@@ -100,7 +100,7 @@ environment_variables() {
 
     [ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
 
-    pip install --install-option="--prefix=$CODE_ROOT/.virtualenvs" black
+    pip install --target=$CODE_ROOT/.devtools black
 }
 
 set_up_git() {
