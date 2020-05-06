@@ -1,41 +1,36 @@
 #!/bin/env zsh
-
-
 echo "setup running"
 export PATH="/usr/local/bin:$PATH"
 exit_code=0
 PROJECT_ROOT=~/profile
 
-
-install_homebrew () {
-	which -s brew
-    if [[ $? != 0 ]] ; then
-    	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)";
+install_homebrew() {
+    which -s brew
+    if [[ $? != 0 ]]; then
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
     else
-    	brew update && brew upgrade
+        brew update && brew upgrade
     fi
     brew doctor
-    
+
 }
 
-install_brew_packages () {
+install_brew_packages() {
     # Ensure all relevant homebrew packages are installed
     sudo chown -R $(whoami) /usr/local/share/zsh /usr/local/share/zsh/site-functions
     chmod u+w /usr/local/share/zsh /usr/local/share/zsh/site-functions
     local required_packages=(
-    	"zsh"
-	"python" 
-    	"git"
-	"docker"
-	"helm"
-	"kubernetes-cli"
-    	)
+        "zsh"
+        "python"
+        "git"
+        "docker"
+        "helm"
+        "kubernetes-cli"
+    )
 
-    for package in "${required_packages[@]}" 
-    do 
+    for package in "${required_packages[@]}"; do
         echo -n "Checking that $package is installed..."
-        if brew list $package | grep $package
-        then
+        if brew list $package | grep $package; then
             echo "OK"
         else
             echo "Not Found"
@@ -46,31 +41,28 @@ install_brew_packages () {
                 exit_script
             }
         fi
-        done
+    done
 }
 
-
-install_cask_packages () {
+install_cask_packages() {
     # Ensure all relevant homebrew packages are installed
     local required_packages=(
-    	"google-chrome"
-	"iterm2" 
-    	"visual-studio-code" 
+        "google-chrome"
+        "iterm2"
+        "visual-studio-code"
         "sublime-text"
         "franz"
         "webex-meetings"
         "vuze"
         "vlc"
         "dropbox"
-	"cleanmymac"
+        "cleanmymac"
         "microsoft-excel"
-    	)
+    )
 
-    for package in "${required_packages[@]}"
-    do 
+    for package in "${required_packages[@]}"; do
         echo -n "Checking that $package is installed..."
-        if brew cask list $package | grep $package
-        then
+        if brew cask list $package | grep $package; then
             echo "OK"
         else
             echo "Not Found"
@@ -81,12 +73,12 @@ install_cask_packages () {
                 exit_script
             }
         fi
-        done
+    done
 }
 
-environment_variables () {
+environment_variables() {
     export PATH="/usr/local/opt/python/libexec/bin:/usr/local/bin:$PATH"
-    
+
     # pip installs
     pip install virtualenv
     pip install virtualenvwrapper
@@ -98,23 +90,19 @@ environment_variables () {
     mkdir -p ~/CODE/.devtools
     mkdir -p ~/CODE/.virtualenvs
     mkdir -p ~/CODE/.tmp/black
-    
-    
 
     # Point CODE_ROOT  to USER/CODE
     export CODE_ROOT=~/CODE
     export WORKON_HOME=$CODE_ROOT/.virtualenvs
     export PROJECT_HOME=$CODE_ROOT
     source /usr/local/bin/virtualenvwrapper.sh
-    
 
     [ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
-    
+
     pip install --install-option="--prefix=$CODE_ROOT/.virtualenvs" black
 }
 
-
-set_up_git () {
+set_up_git() {
     # Create a git config and add relevent settings
     export PATH="/usr/local/bin:${PATH}"
 
@@ -134,18 +122,16 @@ set_up_git () {
     echo "OK"
 }
 
-
-install_zsh_pure () {
-	echo "Installing Oh My ZSH..."
-	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+install_zsh_pure() {
+    echo "Installing Oh My ZSH..."
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     export ZSH=~/.oh-my-zsh
-	echo "Installing Pure..."
+    echo "Installing Pure..."
     git clone https://github.com/sindresorhus/pure.git "$ZSH/pure"
 
 }
 
-
-create_zshrc () {
+create_zshrc() {
     # Back up old and create new zshrc that sources the entrypoint
     if [ -f ~/.zshrc ]; then
         echo -n "found ~/.zshrc, backing up to ~/.zshrc.old..."
@@ -153,32 +139,30 @@ create_zshrc () {
         echo "OK"
     fi
     echo -n "Creating zshrc in HOME..."
-    echo "source $PROJECT_ROOT/entrypoint.zsh" > ~/.zshrc
+    echo "source $PROJECT_ROOT/entrypoint.zsh" >~/.zshrc
     cd /usr/local/share/
     sudo chmod -R 755 zsh
     sudo chown -R root:staff zsh
     echo "OK"
 }
 
-
-install_vscode_exts () {
+install_vscode_exts() {
     echo "Point Sublime to correct place..."
     ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/sublime
     export PATH=/usr/local/bin:$PATH
-
 
     echo "Downloading extensions"
     required_extensions
     echo "Editing json"
 }
 
-copy_postmkvirtualenv () {
+copy_postmkvirtualenv() {
     echo -n "Copying postmkvirtualenv hook to $CODE_ROOT/.virtualenvs..."
     cp $PROJECT_ROOT/lib/postmkvirtualenv $CODE_ROOT/.virtualenvs/postmkvirtualenv
     echo "OK"
 }
 
-create_sandbox_venv () {
+create_sandbox_venv() {
     cd $CODE_ROOT/sandbox
     mkvirtualenv jupyter
     setvirtualenvproject
@@ -188,8 +172,7 @@ create_sandbox_venv () {
     cd $CODE_ROOT
 }
 
-
-exit_script () {
+exit_script() {
     if [[ exit_code -eq 0 ]]; then
         echo "*** Fresh Install of Alex's Profile Complete! ***"
     else
@@ -200,7 +183,7 @@ exit_script () {
     exit
 }
 
-main () {
+main() {
     install_homebrew
     install_brew_packages
     install_cask_packages
