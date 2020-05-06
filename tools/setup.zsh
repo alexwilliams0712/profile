@@ -31,7 +31,7 @@ install_brew_packages() {
 
     for package in "${required_packages[@]}"; do
         echo -n "Checking that $package is installed..."
-        if brew list $package | grep $package; then
+        if brew list | grep $package; then
             echo "OK"
         else
             echo "Not Found"
@@ -63,7 +63,7 @@ install_cask_packages() {
 
     for package in "${required_packages[@]}"; do
         echo -n "Checking that $package is installed..."
-        if brew cask list $package | grep $package; then
+        if brew cask list | grep $package; then
             echo "OK"
         else
             echo "Not Found"
