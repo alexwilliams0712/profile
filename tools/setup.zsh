@@ -27,6 +27,8 @@ install_brew_packages () {
 	"python" 
     	"git"
 	"docker"
+	"helm"
+	"kubernetes-cli"
     	)
 
     for package in "${required_packages[@]}" 
