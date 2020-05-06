@@ -6,6 +6,8 @@ PROJECT_ROOT=~/profile
 
 install_homebrew() {
     which -s brew
+    sudo chown -R $(whoami) /usr/local/share/zsh /usr/local/share/zsh/site-functions
+    chmod u+w /usr/local/share/zsh /usr/local/share/zsh/site-functions
     if [[ $? != 0 ]]; then
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
     else
@@ -17,8 +19,6 @@ install_homebrew() {
 
 install_brew_packages() {
     # Ensure all relevant homebrew packages are installed
-    sudo chown -R $(whoami) /usr/local/share/zsh /usr/local/share/zsh/site-functions
-    chmod u+w /usr/local/share/zsh /usr/local/share/zsh/site-functions
     local required_packages=(
         "zsh"
         "python"
