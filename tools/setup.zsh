@@ -163,6 +163,15 @@ copy_postmkvirtualenv() {
     echo "OK"
 }
 
+create_venv_black() {
+    cd $CODE_ROOT/.devtools
+    mkvirtualenv
+    setvirtualenvproject
+    pip install black
+    deactivate
+    cd $CODE_ROOT
+}
+
 create_sandbox_venv() {
     cd $CODE_ROOT/sandbox
     mkvirtualenv jupyter
@@ -194,6 +203,7 @@ main() {
     create_zshrc
     install_vscode_exts
     copy_postmkvirtualenv
+    create_venv_black
     create_sandbox_venv
     exit_script
 }
