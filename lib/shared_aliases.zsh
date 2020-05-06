@@ -72,6 +72,7 @@ alias co="checkout"
 ##
 #Python Dev
 ##
+alias b=$CODE_ROOT/.devtools/bin/black
 alias pylint="python -m pylint **/*.py --exit-zero"
 
 
