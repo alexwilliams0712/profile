@@ -155,6 +155,7 @@ install_vscode_exts() {
     echo "Downloading extensions"
     required_extensions
     echo "Editing json"
+    cp -f -v ~/profile/lib/vscode-settings.json ~/Library/application\ support/Code/User/settings.json
 }
 
 copy_postmkvirtualenv() {
