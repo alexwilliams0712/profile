@@ -23,6 +23,7 @@ install_brew_packages() {
         "zsh"
         "python"
         "git"
+        "dos2unix"
         "docker"
         "helm"
         "kubernetes-cli"
