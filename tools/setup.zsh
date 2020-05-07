@@ -4,6 +4,11 @@ export PATH="/usr/local/bin:$PATH"
 exit_code=0
 PROJECT_ROOT=~/profile
 
+get_git_details() {
+    vared -p "Enter email for Git setup: " -c useremail
+    vared -p "Enter username for Git setup: " -c gitusername
+}
+
 install_homebrew() {
     which -s brew
     sudo chown -R $(whoami) /usr/local/share/zsh /usr/local/share/zsh/site-functions
@@ -112,8 +117,7 @@ set_up_git() {
         mv $CODE_ROOT/.gitconfig $CODE_ROOT/.gitconfig.old
         echo "OK"
     fi
-    vared -p "Enter email for Git setup: " -c useremail
-    vared -p "Enter username for Git setup: " -c gitusername
+
     echo -n "Creating a new Git config and adding credentials..."
     touch $CODE_ROOT/.gitconfig
     git config --global user.name $gitusername
@@ -195,6 +199,7 @@ exit_script() {
 }
 
 main() {
+    get_git_details
     install_homebrew
     install_brew_packages
     install_cask_packages
