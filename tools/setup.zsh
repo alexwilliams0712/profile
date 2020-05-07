@@ -53,17 +53,17 @@ install_brew_packages() {
 install_cask_packages() {
     # Ensure all relevant homebrew packages are installed
     local required_packages=(
+        "cleanmymac"
+        "dropbox"
+        "franz"
         "google-chrome"
         "iterm2"
-        "visual-studio-code"
-        "sublime-text"
-        "franz"
-        "webex-meetings"
-        "vuze"
-        "vlc"
-        "dropbox"
-        "cleanmymac"
         "microsoft-excel"
+        "sublime-text"
+        "visual-studio-code"
+        "vlc"
+        "vuze"
+        "webex-meetings"
     )
 
     for package in "${required_packages[@]}"; do
@@ -182,7 +182,7 @@ create_sandbox_venv() {
     mkvirtualenv jupyter
     setvirtualenvproject
     pip install --upgrade pip
-    pip install jupyter voila pandas requests matplotlib
+    pip install jupyter voila pandas requests matplotlib nb_black
     deactivate
     cd $CODE_ROOT
 }

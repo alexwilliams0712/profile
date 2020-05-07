@@ -116,7 +116,7 @@ function virtualenv_info(){
 }
 
 # It is possible to use the ZSH-embeded feature vcs_info to retrive Git related information.
-# However it substantially slows Cygwin down, the below function is quicker if all we want is to output the active branch name.
+# However it substantially slows termminal down down, the below function is quicker if all we want is to output the active branch name.
 # For more info, see http://arjanvandergaag.nl/blog/customize-zsh-prompt-with-vcs-info.html
 function git_info(){
     # Only run this if we're inside a git directory
