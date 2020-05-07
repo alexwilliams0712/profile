@@ -25,7 +25,7 @@ path_prepend "/usr/local/opt/python/libexec/bin"
 # GLOBAL VARIABLES
 ##
 
-# Define CODE_ROOT 
+# Define CODE_ROOT
 export CODE_ROOT=~/CODE
 export PYTHONPATH=$CODE_ROOT/git
 
@@ -36,6 +36,7 @@ mkdir -p $CODE_ROOT/git
 ##
 # PURE
 ##
+export ZSH=~/.oh-my-zsh
 fpath+=$ZSH/pure
 
 # move user to code root
