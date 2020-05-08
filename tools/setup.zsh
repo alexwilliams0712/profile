@@ -168,7 +168,6 @@ install_vscode_exts() {
     echo "Downloading VSCode extensions"
     vscode=(
         "adpyke.vscode-sql-formatter"
-        "bbenoist.shell"
         "davidanson.vscode-markdownlint"
         "ms-azuretools.vscode-docker"
         "ms-python.python"
