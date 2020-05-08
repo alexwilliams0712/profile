@@ -62,6 +62,7 @@ install_cask_packages() {
         "dropbox"
         "franz"
         "google-chrome"
+        "google-chrome-canary"
         "istat-menus"
         "iterm2"
         "microsoft-excel"
@@ -165,7 +166,7 @@ install_vscode_exts() {
     ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/sublime
     export PATH=/usr/local/bin:$PATH
 
-    echo "Downloading extensions"
+    echo "Downloading VSCode extensions"
     vscode=(
         "adpyke.vscode-sql-formatter"
         "bbenoist.shell"
@@ -178,7 +179,7 @@ install_vscode_exts() {
     for package in "${vscode[@]}"; do
         code --install-extension $package
     done
-    echo "Editing json"
+    echo "Editing VSCode json"
     cp -f -v ~/profile/lib/vscode-settings.json ~/Library/application\ support/Code/User/settings.json
 }
 
