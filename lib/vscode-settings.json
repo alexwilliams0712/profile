@@ -27,5 +27,10 @@
     "sql-formatter.uppercase": true,
     "python.dataScience.askForKernelRestart": false,
     "python.dataScience.sendSelectionToInteractiveWindow": true,
-    "workbench.sideBar.location": "left"
+    "workbench.sideBar.location": "left",
+    "bracket-pair-colorizer-2.colors": [
+        "Gold",
+        "Orchid",
+        "LightSkyBlue"
+    ]
 }
