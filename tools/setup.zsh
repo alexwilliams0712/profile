@@ -62,7 +62,6 @@ install_cask_packages() {
         "dropbox"
         "franz"
         "google-chrome"
-        "google-chrome-canary"
         "istat-menus"
         "iterm2"
         "microsoft-excel"
@@ -174,6 +173,7 @@ install_vscode_exts() {
         "ms-azuretools.vscode-docker"
         "ms-python.python"
         "njpwerner.autodocstring"
+        "coenraads.bracket-pair-colorizer-2"
     )
 
     for package in "${vscode[@]}"; do
