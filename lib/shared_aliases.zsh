@@ -67,6 +67,7 @@ alias b=$CODE_ROOT/.devtools/Scripts/black.exe
 ##
 alias multipull="cd $CODE_ROOT/git; find . -mindepth 1 -maxdepth 2 -type d -print -exec git -C {} pull --all \;"
 alias co="checkout"
+alias nah='git reset --hard;git clean -df'
 
 
 ##
