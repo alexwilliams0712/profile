@@ -8,7 +8,7 @@ Open Terminal
 Run:
 
 ```zsh
-git clone https://github.com/alexwilliams0712/profile.git && source profile/tools/setup.zsh
+cd ~ && git clone https://github.com/alexwilliams0712/profile.git && source profile/tools/setup.zsh
 ```
 
 ## Notes
