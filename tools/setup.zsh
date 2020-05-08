@@ -139,6 +139,9 @@ install_zsh_pure() {
     export ZSH=~/.oh-my-zsh
     echo "Installing Pure..."
     git clone https://github.com/sindresorhus/pure.git "$ZSH/pure"
+    # Gets rid of annoying prompt when quitting iterm2
+    defaults write com.googlecode.iterm2 PromptOnQuit -bool false
+
 
 }
 
@@ -164,16 +167,17 @@ install_vscode_exts() {
 
     echo "Downloading extensions"
     vscode=(
-        adpyke.vscode-sql-formatter
-        bbenoist.shell
-        davidanson.vscode-markdownlint
-        ms-azuretools.vscode-docker
-        ms-python.python
-        njpwerner.autodocstring
+        "adpyke.vscode-sql-formatter"
+        "bbenoist.shell"
+        "davidanson.vscode-markdownlint"
+        "ms-azuretools.vscode-docker"
+        "ms-python.python"
+        "njpwerner.autodocstring"
     )
-    install 'code --install-extension' "${vscode[@]}"
 
-    required_extensions
+    for package in "${vscode[@]}"; do
+        code --install-extension $package
+    done
     echo "Editing json"
     cp -f -v ~/profile/lib/vscode-settings.json ~/Library/application\ support/Code/User/settings.json
 }
