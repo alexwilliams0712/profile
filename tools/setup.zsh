@@ -62,6 +62,7 @@ install_cask_packages() {
         "dropbox"
         "franz"
         "google-chrome"
+        "istat-menus"
         "iterm2"
         "microsoft-excel"
         "sublime-text"
