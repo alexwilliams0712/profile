@@ -163,6 +163,16 @@ install_vscode_exts() {
     export PATH=/usr/local/bin:$PATH
 
     echo "Downloading extensions"
+    vscode=(
+        adpyke.vscode-sql-formatter
+        bbenoist.shell
+        davidanson.vscode-markdownlint
+        ms-azuretools.vscode-docker
+        ms-python.python
+        njpwerner.autodocstring
+    )
+    install 'code --install-extension' "${vscode[@]}"
+
     required_extensions
     echo "Editing json"
     cp -f -v ~/profile/lib/vscode-settings.json ~/Library/application\ support/Code/User/settings.json
