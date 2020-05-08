@@ -48,7 +48,7 @@ This will create a git config for the user, who will need to enter the email and
 
 ### ToDo
 
-* Install a list of VS Code extensions.
+* Install a list of VS Code extensions (hopefully done)
 * Fix pre-commit hooks so they work for Mac (currently copied from Windows).
 * Create virtualenv for Black doesnt work currently.
 * Pure to show virtualenvs (need to do this before switch it on).
