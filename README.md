@@ -25,6 +25,7 @@ This will also brew install the following apps:
 * dropbox
 * franz
 * google-chrome
+* istat-menus
 * iterm2
 * microsoft-excel
 * sublime-text
