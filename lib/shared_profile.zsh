@@ -34,10 +34,12 @@ export PYTHONPATH=$CODE_ROOT/git
 mkdir -p $CODE_ROOT/git
 
 ##
-# PURE
+# PURE - blocked for now as doesnt show virtualenvs
 ##
 export ZSH=~/.oh-my-zsh
 fpath+=$ZSH/pure
+# autoload -U promptinit; promptinit
+# prompt pure
 
 # move user to code root
 cd $CODE_ROOT
