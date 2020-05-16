@@ -1,0 +1,40 @@
+##
+# Preflight
+##
+
+# Tap homebrew
+tap "homebrew/cask"
+tap "homebrew/cask-drivers"
+tap "homebrew/cask-fonts"
+tap "homebrew/cask-versions"
+tap "homebrew/core"
+tap "homebrew/bundle"
+tap "homebrew/services"
+
+
+# Brew
+brew "zsh"
+brew "python"
+brew "git"
+brew "dos2unix"
+brew "docker"
+brew "docker-compose"
+brew "helm"
+brew "kubernetes-cli"
+brew "cask"
+brew "wifi-password"
+brew "tree"
+
+# Cask
+cask "cleanmymac"
+cask "dropbox"
+cask "franz"
+cask "google-chrome"
+cask "istat-menus"
+cask "iterm2"
+cask "microsoft-excel"
+cask "sublime-text"
+cask "visual-studio-code"
+cask "vlc"
+cask "vuze"
+cask "webex-meetings"
