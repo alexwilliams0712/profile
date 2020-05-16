@@ -1,36 +1,34 @@
 {
+    "autoDocstring.docstringFormat": "numpy",
+    "bracket-pair-colorizer-2.colors": [
+        "Gold",
+        "Orchid",
+        "LightSkyBlue"
+    ],
+    "editor.formatOnPaste": true,
     "editor.formatOnSave": true,
+    "editor.minimap.enabled": false,
     "editor.renderControlCharacters": false,
     "editor.rulers": [
         79,
         88,
         120
     ],
-    "workbench.tree.indent": 20,
-    "workbench.statusBar.visible": true,
-    "extensions.ignoreRecommendations": true,
-    "python.linting.enabled": true,
-    "python.venvPath": "$CODE_ROOT\\.virtualenvs",
-    "python.linting.pylintPath": "$CODE_ROOT\\.devtools\\Scripts\\pylint.exe",
-    "python.formatting.provider": "black",
-    "python.formatting.blackPath": "$CODE_ROOT\\.devtools\\Scripts\\black.exe",
-    "autoDocstring.docstringFormat": "numpy",
     "explorer.confirmDelete": false,
-    "editor.minimap.enabled": false,
-    "window.zoomLevel": 0,
-    "editor.formatOnPaste": true,
+    "extensions.ignoreRecommendations": true,
+    "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true,
-    "terminal.integrated.copyOnSelection": true,
-    "terminal.integrated.rightClickBehavior": "copyPaste",
-    "sql-formatter.uppercase": true,
     "python.dataScience.askForKernelRestart": false,
     "python.dataScience.sendSelectionToInteractiveWindow": true,
+    "python.formatting.provider": "black",
+    "python.linting.enabled": true,
+    "python.venvPath": "$CODE_ROOT\\.virtualenvs",
+    "sql-formatter.uppercase": true,
+    "terminal.integrated.copyOnSelection": true,
+    "terminal.integrated.rightClickBehavior": "copyPaste",
+    "window.zoomLevel": 0,
     "workbench.sideBar.location": "left",
-    "bracket-pair-colorizer-2.colors": [
-        "Gold",
-        "Orchid",
-        "LightSkyBlue"
-    ]
+    "workbench.statusBar.visible": true,
+    "workbench.tree.indent": 20
 }
