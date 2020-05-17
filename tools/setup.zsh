@@ -29,63 +29,8 @@ install_homebrew() {
 
 install_brew_packages() {
     # Ensure all relevant homebrew packages are installed
-    local required_packages=(
-        "zsh"
-        "python"
-        "git"
-        "dos2unix"
-        "docker"
-        "helm"
-        "kubernetes-cli"
-    )
-
-    for package in "${required_packages[@]}"; do
-        echo -n "Checking that $package is installed..."
-        if brew list | grep $package; then
-            echo "OK"
-        else
-            echo "Not Found"
-            echo "Attempting $package installation..."
-            brew install $package || {
-                echo "Installation of $package failed."
-                exit_code=1
-                exit_script
-            }
-        fi
-    done
-}
-
-install_cask_packages() {
-    # Ensure all relevant homebrew packages are installed
-    local required_packages=(
-        "cleanmymac"
-        "dropbox"
-        "franz"
-        "google-chrome"
-        "istat-menus"
-        "iterm2"
-        "microsoft-excel"
-        "sublime-text"
-        "visual-studio-code"
-        "vlc"
-        "vuze"
-        "webex-meetings"
-    )
-
-    for package in "${required_packages[@]}"; do
-        echo -n "Checking that $package is installed..."
-        if brew cask list | grep $package; then
-            echo "OK"
-        else
-            echo "Not Found"
-            echo "Attempting $package installation..."
-            brew cask install $package || {
-                echo "Installation of $package failed."
-                exit_code=1
-                exit_script
-            }
-        fi
-    done
+    cd ~/profile/tools
+    brew bundle install
 }
 
 environment_variables() {
@@ -137,8 +82,6 @@ install_zsh_pure() {
     echo "Installing Oh My ZSH..."
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     export ZSH=~/.oh-my-zsh
-    echo "Installing Pure..."
-    git clone https://github.com/sindresorhus/pure.git "$ZSH/pure"
     # Gets rid of annoying prompt when quitting iterm2
     defaults write com.googlecode.iterm2 PromptOnQuit -bool false
 
@@ -198,12 +141,7 @@ create_venv_black() {
 }
 
 create_sandbox_venv() {
-    cd $CODE_ROOT/sandbox
-    mkvirtualenv jupyter
-    setvirtualenvproject
-    pip install --upgrade pip
-    pip install jupyter voila pandas requests matplotlib nb_black
-    deactivate
+    cd $CODE_ROOT/sandbox; mkvirtualenv jupyter; setvirtualenvproject; pip install --upgrade pip; pip install jupyter voila pandas requests matplotlib nb_black; deactivate
     cd $CODE_ROOT
 }
 
@@ -222,7 +160,6 @@ main() {
     get_git_details
     install_homebrew
     install_brew_packages
-    install_cask_packages
     environment_variables
     set_up_git
     install_zsh_pure
