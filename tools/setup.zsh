@@ -35,6 +35,7 @@ install_brew_packages() {
 
 environment_variables() {
     export PATH="/usr/local/opt/python/libexec/bin:/usr/local/bin:$PATH"
+    export PATH="/usr/local/sbin:$PATH"
 
     # pip installs
     pip install virtualenv
