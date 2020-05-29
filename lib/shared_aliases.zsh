@@ -74,6 +74,7 @@ alias nah='git reset --hard;git clean -df'
 #Python Dev
 ##
 alias pylint="python -m pylint **/*.py --exit-zero"
+mkvirtualenv="mkvirtualenv; pip install --upgrade pip"
 
 
 ##
