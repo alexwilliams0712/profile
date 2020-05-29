@@ -27,19 +27,17 @@ path_prepend "/usr/local/opt/python/libexec/bin"
 
 # Define CODE_ROOT
 export CODE_ROOT=~/CODE
-export PYTHONPATH=$CODE_ROOT/git
+export PYTHONPATH=$CODE_ROOT
 
 
 # Also create subfolders
 mkdir -p $CODE_ROOT/git
 
 ##
-# PURE - blocked for now as doesnt show virtualenvs
+# ZSH
 ##
 export ZSH=~/.oh-my-zsh
-fpath+=$ZSH/pure
-# autoload -U promptinit; promptinit
-# prompt pure
+
 
 # move user to code root
 cd $CODE_ROOT
