@@ -29,6 +29,7 @@ This will also brew install the following apps:
 * google-chrome
 * istat-menus
 * iterm2
+* julia
 * microsoft-excel
 * sublime-text
 * visual-studio-code
