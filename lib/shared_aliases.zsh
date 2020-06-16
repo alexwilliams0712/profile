@@ -79,7 +79,6 @@ alias mkdevreqs="echo 'pytest\npylint\npytest-cov' > requirements-dev.in; pip-co
 alias pytest="pytest -s -vv"
 
 
-
 ##
 #general
 ##
