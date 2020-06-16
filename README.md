@@ -8,9 +8,9 @@ Open Terminal
 Run:
 
 ```zsh
-cd ~
-git clone https://github.com/alexwilliams0712/profile.git
-source profile/tools/setup.zsh
+$ cd ~
+$ git clone https://github.com/alexwilliams0712/profile.git
+$ source profile/tools/setup.zsh
 ```
 
 ## Notes
@@ -29,6 +29,7 @@ This will also brew install the following apps:
 * google-chrome
 * istat-menus
 * iterm2
+* julia
 * microsoft-excel
 * sublime-text
 * visual-studio-code
