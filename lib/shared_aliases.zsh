@@ -74,7 +74,10 @@ alias nah='git reset --hard;git clean -df'
 #Python Dev
 ##
 alias pylint="python -m pylint **/*.py --exit-zero"
-mkvirtualenv="mkvirtualenv; pip install --upgrade pip; pip install black pylint pytest"
+alias mkvirtualenv="mkvirtualenv; pip install --upgrade pip; pip install black pylint pytest"
+alias mkdevreqs="echo 'pytest\npylint\npytest-cov' > requirements-dev.in; pip-compile-dev"
+alias pytest="pytest -s -vv"
+
 
 
 ##
