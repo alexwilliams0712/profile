@@ -71,6 +71,8 @@ function mkpytests {
 		done
 	done
 	unset arg
+	unset func
+	unset line
 }
 
 
