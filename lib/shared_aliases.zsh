@@ -41,6 +41,38 @@ function tailfix() {
    \tail -f  $@ | sed 's/\x1/|/g'
 }
 
+# Makes Python Unit tests for the user, just specify the module to create tests for
+
+function mkpytests {
+	# if no arguments given, get out
+	if [ ! -n "$1" ]; then
+		echo "What py file do you want to test, moron?"
+		return 1
+	fi
+	mkdir -p tests
+	touch "tests/__init__.py"
+	for arg in "$@"
+	do
+		# For each py file specified, create a tests file
+		touch "tests/test_$arg"
+		if ! grep -q "import pytest" "tests/test_$arg"; then
+			echo  '""""\nUnit tests to confirm run.py works entirely as expected\n"""\n# pylint: disable=redefined-outer-name\n\nimport pytest\n\n' > "tests/test_$arg"
+		fi
+		grep def $arg | while read -r line ; 
+		do
+			func="$(cut -d'(' -f1 <<< "$(cut -d' ' -f2 <<< "$line")")"
+			if [ "$func" != "__init__" ]; then
+				if  grep -q "def test_$func" "tests/test_$arg"; then
+					echo  "test_$func() already exists"
+				else
+					echo "def test_$func():\n	# A unit test to confirm $func function works as expected\n	assert 1 == 2\n" >> "tests/test_$arg"
+				fi
+			fi
+		done
+	done
+	unset arg
+}
+
 
 ##
 # EDITORS
