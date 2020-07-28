@@ -56,7 +56,7 @@ function mkpytests {
 		# For each py file specified, create a tests file
 		touch "tests/test_$arg"
 		if ! grep -q "import pytest" "tests/test_$arg"; then
-			echo  '""""\nUnit tests to confirm run.py works entirely as expected\n"""\n# pylint: disable=redefined-outer-name\n\nimport pytest\n\n' > "tests/test_$arg"
+			echo  '""""\nUnit tests to confirm $arg works entirely as expected\n"""\n# pylint: disable=redefined-outer-name\n\nimport pytest\n\n' > "tests/test_$arg"
 		fi
 		grep def $arg | while read -r line ; 
 		do
