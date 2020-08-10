@@ -101,7 +101,7 @@ create_zshrc() {
     cd /usr/local/share/
     sudo chmod -R 755 zsh
     sudo chown -R root:staff zsh
-    echo "OK"
+    dos2unix $PROJECT_ROOT/lib/shared_profile.zsh; dos2unix $PROJECT_ROOT/lib/shared_aliases.zsh
 }
 
 install_vscode_exts() {
