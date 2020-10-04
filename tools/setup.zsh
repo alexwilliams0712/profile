@@ -80,7 +80,7 @@ set_up_git() {
     echo "OK"
 }
 
-install_zsh_pure() {
+install_zsh() {
     echo "Installing Oh My ZSH..."
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     export ZSH=~/.oh-my-zsh
@@ -105,27 +105,6 @@ create_zshrc() {
     dos2unix $PROJECT_ROOT/lib/shared_profile.zsh; dos2unix $PROJECT_ROOT/lib/shared_aliases.zsh
 }
 
-install_vscode_exts() {
-    echo "Point Sublime to correct place..."
-    ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/sublime
-    export PATH=/usr/local/bin:$PATH
-
-    echo "Downloading VSCode extensions"
-    vscode=(
-        "adpyke.vscode-sql-formatter"
-        "davidanson.vscode-markdownlint"
-        "ms-azuretools.vscode-docker"
-        "ms-python.python"
-        "njpwerner.autodocstring"
-        "coenraads.bracket-pair-colorizer-2"
-    )
-
-    for package in "${vscode[@]}"; do
-        code --install-extension $package
-    done
-    echo "Editing VSCode json"
-    cp -f -v ~/profile/lib/vscode-settings.json ~/Library/application\ support/Code/User/settings.json
-}
 
 copy_postmkvirtualenv() {
     echo -n "Copying postmkvirtualenv hook to $CODE_ROOT/.virtualenvs..."
@@ -133,14 +112,6 @@ copy_postmkvirtualenv() {
     echo "OK"
 }
 
-create_venv_black() {
-    cd $CODE_ROOT/.devtools
-    mkvirtualenv
-    setvirtualenvproject
-    pip install black
-    deactivate
-    cd $CODE_ROOT
-}
 
 create_sandbox_venv() {
     cd $CODE_ROOT/sandbox; mkvirtualenv jupyter; setvirtualenvproject; pip install --upgrade pip; pip install jupyter voila pandas requests matplotlib nb_black; deactivate
@@ -164,11 +135,9 @@ main() {
     install_brew_packages
     environment_variables
     set_up_git
-    install_zsh_pure
+    install_zsh
     create_zshrc
-    install_vscode_exts
     copy_postmkvirtualenv
-    create_venv_black
     create_sandbox_venv
     exit_script
 }
