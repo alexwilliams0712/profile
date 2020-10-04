@@ -47,7 +47,6 @@ environment_variables() {
     mkdir -p ~/CODE/sandbox
     mkdir -p ~/CODE/.devtools
     mkdir -p ~/CODE/.virtualenvs
-    mkdir -p ~/CODE/.tmp/black
 
     # Point CODE_ROOT  to USER/CODE
     export CODE_ROOT=~/CODE
@@ -76,7 +75,6 @@ set_up_git() {
     git config --global user.email $useremail
     git config --global core.hooksPath $PROJECT_ROOT/hooks
     git config --global include.path $PROJECT_ROOT/lib/.gitconfig
-    git config --no-rebase
     echo "OK"
 }
 
