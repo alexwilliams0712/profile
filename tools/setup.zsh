@@ -2,7 +2,7 @@
 echo "setup running"
 export PATH="/usr/local/bin:$PATH"
 exit_code=0
-PROJECT_ROOT=~/profile
+PROJECT_ROOT=~/CODE/git/profile
 
 get_git_details() {
     vared -p "Enter email for Git setup: " -c useremail
@@ -29,7 +29,7 @@ install_homebrew() {
 
 install_brew_packages() {
     # Ensure all relevant homebrew packages are installed
-    cd ~/profile/tools
+    cd PROJECT_ROOT/tools
     brew bundle install
 }
 
@@ -56,7 +56,6 @@ environment_variables() {
 
     [ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
 
-    pip install --target=$CODE_ROOT/.devtools black
 }
 
 set_up_git() {
