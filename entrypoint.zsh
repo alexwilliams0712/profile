@@ -1,5 +1,6 @@
 export PATH=/usr/bin:$PATH
 
+PROJECT_ROOT=~/CODE/git/profile
 
 # Source shared functions and aliases
 source $PROJECT_ROOT/lib/shared_profile.zsh
