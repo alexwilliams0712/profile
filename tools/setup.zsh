@@ -29,7 +29,7 @@ install_homebrew() {
 
 install_brew_packages() {
     # Ensure all relevant homebrew packages are installed
-    cd PROJECT_ROOT/tools
+    cd $PROJECT_ROOT/tools
     brew bundle install
 }
 
