@@ -38,8 +38,8 @@ environment_variables() {
     export PATH="/usr/local/sbin:$PATH"
 
     # pip installs
-    pip install virtualenv
-    pip install virtualenvwrapper
+    pip install virtualenv --upgrade
+    pip install virtualenvwrapper --upgrade
 
     # make directories
     mkdir -p ~/CODE/git
@@ -111,7 +111,7 @@ copy_postmkvirtualenv() {
 
 
 create_sandbox_venv() {
-    cd $CODE_ROOT/sandbox; mkvirtualenv jupyter; setvirtualenvproject; pip install --upgrade pip; pip install jupyter voila pandas requests matplotlib nb_black; deactivate
+    cd $CODE_ROOT/sandbox; mkvirtualenv jupyter; setvirtualenvproject; pip install --upgrade pip; pip install jupyter voila pandas requests matplotlib nb_black --upgrade; deactivate
     cd $CODE_ROOT
 }
 
@@ -136,6 +136,7 @@ main() {
     create_zshrc
     copy_postmkvirtualenv
     create_sandbox_venv
+    source ~/.zshrc
     exit_script
 }
 
