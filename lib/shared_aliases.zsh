@@ -97,28 +97,34 @@ mkrequirements() {
 alias b=$CODE_ROOT/.devtools/Scripts/black.exe
 
 ##
-#git
+#general
 ##
-alias multipull="cd $CODE_ROOT/git; find . -mindepth 1 -maxdepth 2 -type d -print -exec git -C {} pull --all \;"
-alias co="checkout"
-alias nah='git reset --hard;git clean -df'
+alias gohome="cd $CODE_ROOT"
 
 
 ##
 #Python Dev
 ##
+alias allinstalls="pip install -r requirements.txt; pip install -r requirements-dev.txt"
 alias pylint="python -m pylint **/*.py --exit-zero"
-alias pip-compile-dev="pip-compile --no-emit-index-url --no-emit-trusted-host --output-file requirements-dev.txt requirements-dev.in"
-alias mkdevreqs="echo 'pytest\npylint\npytest-cov' > requirements-dev.in; pip-compile-dev"
+alias pip-compile-dev="pip-compile --no-index --no-emit-trusted-host --output-file requirements-dev.txt requirements-dev.in"
+alias mkdevreqs="echo 'pytest\npytest-cov\npylint\npylint-flask\npylint-flask-sqlalchemy' > requirements-dev.in; pip-compile-dev; touch requirements.in; pip-compile; allinstalls"
 alias pytest="pytest -s -vv"
 alias jnb="jupyter notebook --VoilaConfiguration.enable_nbextensions=True"
+
 
 ##
 #git
 ##
 alias gitthefuckout="git reset HEAD --hard; git clean -fd; git pull --all"
+alias multipull="gohome; cd git/Airain; find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \; gohome; cd git/GR; find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull"
+alias newprofile="gohome; cd git/profile; gitthefuckout; source tools/setup.zsh; reload"
+
 
 ##
-#general
+#K9s
 ##
-alias gohome="cd $CODE_ROOT"
+alias guernseyprod="kl; K9s --kubeconfig ~/.kube/config --context services-1.k8s.jtgy -n airain"
+alias icelandprod="kl; K9s --kubeconfig ~/.kube/config --context services-1.k8s.vgis -n airain"
+alias londonqa="kl; K9s --kubeconfig ~/.kube/config --context services-staging-1.k8s.eqld -n airain-staging"
+
