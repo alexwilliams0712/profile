@@ -121,13 +121,6 @@ alias multipull="gohome; cd git/Airain; find . -mindepth 1 -maxdepth 1 -type d -
 alias newprofile="gohome; cd git/profile; gitthefuckout; dos2unix tools/setup.zsh lib/shared_aliases.zsh lib/shared_profile.zsh; source tools/setup.zsh; reload"
 
 
-
-##
-#Dev
-##
-alias go="/usr/local/go/bin/go"
-
-
 ##
 #K9s
 ##
