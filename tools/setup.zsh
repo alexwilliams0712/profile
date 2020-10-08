@@ -4,16 +4,6 @@ export PATH="/usr/local/bin:$PATH"
 exit_code=0
 PROJECT_ROOT=~/CODE/git/profile
 
-get_git_details() {
-    vared -p "Enter email for Git setup: " -c useremail
-    vared -p "Enter username for Git setup: " -c gitusername
-    if [[ -z "${CI}" ]]; then
-        sudo -v # Ask for the administrator password upfront
-        # Keep-alive: update existing `sudo` time stamp until script has finished
-        while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
-    fi
-}
-
 install_homebrew() {
     which -s brew
     sudo chown -R $(whoami) /usr/local/share/zsh /usr/local/share/zsh/site-functions
@@ -66,6 +56,14 @@ set_up_git() {
         echo -n "found ~/.gitconfig, backing up to ~/.gitconfig.old..."
         mv $CODE_ROOT/.gitconfig $CODE_ROOT/.gitconfig.old
         echo "OK"
+    else
+        vared -p "Enter email for Git setup: " -c useremail
+        vared -p "Enter username for Git setup: " -c gitusername
+        if [[ -z "${CI}" ]]; then
+            sudo -v # Ask for the administrator password upfront
+            # Keep-alive: update existing `sudo` time stamp until script has finished
+            while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+        fi
     fi
 
     echo -n "Creating a new Git config and adding credentials..."
@@ -127,7 +125,6 @@ exit_script() {
 }
 
 main() {
-    get_git_details
     install_homebrew
     install_brew_packages
     environment_variables
