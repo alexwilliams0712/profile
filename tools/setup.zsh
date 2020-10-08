@@ -120,6 +120,11 @@ create_sandbox_venv() {
     cd $CODE_ROOT
 }
 
+setup_go() {
+    GO111MODULE="on" go get sigs.k8s.io/kind@v0.3.0
+    export PATH=$PATH:$(go env GOPATH)/bin
+}
+
 exit_script() {
     if [[ exit_code -eq 0 ]]; then
         echo "*** Fresh Install of Alex's Profile Complete! ***"
@@ -140,6 +145,7 @@ main() {
     create_zshrc
     copy_postmkvirtualenv
     create_sandbox_venv
+    setup_go
     source ~/.zshrc
     exit_script
 }
