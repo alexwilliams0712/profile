@@ -28,9 +28,11 @@ install_brew_packages() {
 environment_variables() {
     export PATH="/usr/local/opt/python/libexec/bin:/usr/local/bin:$PATH"
     export PATH="/usr/local/sbin:$PATH"
+    export GOPATH=$HOME/golang
     export GOROOT=/usr/local/opt/go/libexec
-    export GOPATH=$HOME/.go
-    export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+    export GOBIN=$GOPATH/bin
+    export PATH=$PATH:$GOPATH
+    export PATH=$PATH:$GOROOT/bin
 
     # pip installs
     pip install virtualenv --upgrade
