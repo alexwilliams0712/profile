@@ -22,7 +22,7 @@ install_brew_packages() {
     cd $PROJECT_ROOT/tools
     brew bundle install
     brew upgrade kubernetes-cli
-    brew link --overwrite kubernetes-cli
+    brew unlink kubernetes-cli && brew link kubernetes-cli
 }
 
 environment_variables() {
