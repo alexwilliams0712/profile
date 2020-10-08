@@ -13,6 +13,12 @@ $ git clone https://github.com/alexwilliams0712/profile.git
 $ source profile/tools/setup.zsh
 ```
 
+Subsequently, to pick up updates, run:
+
+```zsh
+$ newprofile
+```
+
 ## Notes
 
 ### Directories
