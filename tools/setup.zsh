@@ -21,6 +21,8 @@ install_brew_packages() {
     # Ensure all relevant homebrew packages are installed
     cd $PROJECT_ROOT/tools
     brew bundle install
+    brew upgrade kuberenetes-cli
+    brew link --overwrite kubernetes-cli
 }
 
 environment_variables() {
