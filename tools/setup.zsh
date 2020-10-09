@@ -2,7 +2,7 @@
 echo "setup running"
 export PATH="/usr/local/bin:$PATH"
 exit_code=0
-PROJECT_ROOT=~/CODE/git/profile
+PROJECT_ROOT=~/CODE/git/alexwi/profile
 
 install_homebrew() {
     which -s brew
