@@ -24,6 +24,7 @@ install_brew_packages() {
     brew upgrade kubernetes-cli
     brew unlink kubernetes-cli && brew link kubernetes-cli
     brew upgrade hashicorp/tap/terraform
+    terraform -install-autocomplete
 }
 
 environment_variables() {
