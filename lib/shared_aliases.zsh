@@ -118,7 +118,7 @@ alias jnb="jupyter notebook --VoilaConfiguration.enable_nbextensions=True"
 ##
 alias gitthefuckout="git reset HEAD --hard; git clean -fd; git pull --all"
 alias multipull="gohome; cd git/Airain; find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \; gohome; cd git/GR; find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull"
-alias newprofile="gohome; cd git/profile; gitthefuckout; dos2unix tools/setup.zsh lib/shared_aliases.zsh lib/shared_profile.zsh; source tools/setup.zsh; reload"
+alias newprofile="gohome; cd git/alexwi/profile; gitthefuckout; dos2unix tools/setup.zsh lib/shared_aliases.zsh lib/shared_profile.zsh; source tools/setup.zsh; reload"
 
 
 ##
