@@ -3,6 +3,7 @@
 ##
 
 # Tap homebrew
+tap "hashicorp/tap"
 tap "homebrew/bundle"
 tap "homebrew/cask"
 tap "homebrew/cask-drivers"
@@ -21,6 +22,7 @@ brew "dos2unix"
 brew "git"
 brew "go"
 brew "golang"
+brew "hashicorp/tap/terraform"
 brew "helm@2"
 brew "jx"
 brew "k9s"
