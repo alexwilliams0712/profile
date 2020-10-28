@@ -119,7 +119,7 @@ copy_postmkvirtualenv() {
 
 
 create_sandbox_venv() {
-    cd $CODE_ROOT/sandbox; mkvirtualenv jupyter; setvirtualenvproject; pip install --upgrade pip; pip install jupyter voila pandas requests matplotlib nb_black --upgrade; deactivate
+    cd $CODE_ROOT/sandbox; mkvirtualenv jupyter; setvirtualenvproject; pip install --upgrade pip; pip install jupyter voila pandas requests nb_black --upgrade; deactivate
     cd $CODE_ROOT
 }
 
