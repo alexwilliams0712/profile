@@ -81,7 +81,7 @@ set_up_git() {
     git config --global user.name $gitusername
     git config --global user.email $useremail
     git config --global core.hooksPath $PROJECT_ROOT/hooks
-    git config --global include.path $PROJECT_ROOT/lib/.gitconfig
+    git config --global include.path $PROJECT_ROOT/dotfiles/.gitconfig
     echo "OK"
 }
 
@@ -93,6 +93,11 @@ install_zsh() {
     defaults write com.googlecode.iterm2 PromptOnQuit -bool false
 
 
+}
+
+vscode_setup() {
+    # VS Code
+    ln -sv${LINK_TARGET_EXISTS_HANDLING} "${HOME}/.vscode.settings.json" "${HOME}/Library/Application Support/Code/User/settings.json"
 }
 
 create_zshrc() {
@@ -107,13 +112,15 @@ create_zshrc() {
     cd /usr/local/share/
     sudo chmod -R 755 zsh
     sudo chown -R root:staff zsh
-    dos2unix $PROJECT_ROOT/lib/shared_profile.zsh; dos2unix $PROJECT_ROOT/lib/shared_aliases.zsh
+    dos2unix $PROJECT_ROOT/dotfiles/shared_profile.zsh
+    dos2unix $PROJECT_ROOT/dotfiles/shared_aliases.zsh
+    dos2unix $PROJECT_ROOT/entrypoint.zsh
 }
 
 
 copy_postmkvirtualenv() {
     echo -n "Copying postmkvirtualenv hook to $CODE_ROOT/.virtualenvs..."
-    cp $PROJECT_ROOT/lib/postmkvirtualenv $CODE_ROOT/.virtualenvs/postmkvirtualenv
+    cp $PROJECT_ROOT/dotfiles/postmkvirtualenv $CODE_ROOT/.virtualenvs/postmkvirtualenv
     echo "OK"
 }
 
@@ -147,6 +154,7 @@ main() {
     install_zsh
     create_zshrc
     copy_postmkvirtualenv
+    vscode_setup
     create_sandbox_venv
     setup_go
     source ~/.zshrc
