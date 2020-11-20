@@ -58,7 +58,7 @@ function mkpytests {
 		if ! grep -q "import pytest" "tests/test_$arg"; then
 			echo  '""""\nUnit tests to confirm $arg works entirely as expected\n"""\n# pylint: disable=redefined-outer-name\n\nimport pytest\n\n' > "tests/test_$arg"
 		fi
-		grep def $arg | while read -r line ; 
+		grep def $arg | while read -r line ;
 		do
 			func="$(cut -d'(' -f1 <<< "$(cut -d' ' -f2 <<< "$line")")"
 			if [ "$func" != "__init__" ]; then
@@ -118,13 +118,12 @@ alias jnb="jupyter notebook --VoilaConfiguration.enable_nbextensions=True"
 ##
 alias gitthefuckout="git reset HEAD --hard; git clean -fd; git pull --all"
 alias multipull="gohome; cd git/Airain; find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \; gohome; cd git/GR; find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull"
-alias newprofile="gohome; cd git/alexwi/profile; gitthefuckout; dos2unix tools/setup.zsh lib/shared_aliases.zsh lib/shared_profile.zsh; source tools/setup.zsh; reload"
+alias newprofile="gohome; cd git/alexwi/profile; gitthefuckout; dos2unix tools/setup.zsh dotfiles/shared_aliases.zsh dotfiles/shared_profile.zsh; source tools/setup.zsh; reload"
 
 
 ##
 #K9s
 ##
-alias guernseyprod="kl; K9s --kubeconfig ~/.kube/config --context services-1.k8s.jtgy -n airain"
-alias icelandprod="kl; K9s --kubeconfig ~/.kube/config --context services-1.k8s.vgis -n airain"
-alias londonqa="kl; K9s --kubeconfig ~/.kube/config --context services-staging-1.k8s.eqld -n airain-staging"
-
+alias trading_prod="kl; K9s --kubeconfig ~/.kube/config --context services-1.k8s.jtgy -n airain"
+alias trading_staging="kl; K9s --kubeconfig ~/.kube/config --context services-1.k8s.vgis -n airain"
+alias home_automation="kl; K9s --kubeconfig ~/.kube/config --context services-staging-1.k8s.eqld -n airain-staging"
