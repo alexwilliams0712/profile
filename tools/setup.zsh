@@ -5,6 +5,7 @@ exit_code=0
 PROJECT_ROOT=~/CODE/git/alexwi/profile
 
 install_homebrew() {
+    xcode-select --install
     which -s brew
     sudo chown -R $(whoami) /usr/local/share/zsh /usr/local/share/zsh/site-functions
     chmod u+w /usr/local/share/zsh /usr/local/share/zsh/site-functions
@@ -20,6 +21,7 @@ install_homebrew() {
 install_brew_packages() {
     # Ensure all relevant homebrew packages are installed
     cd $PROJECT_ROOT/tools
+    brew install gcc
     brew bundle install
     brew upgrade kubernetes-cli
     brew unlink kubernetes-cli && brew link kubernetes-cli
