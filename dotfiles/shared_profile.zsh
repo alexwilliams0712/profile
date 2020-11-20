@@ -30,8 +30,7 @@ export CODE_ROOT=~/CODE
 export PYTHONPATH=$CODE_ROOT
 
 
-# Also create subfolders
-mkdir -p $CODE_ROOT/git
+
 
 ##
 # ZSH
