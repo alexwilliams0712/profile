@@ -31,6 +31,11 @@ install_brew_packages() {
 }
 
 environment_variables() {
+    # Point CODE_ROOT  to USER/CODE
+    export HOME=~/
+    export CODE_ROOT=~/CODE
+    export WORKON_HOME=$CODE_ROOT/.virtualenvs
+    export PROJECT_HOME=$CODE_ROOT
     export PATH="/usr/local/opt/python/libexec/bin:/usr/local/bin:$PATH"
     export PATH="/usr/local/sbin:$PATH"
     export GOPATH=$HOME/golang
@@ -50,10 +55,7 @@ environment_variables() {
     mkdir -p ~/CODE/.devtools
     mkdir -p ~/CODE/.virtualenvs
 
-    # Point CODE_ROOT  to USER/CODE
-    export CODE_ROOT=~/CODE
-    export WORKON_HOME=$CODE_ROOT/.virtualenvs
-    export PROJECT_HOME=$CODE_ROOT
+
     source /usr/local/bin/virtualenvwrapper.sh
 
     [ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
@@ -99,7 +101,7 @@ install_zsh() {
 
 vscode_setup() {
     # VS Code
-    ln -sv${LINK_TARGET_EXISTS_HANDLING} "${HOME}/.vscode.settings.json" "${HOME}/Library/Application Support/Code/User/settings.json"
+    ln -sv${LINK_TARGET_EXISTS_HANDLING} "${PROJECT_ROOT}/dotfiles/vscode-settings.json" "${HOME}/Library/Application Support/Code/User/settings.json"
 }
 
 create_zshrc() {
