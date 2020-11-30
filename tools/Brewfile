@@ -16,6 +16,7 @@ tap "jenkins-x/jx"
 
 # Brew
 brew "ansible"
+brew "black"
 brew "cask"
 brew "docker"
 brew "docker-compose"
