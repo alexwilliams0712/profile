@@ -5,7 +5,7 @@ exit_code=0
 PROJECT_ROOT=~/CODE/git/alexwi/profile
 
 install_homebrew() {
-    xcode-select --install
+    #xcode-select --install
     which -s brew
     sudo chown -R $(whoami) /usr/local/share/zsh /usr/local/share/zsh/site-functions
     chmod u+w /usr/local/share/zsh /usr/local/share/zsh/site-functions
