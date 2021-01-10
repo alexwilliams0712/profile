@@ -38,6 +38,7 @@ brew "mysql"
 brew "python@3.8"
 brew "pv"
 brew "tree"
+brew "wget"
 brew "wifi-password"
 brew "zsh"
 
