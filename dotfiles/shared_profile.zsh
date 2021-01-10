@@ -28,7 +28,7 @@ path_prepend "/usr/local/opt/python/libexec/bin"
 # Define CODE_ROOT
 export CODE_ROOT=~/CODE
 export PYTHONPATH=$CODE_ROOT
-
+export KUBECONFIG=~/.kube/config
 
 
 
