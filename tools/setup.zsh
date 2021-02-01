@@ -142,6 +142,7 @@ setup_go() {
 
 exit_script() {
     if [[ exit_code -eq 0 ]]; then
+        source ~/.zshrc
         echo "*** Fresh Install of Alex's Profile Complete! ***"
     else
         echo "FATAL - Could not install Alex's Profile :("
@@ -162,7 +163,7 @@ main() {
     vscode_setup
     create_sandbox_venv
     setup_go
-    source ~/.zshrc
+    
     exit_script
 }
 
