@@ -28,6 +28,7 @@ install_brew_packages() {
     brew upgrade hashicorp/tap/terraform
     brew link terraform
     terraform -install-autocomplete
+    brew cleanup
 }
 
 environment_variables() {
