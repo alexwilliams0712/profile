@@ -124,6 +124,6 @@ alias newprofile="gohome; cd git/alexwi/profile; gitthefuckout; dos2unix tools/s
 ##
 #K9s
 ##
-alias trading_prod="kl; K9s --kubeconfig ~/.kube/config
-alias trading_staging="kl; K9s --kubeconfig ~/.kube/config
-alias home_automation="kl; K9s --kubeconfig ~/.kube/config
+alias trading_prod="kl; K9s --kubeconfig ~/.kube/config"
+alias trading_staging="kl; K9s --kubeconfig ~/.kube/config"
+alias home_automation="kl; K9s --kubeconfig ~/.kube/config"
