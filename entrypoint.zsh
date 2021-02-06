@@ -11,4 +11,4 @@ if [ -f ~/personal.zsh ]; then
     source ~/personal.zsh
 fi
 
-figlet Alex's Profile
+figlet Alexs Profile
