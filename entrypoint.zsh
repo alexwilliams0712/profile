@@ -11,4 +11,4 @@ if [ -f ~/personal.zsh ]; then
     source ~/personal.zsh
 fi
 
-echo "*** Alex's Profile Sourced ***"
+figlet Alex's Profile
