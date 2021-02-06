@@ -148,9 +148,9 @@ setup_go() {
 exit_script() {
     if [[ exit_code -eq 0 ]]; then
         source ~/.zshrc
-        echo "*** Fresh Install of Alex's Profile Complete! ***"
+        figlet "*** Fresh Install of Alex's Profile Complete! ***"
     else
-        echo "FATAL - Could not install Alex's Profile :("
+        figlet "FATAL - Could not install Alex's Profile"
     fi
     echo "Press Enter to Exit..."
     read
