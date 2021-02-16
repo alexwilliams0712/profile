@@ -122,8 +122,9 @@ alias newprofile="gohome; cd git/alexwi/profile; gitthefuckout; dos2unix tools/s
 
 
 ##
-#K9s
+#Kubernetes/Docker
 ##
 alias trading_prod="kl; K9s --kubeconfig ~/.kube/config"
 alias trading_staging="kl; K9s --kubeconfig ~/.kube/config"
 alias home_automation="kl; K9s --kubeconfig ~/.kube/config"
+alias dfimage="docker run -v /var/run/docker.sock:/var/run/docker.sock --rm alpine/dfimage"
