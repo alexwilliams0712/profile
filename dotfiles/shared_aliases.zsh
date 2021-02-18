@@ -112,6 +112,7 @@ alias mkdevreqs="echo 'pytest\npytest-cov\npylint' > requirements-dev.in; pip-co
 alias pytest="pytest -s -vv"
 alias jnb="jupyter notebook --VoilaConfiguration.enable_nbextensions=True"
 alias setvirtualenvproject="setvirtualenvproject; python -m pip install pip --upgrade; pip install setuptools --upgrade"
+alias b="black"
 
 
 ##
