@@ -111,6 +111,7 @@ alias pip-compile-dev="pip-compile --no-index --no-emit-trusted-host --output-fi
 alias mkdevreqs="echo 'pytest\npytest-cov\npylint' > requirements-dev.in; pip-compile-dev; touch requirements.in; pip-compile; allinstalls"
 alias pytest="pytest -s -vv"
 alias jnb="jupyter notebook --VoilaConfiguration.enable_nbextensions=True"
+alias setvirtualenvproject="setvirtualenvproject; python -m pip install pip --upgrade; pip install setuptools --upgrade"
 
 
 ##
