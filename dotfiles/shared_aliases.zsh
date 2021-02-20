@@ -41,15 +41,7 @@ function tailfix() {
    \tail -f  $@ | sed 's/\x1/|/g'
 }
 function yamlsplitter {
-	awk '
-	/name:/{
-	  close(file)
-	  file=$NF".yaml"
-	}
-	file!="" && !/^--/{
-	  print > (file)
-	}
-	' Input_file
+		awk -v RS="---\n" 'NR>1{f=$2 ".yaml";printf "%s",$0 > f;close(f)}' file
 }
 
 
