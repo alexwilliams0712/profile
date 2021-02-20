@@ -40,9 +40,6 @@ function grepcfix() {
 function tailfix() {
    \tail -f  $@ | sed 's/\x1/|/g'
 }
-function yamlsplitter {
-		awk -v RS="---\n" 'NR>1{f=$2 ".yaml";printf "%s",$0 > f;close(f)}' file
-}
 
 
 
