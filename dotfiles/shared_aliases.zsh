@@ -40,6 +40,19 @@ function grepcfix() {
 function tailfix() {
    \tail -f  $@ | sed 's/\x1/|/g'
 }
+function yamlsplitter {
+	awk '
+	/name:/{
+	  close(file)
+	  file=$NF".yaml"
+	}
+	file!="" && !/^--/{
+	  print > (file)
+	}
+	' Input_file
+}
+
+
 
 # Makes Python Unit tests for the user, just specify the module to create tests for
 
