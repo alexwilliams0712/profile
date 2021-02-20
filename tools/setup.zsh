@@ -29,6 +29,15 @@ install_brew_packages() {
     brew link terraform
     terraform -install-autocomplete
     brew cleanup
+    (
+      set -x; cd "$(mktemp -d)" &&
+      OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+      ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+      curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz" &&
+      tar zxvf krew.tar.gz &&
+      KREW=./krew-"${OS}_${ARCH}" &&
+      "$KREW" install krew
+    )
 }
 
 environment_variables() {
@@ -44,6 +53,7 @@ environment_variables() {
     export GOBIN=$GOPATH/bin
     export PATH=$PATH:$GOPATH
     export PATH=$PATH:$GOROOT/bin
+    export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
     # pip installs
     pip install virtualenv --upgrade
