@@ -39,6 +39,7 @@ brew "terraform"
 brew "tree"
 brew "wget"
 brew "wifi-password"
+brew "yq"
 brew "zsh"
 
 # Cask
