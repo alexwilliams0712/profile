@@ -31,6 +31,11 @@ export PATH=/opt/homebrew/opt/python@3.9/libexec/bin:$PATH
 export CODE_ROOT=~/CODE
 export PYTHONPATH=$CODE_ROOT
 export KUBECONFIG=~/.kube/config
+# Configuration for virtualenv
+export WORKON_HOME=$CODE_ROOT/.virtualenvs
+export VIRTUALENVWRAPPER_PYTHON=/opt/homebrew/opt/python@3.9/libexec/bin/python
+export VIRTUALENVWRAPPER_VIRTUALENV=/opt/homebrew/bin/virtualenv
+source /opt/homebrew/bin/virtualenvwrapper.sh
 
 
 
