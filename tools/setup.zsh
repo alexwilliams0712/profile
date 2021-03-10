@@ -147,7 +147,7 @@ create_sandbox_venv() {
     cd $CODE_ROOT/sandbox; mkvirtualenv jupyter; 
     setvirtualenvproject; 
     pip install --upgrade pip; 
-    pip install jupyter jupyterthemes voila pandas requests nb_black --upgrade;
+    pip install jupyter jupyterthemes pandas requests nb_black --upgrade;
     jt -t oceans16
     deactivate
     cd $CODE_ROOT
