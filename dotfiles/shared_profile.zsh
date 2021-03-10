@@ -19,6 +19,7 @@ alias ppath='for i ($path) { print $i }'
 # Put HomeBrew Python first in PATH
 path_prepend "/usr/local/bin:/usr/bin"
 path_prepend "/usr/local/opt/python/libexec/bin"
+export PATH="/opt/homebrew/bin:$PATH"
 
 
 ##
