@@ -48,6 +48,7 @@ environment_variables() {
     export PROJECT_HOME=$CODE_ROOT
     export PATH="/usr/local/opt/python/libexec/bin:/usr/local/bin:$PATH"
     export PATH="/usr/local/sbin:$PATH"
+    export PATH="/opt/homebrew/bin:$PATH"
     export GOPATH=$HOME/golang
     export GOROOT=/usr/local/opt/go/libexec
     export GOBIN=$GOPATH/bin
