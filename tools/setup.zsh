@@ -154,8 +154,8 @@ create_sandbox_venv() {
     cd $CODE_ROOT/sandbox; mkvirtualenv jupyter; 
     setvirtualenvproject; 
     python3 -m pip install --upgrade pip; 
-    pip install jupyter jupyterthemes nb_black --upgrade;
-    jt -t oceans16
+    pip install jupyter nb_black --upgrade;
+#     jt -t oceans16
     deactivate
     cd $CODE_ROOT
 }
