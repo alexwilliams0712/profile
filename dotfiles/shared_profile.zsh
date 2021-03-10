@@ -20,6 +20,7 @@ alias ppath='for i ($path) { print $i }'
 path_prepend "/usr/local/bin:/usr/bin"
 path_prepend "/usr/local/opt/python/libexec/bin"
 export PATH="/opt/homebrew/bin:$PATH"
+export PATH=/opt/homebrew/opt/python@3.9/libexec/bin:$PATH
 
 
 ##
