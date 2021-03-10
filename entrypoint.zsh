@@ -10,5 +10,8 @@ source $PROJECT_ROOT/dotfiles/shared_aliases.zsh
 if [ -f ~/personal.zsh ]; then
     source ~/personal.zsh
 fi
+if [ -f ~/.tokens.zsh ]; then
+    source ~/.tokens.zsh
+fi
 
 figlet Alexs Profile
