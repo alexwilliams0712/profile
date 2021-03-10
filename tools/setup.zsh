@@ -11,6 +11,7 @@ install_homebrew() {
     chmod u+w /usr/local/share/zsh /usr/local/share/zsh/site-functions
     if [[ $? != 0 ]]; then
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+        export PATH="/opt/homebrew/bin:$PATH"
     else
         brew update && brew upgrade
     fi
