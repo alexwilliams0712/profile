@@ -61,6 +61,12 @@ environment_variables() {
     # pip installs
     pip install virtualenv --upgrade
     pip install virtualenvwrapper --upgrade
+    
+    # Configuration for virtualenv
+    export WORKON_HOME=$CODE_ROOT/.virtualenvs
+    export VIRTUALENVWRAPPER_PYTHON=/opt/homebrew/opt/python@3.9/libexec/bin/python
+    export VIRTUALENVWRAPPER_VIRTUALENV=/opt/homebrew/bin/virtualenv
+    source /opt/homebrew/bin/virtualenvwrapper.sh
 
     # make directories
     mkdir -p ~/CODE/git
