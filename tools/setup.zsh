@@ -42,7 +42,6 @@ environment_variables() {
     export PATH="/usr/local/opt/python/libexec/bin:/usr/local/bin:$PATH"
     export PATH="/usr/local/sbin:$PATH"
     export PATH="/opt/homebrew/bin:$PATH"
-    export PATH=/opt/homebrew/opt/python@3.9/libexec/bin:$PATH
     export GOPATH=$HOME/golang
     export GOROOT=/usr/local/opt/go/libexec
     export GOBIN=$GOPATH/bin
@@ -55,9 +54,7 @@ environment_variables() {
     
     # Configuration for virtualenv
     export WORKON_HOME=$CODE_ROOT/.virtualenvs
-#     export VIRTUALENVWRAPPER_PYTHON=/opt/homebrew/opt/python@3.9/libexec/bin/python
-#     export VIRTUALENVWRAPPER_VIRTUALENV=/opt/homebrew/bin/virtualenv
-    source /opt/homebrew/bin/virtualenvwrapper.sh
+    source /usr/local/bin/virtualenvwrapper.sh
 
     # make directories
     mkdir -p ~/CODE/git
@@ -133,13 +130,6 @@ create_zshrc() {
 }
 
 
-copy_postmkvirtualenv() {
-    echo -n "Copying postmkvirtualenv hook to $CODE_ROOT/.virtualenvs..."
-    cp $PROJECT_ROOT/dotfiles/postmkvirtualenv $CODE_ROOT/.virtualenvs/postmkvirtualenv
-    echo "OK"
-}
-
-
 create_sandbox_venv() {
     cd $CODE_ROOT/sandbox; mkvirtualenv jupyter; 
     setvirtualenvproject; 
@@ -174,7 +164,6 @@ main() {
     set_up_git
     install_zsh
     create_zshrc
-    copy_postmkvirtualenv
     vscode_setup
     create_sandbox_venv
     setup_go
