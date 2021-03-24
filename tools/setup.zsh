@@ -1,7 +1,7 @@
 #!/bin/env zsh
 echo "setup running"
 export PATH="/usr/local/bin:$PATH"
-export PATH="/opt/homebrew/sbin:$PATH"
+export PATH="/opt/local/sbin:$PATH"
 exit_code=0
 PROJECT_ROOT=~/CODE/git/alexwi/profile
 
