@@ -19,9 +19,8 @@ alias ppath='for i ($path) { print $i }'
 # Put HomeBrew Python first in PATH
 path_prepend "/usr/local/bin:/usr/bin"
 path_prepend "/usr/local/opt/python/libexec/bin"
-export PATH="/opt/homebrew/bin:$PATH"
-export PATH="${PATH}:${HOME}/.krew/bin"
-export PATH="/opt/homebrew/opt/python@3.9/libexec/bin:$PATH"
+export PATH="/usr/local/bin/:$PATH"
+export PATH="/usr/local/sbin/:$PATH"
 
 
 ##
@@ -34,9 +33,9 @@ export PYTHONPATH=$CODE_ROOT
 export KUBECONFIG=~/.kube/config
 # Configuration for virtualenv
 export WORKON_HOME=$CODE_ROOT/.virtualenvs
-export VIRTUALENVWRAPPER_PYTHON=/opt/homebrew/opt/python@3.9/libexec/bin/python
-export VIRTUALENVWRAPPER_VIRTUALENV=/opt/homebrew/bin/virtualenv
-source /opt/homebrew/bin/virtualenvwrapper.sh
+export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
+export VIRTUALENVWRAPPER_VIRTUALENV=/usr/local/bin/virtualenv
+source /usr/local/bin/virtualenvwrapper.sh
 
 
 
