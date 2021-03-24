@@ -6,7 +6,7 @@ exit_code=0
 PROJECT_ROOT=~/CODE/git/alexwi/profile
 
 install_homebrew() {
-    #xcode-select --install
+    xcode-select --install
     which -s brew
     sudo chown -R $(whoami) /usr/local/share/zsh /usr/local/share/zsh/site-functions
     chmod u+w /usr/local/share/zsh /usr/local/share/zsh/site-functions
@@ -31,15 +31,6 @@ install_brew_packages() {
     brew link terraform
     terraform -install-autocomplete
     brew cleanup
-    (
-      set -x; cd "$(mktemp -d)" &&
-      OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
-      ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
-      curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz" &&
-      tar zxvf krew.tar.gz &&
-      KREW=./krew-"${OS}_${ARCH}" &&
-      "$KREW" install krew
-    )
 }
 
 environment_variables() {
@@ -57,7 +48,6 @@ environment_variables() {
     export GOBIN=$GOPATH/bin
     export PATH=$PATH:$GOPATH
     export PATH=$PATH:$GOROOT/bin
-    export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
     # pip installs
     pip install virtualenv --upgrade
@@ -65,8 +55,8 @@ environment_variables() {
     
     # Configuration for virtualenv
     export WORKON_HOME=$CODE_ROOT/.virtualenvs
-    export VIRTUALENVWRAPPER_PYTHON=/opt/homebrew/opt/python@3.9/libexec/bin/python
-    export VIRTUALENVWRAPPER_VIRTUALENV=/opt/homebrew/bin/virtualenv
+#     export VIRTUALENVWRAPPER_PYTHON=/opt/homebrew/opt/python@3.9/libexec/bin/python
+#     export VIRTUALENVWRAPPER_VIRTUALENV=/opt/homebrew/bin/virtualenv
     source /opt/homebrew/bin/virtualenvwrapper.sh
 
     # make directories
