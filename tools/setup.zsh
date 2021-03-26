@@ -42,6 +42,7 @@ environment_variables() {
     export PATH="/usr/local/opt/python/libexec/bin:/usr/local/bin:$PATH"
     export PATH="/usr/local/sbin:$PATH"
     export PATH="/opt/homebrew/bin:$PATH"
+    export VIRTUALENVWRAPPER_PATH="/opt/homebrew/bin" # /usr/local/bin
     export GOPATH=$HOME/golang
     export GOROOT=/usr/local/opt/go/libexec
     export GOBIN=$GOPATH/bin
@@ -54,7 +55,7 @@ environment_variables() {
     
     # Configuration for virtualenv
     export WORKON_HOME=$CODE_ROOT/.virtualenvs
-    source /usr/local/bin/virtualenvwrapper.sh
+    source $VIRTUALENVWRAPPER_PATH/virtualenvwrapper.sh
 
     # make directories
     mkdir -p ~/CODE/git
@@ -64,9 +65,9 @@ environment_variables() {
     mkdir -p ~/CODE/.virtualenvs
 
 
-    source /usr/local/bin/virtualenvwrapper.sh
+    source $VIRTUALENVWRAPPER_PATH/virtualenvwrapper.sh
 
-    [ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
+    [ -f $VIRTUALENVWRAPPER_PATH/virtualenvwrapper.sh ] && source $VIRTUALENVWRAPPER_PATH/virtualenvwrapper.sh
 
 }
 
