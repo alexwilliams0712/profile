@@ -33,8 +33,8 @@ export PYTHONPATH=$CODE_ROOT
 export KUBECONFIG=~/.kube/config
 # Configuration for virtualenv
 export WORKON_HOME=$CODE_ROOT/.virtualenvs
-export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python3
-export VIRTUALENVWRAPPER_VIRTUALENV=/usr/local/bin/virtualenv
+export VIRTUALENVWRAPPER_PYTHON=/opt/homebrew/bin/python3
+export VIRTUALENVWRAPPER_VIRTUALENV=/opt/homebrew/bin/virtualenv
 source /usr/local/bin/virtualenvwrapper.sh
 
 
@@ -51,7 +51,7 @@ cd $CODE_ROOT
 
 # If virtualenvwrapper is installed in Python3:
 export WORKON_HOME=$CODE_ROOT/.virtualenvs
-[ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
+[ -f $VIRTUALENVWRAPPER_VIRTUALENV/virtualenvwrapper.sh ] && source $VIRTUALENVWRAPPER_VIRTUALENV/virtualenvwrapper.sh
 
 
 
