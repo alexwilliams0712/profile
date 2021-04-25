@@ -160,7 +160,7 @@ exit_script() {
 
 main() {
     install_homebrew
-#     install_brew_packages
+    install_brew_packages
     environment_variables
     set_up_git
     install_zsh
