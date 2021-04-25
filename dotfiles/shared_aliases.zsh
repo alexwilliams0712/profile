@@ -110,10 +110,16 @@ alias gohome="cd $CODE_ROOT"
 alias allinstalls="pip install -r requirements.txt; pip install -r requirements-dev.txt"
 alias pylint="python -m pylint **/*.py --exit-zero"
 alias pip-compile-dev="pip-compile --no-index --no-emit-trusted-host --output-file requirements-dev.txt requirements-dev.in"
-alias mkdevreqs="echo 'pytest\npytest-cov\npylint' > requirements-dev.in; pip-compile-dev; touch requirements.in; pip-compile; allinstalls"
+alias mkdevreqs="echo 'pytest\npytest-cov\npylint' > requirements-dev.in \
+                && pip-compile-dev \
+                && touch requirements.in \
+                && pip-compile \
+                && allinstalls"
 alias pytest="pytest -s -vv"
 alias jnb="jupyter notebook --VoilaConfiguration.enable_nbextensions=True"
-alias setvirtualenvproject="setvirtualenvproject; python -m pip install pip --upgrade; pip install setuptools pip-tools --upgrade"
+alias setvirtualenvproject="setvirtualenvproject \
+                            && python -m pip install pip --upgrade \
+                            && pip install setuptools pip-tools --upgrade"
 alias b="black"
 
 
@@ -121,15 +127,21 @@ alias b="black"
 #git
 ##
 alias gitthefuckout="git reset HEAD --hard; git clean -fd; git pull --all"
-alias multipull="gohome; cd git/SalterCapital; find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \;"
-alias newprofile="gohome; cd git/alexwi/profile; gitthefuckout; dos2unix tools/setup.zsh dotfiles/shared_aliases.zsh dotfiles/shared_profile.zsh; source tools/setup.zsh; reload"
+alias multipull="gohome \
+                  && cd git/SalterCapital \
+                  && find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \;"
+alias newprofile="gohome \
+                  && cd git/alexwi/profile \
+                  && gitthefuckout \
+                  && dos2unix tools/setup.zsh dotfiles/shared_aliases.zsh dotfiles/shared_profile.zsh \
+                  && source tools/setup.zsh \
+                  && reload"
 
 
 ##
 #Kubernetes/Docker
 ##
-alias trading_prod="kl; K9s --kubeconfig ~/.kube/config"
-alias trading_staging="kl; K9s --kubeconfig ~/.kube/config"
-alias home_automation="kl; K9s --kubeconfig ~/.kube/config"
-alias dfimage="docker run -v /var/run/docker.sock:/var/run/docker.sock --rm alpine/dfimage"
-alias killdeadpods="kubectl get pods --all-namespaces | grep -E 'CrashLoopBackOff|ImagePullBackOff' | awk '{print $2 " --namespace=" $1}' | xargs kubectl delete pod
+alias killdeadpods="$(kubectl get pods --all-namespaces \
+                    | grep -E 'CrashLoopBackOff|ImagePullBackOff|ErrImagePull' \
+                    | awk '{print $2 " --namespace=" $1}' \
+                    | xargs kubectl delete pod)"
