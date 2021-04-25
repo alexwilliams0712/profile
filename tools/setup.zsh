@@ -61,7 +61,6 @@ environment_variables() {
     mkdir -p ~/CODE/git
     mkdir -p ~/CODE/preferences
     mkdir -p ~/CODE/sandbox
-    mkdir -p ~/CODE/.devtools
     mkdir -p ~/CODE/.virtualenvs
 
 
