@@ -98,4 +98,4 @@ alias newprofile="gohome \
 alias killdeadpods="kubectl get pods --all-namespaces \
                    | grep -E 'CrashLoopBackOff|ImagePullBackOff|ErrImagePull' \
                    | awk '{print \$2 \" -n \" \$1}' \
-                   | xargs kubectl delete pods"
+                   | xargs kubectl delete pods --force"
