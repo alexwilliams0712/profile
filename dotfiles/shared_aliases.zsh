@@ -96,6 +96,6 @@ alias newprofile="gohome \
 #Kubernetes/Docker
 ##
 alias killdeadpods="kubectl get pods --all-namespaces \
-                    | grep -E 'CrashLoopBackOff|ImagePullBackOff|ErrImagePull' \
-                    | awk '$({print $2 " --namespace=" $1})' \
-                    | xargs kubectl delete pod"
+                  && | grep -E 'CrashLoopBackOff|ImagePullBackOff|ErrImagePull' \
+                  && | awk '{print \$2 \" -n \" \$1}' \
+                  && | xargs kubectl delete pods"
