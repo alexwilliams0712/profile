@@ -43,6 +43,7 @@ brew "yq"
 brew "zsh"
 
 # Cask
+cask "balenaetcher"
 cask "cleanmymac"
 cask "docker"
 cask "dropbox"
