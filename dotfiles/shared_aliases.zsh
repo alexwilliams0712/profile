@@ -100,4 +100,4 @@ alias killdeadpods="kubectl get pods --all-namespaces \
                    | awk '{print \$2 \" -n \" \$1}' \
                    | xargs kubectl delete pods --force"
                    
-alias dockerkillall="docker stop $(docker ps -a -q); docker rm $(docker ps -a -q)"
+alias dockerkillall="docker stop $'(docker ps -a -q)'; docker rm $'(docker ps -a -q)'"
