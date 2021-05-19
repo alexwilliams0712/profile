@@ -43,11 +43,12 @@ environment_variables() {
     export PATH="/usr/local/sbin:$PATH"
     export PATH="/opt/homebrew/bin:$PATH"
     export VIRTUALENVWRAPPER_PATH="/opt/homebrew/bin" # /usr/local/bin
-    export GOPATH=$HOME/golang
+    go env -w GOPATH=$CODE_ROOT/go
+    export GOPATH=$(go env GOPATH)
+    export PATH=$PATH:$(go env GOPATH)/bin
     export GOROOT=/usr/local/opt/go/libexec
     export GOBIN=$GOPATH/bin
-    export PATH=$PATH:$GOPATH
-    export PATH=$PATH:$GOROOT/bin
+
 
     # pip installs
     pip install virtualenv --upgrade
