@@ -101,3 +101,5 @@ alias killdeadpods="kubectl get pods --all-namespaces \
                    | xargs kubectl delete pods --force"
                    
 alias dockerkillall="docker stop $'(docker ps -a -q)'; docker rm $'(docker ps -a -q)'"
+alias dockerrabbit="docker run -p 5672:5672 -p 15672:15672 -d --hostname rabbit --name rabbit rabbitmq:3.8.16-management"
+alias dockerredis="docker run -p 6379:6379 --name redis -d redis"
