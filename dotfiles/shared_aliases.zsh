@@ -100,7 +100,7 @@ alias killdeadpods="kubectl get pods --all-namespaces \
                    | awk '{print \$2 \" -n \" \$1}' \
                    | xargs kubectl delete pods --force"
                    
-alias dockerkillall="docker kill $(docker ps -qa); docker rm $(docker ps -qa)"
+alias dockerkillall="docker kill $'(docker ps -qa)'; docker rm $'(docker ps -qa)'"
 alias dockerrabbit="docker run -p 5672:5672 -p 15672:15672 -d --hostname rabbit --name rabbit rabbitmq:3.8.16-management"
 alias dockerredis="docker run -p 6379:6379 --name redis -d redis"
 alias dockermaria="docker run -p 127.0.0.1:3306:3306  --name mariadb -e MARIADB_ROOT_PASSWORD=salcap -d mariadb"
