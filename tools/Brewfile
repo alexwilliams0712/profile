@@ -45,6 +45,7 @@ brew "zsh"
 # Cask
 # cask "cleanmymac"
 # cask "docker"
+# cask "dotnet"
 # cask "dropbox"
 # cask "franz"
 # cask "goland"
