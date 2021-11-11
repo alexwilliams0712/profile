@@ -35,6 +35,7 @@ copy_dotfiles() {
     cp $PROJECT_ROOT/dotfiles/.profile $HOME/.profile
     cp $PROJECT_ROOT/dotfiles/.bashrc $HOME/.bashrc
     cp $PROJECT_ROOT/dotfiles/.bash_aliases $HOME/.bash_aliases
+    cp $PROJECT_ROOT/dotfiles/.gitconfig $HOME/.gitconfig
 }
 
 set_up_virtualenvwrapper() {
