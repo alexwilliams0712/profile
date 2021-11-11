@@ -1,6 +1,9 @@
+[user]
+  email = alexwilliams0712@hotmail.com
+  name = AlexWilliams
 [core]
     autocrlf = true
-    editor = vim
+    editor = sublime-text
 [http]
     sslVerify = false
 [diff]
@@ -10,8 +13,6 @@
   diff = auto
   interactive = auto
   status = auto
-[credential]
-  helper = osxkeychain
 [push]
   default = simple
 [merge]
@@ -26,3 +27,5 @@
   d = diff
   dc = diff --cached
   l = log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit
+[url "ssh://git@github.com/"]
+  insteadOf = https://github.com/
