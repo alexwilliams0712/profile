@@ -37,9 +37,8 @@ function tailfix() {
    \tail -f  $@ | sed 's/\x1/|/g'
 }
 
-##
-# EDITORS
-##
+# Python
+alias pip-compile="sort requirements.in -o requirements.in; pip-compile"
 
 # Sublime Text
 alias st=subl
