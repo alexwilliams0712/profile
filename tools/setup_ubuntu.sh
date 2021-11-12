@@ -35,6 +35,7 @@ install_apt_packages() {
 
     sudo systemctl enable --now docker && sudo docker run hello-world
 
+
     # Snap classic install
     for i in \
         pycharm-professional \
