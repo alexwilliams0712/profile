@@ -16,11 +16,7 @@ copy_dotfiles() {
 }
 
 install_apt_packages() {
-    sudo apt update
-    # Sublime
-    sudo apt install apt-transport-https ca-certificates curl software-properties-common
-    sudo add-apt-repository "deb https://download.sublimetext.com/ apt/stable/"
-	
+    sudo apt update	
     
     # Apt gets
     sudo apt-get install \
@@ -28,18 +24,33 @@ install_apt_packages() {
 
     # Apt install
     sudo apt install \
-            sublime-text \
             figlet \
             terminator \
             docker.io
 
     sudo systemctl enable --now docker && sudo docker run hello-world
 
-    # Snap install
-    sudo snap install pycharm-professional --classic
-    sudo snap install rider --classic
-    sudo snap install goland --classic
-    sudo snap install kubectl --classic
+    # Snap classic install
+    for i in \
+        pycharm-professional \
+        rider \
+        goland \
+        code \
+        sublime-text \
+        kubectl
+
+    do
+       sudo snap install $i --classic
+    done
+
+    # Snap  install
+    for i in \
+        k9s \
+        1password 
+
+    do
+       sudo snap install $i
+    done
 }
 
 
