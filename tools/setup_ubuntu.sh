@@ -31,7 +31,8 @@ install_apt_packages() {
     sudo apt install \
             figlet \
             terminator \
-            docker.io
+            docker.io \
+            docker-compose
 
     sudo systemctl enable --now docker && sudo docker run hello-world
 
