@@ -7,6 +7,7 @@ export CODE_ROOT=$HOME/CODE
 export PROJECT_ROOT=$HOME/profile
 export PATH="/usr/local/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 copy_dotfiles() {
     cp $PROJECT_ROOT/dotfiles/.profile $HOME/.profile
