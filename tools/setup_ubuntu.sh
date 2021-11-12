@@ -8,12 +8,20 @@ export PROJECT_ROOT=$HOME/profile
 export PATH="/usr/local/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 
+copy_dotfiles() {
+    cp $PROJECT_ROOT/dotfiles/.profile $HOME/.profile
+    cp $PROJECT_ROOT/dotfiles/.bashrc $HOME/.bashrc
+    cp $PROJECT_ROOT/dotfiles/.bash_aliases $HOME/.bash_aliases
+    cp $PROJECT_ROOT/dotfiles/.gitconfig $HOME/.gitconfig
+}
+
 install_apt_packages() {
     sudo apt update
     # Sublime
     sudo apt install apt-transport-https ca-certificates curl software-properties-common
     sudo add-apt-repository "deb https://download.sublimetext.com/ apt/stable/"
 	
+    
     # Apt gets
     sudo apt-get install \
             python3-pip
@@ -22,21 +30,19 @@ install_apt_packages() {
     sudo apt install \
             sublime-text \
             figlet \
-            terminator
+            terminator \
+            docker.io
+
+    sudo systemctl enable --now docker && sudo docker run hello-world
 
     # Snap install
     sudo snap install pycharm-professional --classic
     sudo snap install rider --classic
     sudo snap install goland --classic
-
+    sudo snap install kubectl --classic
 }
 
-copy_dotfiles() {
-    cp $PROJECT_ROOT/dotfiles/.profile $HOME/.profile
-    cp $PROJECT_ROOT/dotfiles/.bashrc $HOME/.bashrc
-    cp $PROJECT_ROOT/dotfiles/.bash_aliases $HOME/.bash_aliases
-    cp $PROJECT_ROOT/dotfiles/.gitconfig $HOME/.gitconfig
-}
+
 
 set_up_virtualenvwrapper() {
     #Virtualenvwrapper settings:
@@ -49,7 +55,6 @@ set_up_virtualenvwrapper() {
     sudo pip3 install virtualenv virtualenvwrapper
 
     source /usr/local/bin/virtualenvwrapper.sh
-    
 }
 
 create_sandbox_venv() {
@@ -60,6 +65,7 @@ create_sandbox_venv() {
 
 exit_script() {
     if [[ exit_code -eq 0 ]]; then
+        cd $PROJECT_ROOT
         source ~/.bashrc
         figlet "*** Fresh Install of Alex's Profile Complete! ***"
     else
@@ -71,11 +77,10 @@ exit_script() {
 }
 
 main() {
-    install_apt_packages
     copy_dotfiles
+    install_apt_packages
     set_up_virtualenvwrapper
     create_sandbox_venv
-    
     exit_script
 }
 
