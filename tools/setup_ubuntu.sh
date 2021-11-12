@@ -13,6 +13,10 @@ copy_dotfiles() {
     cp $PROJECT_ROOT/dotfiles/.bashrc $HOME/.bashrc
     cp $PROJECT_ROOT/dotfiles/.bash_aliases $HOME/.bash_aliases
     cp $PROJECT_ROOT/dotfiles/.gitconfig $HOME/.gitconfig
+
+
+    # you may have to use this instead if you are not a superuser:
+    sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
 }
 
 install_apt_packages() {
