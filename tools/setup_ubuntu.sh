@@ -39,9 +39,6 @@ install_apt_packages() {
 
     # Snap classic install
     for i in \
-        pycharm-professional \
-        rider \
-        goland \
         code \
         sublime-text \
         kubectl
