@@ -32,7 +32,8 @@ install_apt_packages() {
             figlet \
             terminator \
             docker.io \
-            docker-compose
+            docker-compose \
+            dos2unix
 
     sudo systemctl enable --now docker && sudo docker run hello-world
 
