@@ -58,7 +58,7 @@ install_apt_packages() {
        sudo snap install $i
     done
     
-    snap install --candidate terraform
+    snap install --edge terraform
 }
 
 
