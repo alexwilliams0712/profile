@@ -41,7 +41,8 @@ install_apt_packages() {
     for i in \
         code \
         sublime-text \
-        kubectl
+        kubectl \
+        helm
 
     do
        sudo snap install $i --classic
