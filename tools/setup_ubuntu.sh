@@ -56,6 +56,8 @@ install_apt_packages() {
     do
        sudo snap install $i
     done
+    
+    snap install --candidate terraform
 }
 
 
