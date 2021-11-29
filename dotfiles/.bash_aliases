@@ -1,3 +1,5 @@
+export CODE_ROOT=$HOME/CODE
+
 # Allow modification without restarting terminal
 alias refresh='source ~/.bashrc'
 alias reload='refresh'
