@@ -10,10 +10,10 @@ export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
 copy_dotfiles() {
-    cp $PROJECT_ROOT/dotfiles/.profile $HOME/.profile
-    cp $PROJECT_ROOT/dotfiles/.bashrc $HOME/.bashrc
-    cp $PROJECT_ROOT/dotfiles/.bash_aliases $HOME/.bash_aliases
-    cp $PROJECT_ROOT/dotfiles/.gitconfig $HOME/.gitconfig
+    cp $HOME/profile/dotfiles/.profile $HOME/.profile
+    cp $HOME/profile/dotfiles/.bashrc $HOME/.bashrc
+    cp $HOME/profile/dotfiles/.bash_aliases $HOME/.bash_aliases
+    cp $HOME/profile/dotfiles/.gitconfig $HOME/.gitconfig
 
 
     # you may have to use this instead if you are not a superuser:
@@ -84,7 +84,7 @@ create_sandbox_venv() {
 
 exit_script() {
     if [[ exit_code -eq 0 ]]; then
-        cd $PROJECT_ROOT
+        cd $HOME/profile
         source ~/.bashrc
         figlet "*** Fresh Install of Alex's Profile Complete! ***"
     else
