@@ -149,8 +149,8 @@ if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
 
-if [ -f ~/.profile ]; then
-    . ~/.profile
+if [ -f ~/.personal ]; then
+    . ~/.personal
 fi
 
 # enable programmable completion features (you don't need to enable
