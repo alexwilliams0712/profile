@@ -1,4 +1,5 @@
 export CODE_ROOT=$HOME/CODE
+export KUBECONFIG=~/.kube/config
 
 # Allow modification without restarting terminal
 alias refresh='source ~/.bashrc'
