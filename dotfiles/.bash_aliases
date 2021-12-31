@@ -56,3 +56,8 @@ alias gohome="cd $CODE_ROOT"
 ##
 alias gitthefuckout="git reset HEAD --hard; git clean -fd; git pull --all"
 alias multipull="gohome; cd git/SalterCapital; find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \;"
+
+##
+#K8s
+##
+alias k9s="k9s-nsg"
