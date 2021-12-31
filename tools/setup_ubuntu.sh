@@ -51,7 +51,7 @@ install_apt_packages() {
 
     # Snap  install
     for i in \
-        k9s \
+        k9s-nsg \
         1password 
 
     do
