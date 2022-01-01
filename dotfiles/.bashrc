@@ -168,5 +168,7 @@ export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
 export WORKON_HOME=$HOME/.virtualenvs
 export VIRTUALENVWRAPPER_VIRTUALENV=/usr/local/bin/virtualenv
 export PATH="$VIRTUALENVWRAPPER_VIRTUALENV:$PATH"
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
 
 source /usr/local/bin/virtualenvwrapper.sh
