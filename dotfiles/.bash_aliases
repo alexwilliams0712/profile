@@ -61,3 +61,9 @@ alias multipull="gohome; cd git/SalterCapital; find . -mindepth 1 -maxdepth 1 -t
 #K8s
 ##
 alias k9s="k9s-nsg"
+
+
+##
+#Certs
+##
+u-cert-ain='openssl req -x509 -nodes -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -subj "/C=GB/ST=London/L=London/O=Maven Securities/OU=DigitalAssets/CN=DA"'
