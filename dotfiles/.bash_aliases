@@ -62,5 +62,5 @@ alias multipull="find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} p
 ##
 alias k9s="k9s-nsg"
 
-alias multibuild='for d in ./*/ ; do (cd "$d" && docker_name=$d | cut -c 3- | rev | cut -c 2- | rev && docker build . -t docker_name --target runtime); done'
+alias dockoff='docker rm -vf $(docker ps -aq); docker rmi -f $(docker images -aq)'
 
