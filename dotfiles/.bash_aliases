@@ -55,15 +55,12 @@ alias gohome="cd $CODE_ROOT"
 #git
 ##
 alias gitthefuckout="git reset HEAD --hard; git clean -fd; git pull --all"
-alias multipull="gohome; cd git/SalterCapital; find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \;"
+alias multipull="find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \;"
 
 ##
 #K8s
 ##
 alias k9s="k9s-nsg"
 
+alias multibuild='for d in ./*/ ; do (cd "$d" && docker_name=$d | cut -c 3- | rev | cut -c 2- | rev && docker build . -t docker_name --target runtime); done'
 
-##
-#Certs
-##
-u-cert-ain='openssl req -x509 -nodes -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -subj "/C=GB/ST=London/L=London/O=Maven Securities/OU=DigitalAssets/CN=DA"'
