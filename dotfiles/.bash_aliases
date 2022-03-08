@@ -63,4 +63,5 @@ alias multipull="find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} p
 alias k9s="k9s-nsg"
 
 alias dockoff='docker rm -vf $(docker ps -aq); docker rmi -f $(docker images -aq)'
+alias dockercontainers='docker ps --format="table {{.Names}}\t{{.Image}}\t{{.Status}}"'
 
