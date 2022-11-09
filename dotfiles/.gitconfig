@@ -2,7 +2,7 @@
   email = alexwilliams0712@hotmail.com
   name = AlexWilliams
 [core]
-    autocrlf = true
+    autocrlf = false
     editor = sublime-text
 [http]
     sslVerify = false
@@ -27,5 +27,3 @@
   d = diff
   dc = diff --cached
   l = log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit
-[url "ssh://git@github.com/"]
-  insteadOf = https://github.com/
