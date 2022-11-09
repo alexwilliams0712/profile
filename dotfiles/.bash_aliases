@@ -41,7 +41,7 @@ function tailfix() {
 }
 
 # Python
-alias pip-compile="sort requirements.in -o requirements.in; pip-compile"
+# alias pip-compile="sort requirements.in -o requirements.in; pip-compile"
 
 # Sublime Text
 alias st=subl
