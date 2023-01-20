@@ -170,5 +170,6 @@ export VIRTUALENVWRAPPER_VIRTUALENV=/usr/local/bin/virtualenv
 export PATH="$VIRTUALENVWRAPPER_VIRTUALENV:$PATH"
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
+eval "$(pyenv virtualenv-init -)"
 
 source /usr/local/bin/virtualenvwrapper.sh
