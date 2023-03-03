@@ -8,10 +8,6 @@ alias reload='refresh'
 # Make grep always show color and enable Regex, which is normally a default behavior on Linux
 alias grep='grep --color=auto -E'
 
-# Open a Windows explorer in the current dir
-alias explore='explorer .'
-
-
 ##
 # LS ALIASES
 ##
