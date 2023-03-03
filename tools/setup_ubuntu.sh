@@ -94,6 +94,7 @@ install_apt_packages() {
 }
 
 install_github_cli() {
+echo "running gh setup"
     type -p curl >/dev/null || sudo apt install curl -y
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
     && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
@@ -136,8 +137,6 @@ echo "Setting up pyenv"
         cd "$FOLDER"
         git pull $URL
     fi
-    
-    pyenv virtualenv sandbox
 }
 
 
