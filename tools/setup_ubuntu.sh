@@ -94,6 +94,7 @@ install_apt_packages() {
 }
 
 set_up_pyenv() {
+echo "Setting up pyenv"
     sudo apt-get update -y
     sudo apt-get install -y \
         make \
