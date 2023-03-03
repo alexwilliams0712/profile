@@ -25,7 +25,13 @@ install_apt_packages() {
     
     # Apt gets
     sudo apt-get install \
+            ca-certificates \
+            curl \
+            gnupg \
+            lsb-release
             python3-pip
+            
+     
 
     # Apt install
     sudo apt install \
@@ -33,11 +39,7 @@ install_apt_packages() {
             wget \
             figlet \
             terminator \
-            docker.io \
             dos2unix
-
-    sudo systemctl enable --now docker && sudo docker run hello-world
-
 
     # Snap classic install
     for i in \
@@ -63,6 +65,23 @@ install_apt_packages() {
     
     # Install Jetbrains Toolbox
     curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
+    
+    # Install Docker
+    sudo mkdir -m 0755 -p /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo chmod a+r /etc/apt/keyrings/docker.gpg
+    sudo apt-get update -y
+    sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    sudo systemctl enable --now docker
+    sudo groupadd docker
+    sudo usermod -aG docker $USER
+    newgrp docker
+    sudo systemctl enable docker.service
+    sudo systemctl enable containerd.service
+    docker run hello-world
 }
 
 set_up_pyenv() {
@@ -77,7 +96,6 @@ set_up_pyenv() {
         libsqlite3-dev \
         wget \
         curl 
-        llvm \
         libncursesw5-dev \
         xz-utils \
         tk-dev \
