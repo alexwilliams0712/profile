@@ -1,4 +1,4 @@
-# Alex's Mac zsh_profile
+# Alex's zsh_profile
 
 If anybody has any suggestions, please feel free to raise a PR.
 
