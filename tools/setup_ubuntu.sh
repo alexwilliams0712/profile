@@ -24,7 +24,7 @@ install_apt_packages() {
     sudo apt update	
     
     # Apt gets
-    sudo apt-get install \
+    sudo apt-get install -y \
             ca-certificates \
             curl \
             gnupg \
@@ -34,7 +34,7 @@ install_apt_packages() {
      
 
     # Apt install
-    sudo apt install \
+    sudo apt install -y \
             curl \
             wget \
             figlet \
@@ -80,13 +80,12 @@ install_apt_packages() {
     sudo usermod -aG docker $USER
     newgrp docker
     sudo systemctl enable docker.service
-    sudo systemctl enable containerd.service
     docker run hello-world
 }
 
 set_up_pyenv() {
-    sudo apt-get update
-    sudo apt-get install \
+    sudo apt-get update -y
+    sudo apt-get install -y \
         make \
         build-essential \
         libssl-dev \
