@@ -44,7 +44,8 @@ install_apt_packages() {
     # Snap classic install
     for i in \
         code \
-        sublime-text 
+        sublime-text \
+        terraform
     do
        sudo snap install $i --classic
     done
@@ -52,7 +53,6 @@ install_apt_packages() {
     # Snap  install
     for i in \
         k9s-nsg \
-        terraform \
         1password 
 
     do
