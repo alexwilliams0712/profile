@@ -30,6 +30,7 @@ install_apt_packages() {
     # Apt install
     sudo apt install \
             curl \
+            wget \
             figlet \
             terminator \
             docker.io \
@@ -56,7 +57,11 @@ install_apt_packages() {
     done
     
     snap install --edge terraform
+    # Install Chrome
+    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+    sudo apt install ./google-chrome-stable_current_amd64.deb
     
+    # Install Jetbrains Toolbox
     curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
 }
 
