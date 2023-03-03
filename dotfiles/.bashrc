@@ -109,14 +109,10 @@ WHITE="\[\033[1;37m\]"
 LIGHT_GRAY="\[\033[0;37m\]"
 COLOR_NONE="\[\e[0m\]"
 
-# Determine active Python virtualenv details.
-function set_virtualenv () {
-    if test -z "$VIRTUAL_ENV" ; then
-        PYTHON_VIRTUALENV=""
-    else
-        PYTHON_VIRTUALENV="${RED}(`basename \"$VIRTUAL_ENV\"`)${COLOR_NONE} "
-    fi
-}
+# pyenv
+export PATH="$HOME/.pyenv/bin:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv virtualenv-init -)"
 
 hg_branch() {
     hg branch 2> /dev/null | awk '{print "hg["$1"] "}'
@@ -163,15 +159,3 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
-
-export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
-export WORKON_HOME=$HOME/.virtualenvs
-export VIRTUALENVWRAPPER_VIRTUALENV=/usr/local/bin/virtualenv
-export PATH="$VIRTUALENVWRAPPER_VIRTUALENV:$PATH"
-export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-
-export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
-
-source /usr/local/bin/virtualenvwrapper.sh
