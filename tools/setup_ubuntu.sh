@@ -115,7 +115,7 @@ echo "Setting up pyenv"
         libreadline-dev \
         libsqlite3-dev \
         wget \
-        curl 
+        curl \
         libncursesw5-dev \
         xz-utils \
         tk-dev \
