@@ -52,13 +52,13 @@ install_apt_packages() {
     # Snap  install
     for i in \
         k9s-nsg \
+        terraform \
         1password 
 
     do
        sudo snap install $i
     done
     
-    snap install --edge terraform
     # Install Chrome
     wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
     sudo apt install ./google-chrome-stable_current_amd64.deb
