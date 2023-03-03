@@ -93,6 +93,15 @@ install_apt_packages() {
     sudo apt autoremove
 }
 
+install_github_cli() {
+    type -p curl >/dev/null || sudo apt install curl -y
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && sudo apt update \
+    && sudo apt install gh -y
+}
+
 set_up_pyenv() {
 echo "Setting up pyenv"
     sudo apt-get update -y
@@ -149,6 +158,7 @@ main() {
     copy_dotfiles
     install_apt_packages
     set_up_pyenv
+    install_github_cli
     exit_script
 }
 
