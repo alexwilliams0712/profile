@@ -86,6 +86,7 @@ set_up_pyenv() {
         libffi-dev \
         liblzma-dev
     curl https://pyenv.run | bash
+    git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
 }
 
 
