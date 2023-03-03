@@ -162,3 +162,4 @@ if ! shopt -oq posix; then
 fi
 
 pyenv --version
+python --version
