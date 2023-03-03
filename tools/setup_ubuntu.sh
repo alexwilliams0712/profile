@@ -126,7 +126,7 @@ echo "Setting up pyenv"
         libbz2-dev \
         liblzma-dev
     curl https://pyenv.run | bash
-    pyenv install 3.11.2
+    pyenv install -f 3.11.2
     pyenv global 3.11.2
     
     FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
