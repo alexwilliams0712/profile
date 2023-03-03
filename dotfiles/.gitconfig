@@ -3,7 +3,6 @@
   name = AlexWilliams
 [core]
     autocrlf = false
-    editor = sublime-text
 [http]
     sslVerify = false
 [diff]
