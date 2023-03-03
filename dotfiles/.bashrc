@@ -127,7 +127,7 @@ git_branch() {
 # Set the full bash prompt
 function set_bash_prompt () {
     # Set the PYTHON_VIRTUALENV variable.
-    PS1="${PYENV_VERSION}${debian_chroot:+($debian_chroot)}${GREEN}\u${GREEN}@${GREEN}\h\[\033[00m\]:${BLUE}\w\[\033[00m\] ${PURPLE}$(git_branch)$(hg_branch)${COLOR_NONE}$ "
+    PS1="${RED}(${PYENV_VERSION}) ${debian_chroot:+($debian_chroot)}${GREEN}\u${GREEN}@${GREEN}\h\[\033[00m\]:${BLUE}\w\[\033[00m\] ${PURPLE}$(git_branch)$(hg_branch)${COLOR_NONE}$ "
 }
 
 # Execute this function before displaying prompt
