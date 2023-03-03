@@ -87,7 +87,7 @@ install_apt_packages() {
     
     
     # Install Tweaks
-    sudo add-apt-repository universe
+    sudo add-apt-repository -y universe
     sudo apt install $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
     
     sudo apt autoremove
