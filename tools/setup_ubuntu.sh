@@ -29,10 +29,10 @@ install_apt_packages() {
 
     # Apt install
     sudo apt install \
+            curl \
             figlet \
             terminator \
             docker.io \
-            docker-compose \
             dos2unix
 
     sudo systemctl enable --now docker && sudo docker run hello-world
@@ -41,10 +41,7 @@ install_apt_packages() {
     # Snap classic install
     for i in \
         code \
-        sublime-text \
-        kubectl \
-        helm
-
+        sublime-text 
     do
        sudo snap install $i --classic
     done
@@ -59,6 +56,8 @@ install_apt_packages() {
     done
     
     snap install --edge terraform
+    
+    curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
 }
 
 
@@ -82,16 +81,6 @@ create_sandbox_venv() {
     cd $HOME/profile/tools
 }
 
-installkrew() {
-  set -x; cd "$(mktemp -d)" &&
-  OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
-  ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
-  KREW="krew-${OS}_${ARCH}" &&
-  curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
-  tar zxvf "${KREW}.tar.gz" &&
-  ./"${KREW}" install krew
-}
-
 exit_script() {
     if [[ exit_code -eq 0 ]]; then
         cd $HOME/profile
@@ -110,7 +99,6 @@ main() {
     install_apt_packages
     set_up_virtualenvwrapper
     create_sandbox_venv
-    installkrew
     exit_script
 }
 
