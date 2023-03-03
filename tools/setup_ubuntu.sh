@@ -111,6 +111,8 @@ set_up_pyenv() {
         libxml2-dev \
         libxmlsec1-dev \
         libffi-dev \
+        lzma \
+        libbz2-dev \
         liblzma-dev
     curl https://pyenv.run | bash
     pyenv install 3.11.2
