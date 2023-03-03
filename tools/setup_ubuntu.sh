@@ -115,8 +115,6 @@ set_up_pyenv() {
     curl https://pyenv.run | bash
     pyenv install 3.11.2
     git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
-    eval "$(pyenv virtualenv-init -)"
-    exec "$SHELL"
 }
 
 
