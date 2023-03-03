@@ -65,26 +65,29 @@ install_apt_packages() {
     curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
 }
 
-
-
-set_up_virtualenvwrapper() {
-    #Virtualenvwrapper settings:
-    export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
-    export WORKON_HOME=$HOME/.virtualenvs
-    export VIRTUALENVWRAPPER_VIRTUALENV=/usr/local/bin/virtualenv
-    export PATH="$VIRTUALENVWRAPPER_VIRTUALENV:$PATH"
-
-    mkdir -p $WORKON_HOME
-    sudo pip3 install virtualenv virtualenvwrapper
-
-    source /usr/local/bin/virtualenvwrapper.sh
+set_up_pyenv() {
+    sudo apt-get update
+    sudo apt-get install \
+        make \
+        build-essential \
+        libssl-dev \
+        zlib1g-dev \
+        libbz2-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        wget \
+        curl 
+        llvm \
+        libncursesw5-dev \
+        xz-utils \
+        tk-dev \
+        libxml2-dev \
+        libxmlsec1-dev \
+        libffi-dev \
+        liblzma-dev
+    curl https://pyenv.run | bash
 }
 
-create_sandbox_venv() {
-    cd $CODE_ROOT && mkdir -p sandbox && cd sandbox
-    mkvirtualenv sandbox && setvirtualenvproject && deactivate
-    cd $HOME/profile/tools
-}
 
 exit_script() {
     if [[ exit_code -eq 0 ]]; then
@@ -102,8 +105,7 @@ exit_script() {
 main() {
     copy_dotfiles
     install_apt_packages
-    set_up_virtualenvwrapper
-    create_sandbox_venv
+    set_up_pyenv
     exit_script
 }
 
