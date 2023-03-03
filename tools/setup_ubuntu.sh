@@ -40,6 +40,7 @@ install_apt_packages() {
             figlet \
             terminator \
             piper \
+            libfuse2 \
             dos2unix
 
     # Snap classic install
@@ -66,7 +67,8 @@ install_apt_packages() {
     
     # Install Jetbrains Toolbox
     curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
-    
+    cd /opt/jetbrains-toolbox
+    jetbrains-toolbox
     # Install Docker
     sudo mkdir -m 0755 -p /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
