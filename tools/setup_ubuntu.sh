@@ -117,7 +117,16 @@ echo "Setting up pyenv"
         liblzma-dev
     curl https://pyenv.run | bash
     pyenv install 3.11.2
-    git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
+    pyenv global 3.11.2
+    
+    FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
+    URL=https://github.com/pyenv/pyenv-virtualenv.git
+    if [ ! -d "$FOLDER" ] ; then
+        git clone $URL $FOLDER
+    else
+        cd "$FOLDER"
+        git pull $URL
+    fi
 }
 
 
