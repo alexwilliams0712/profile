@@ -48,8 +48,8 @@ function attackoftheclones() {
             git pull
             cd ..
         else
-            echo "Cloning repository: https://github.com/${REPO_NAME}.git"
-            git clone "https://github.com/${REPO_NAME}.git"
+            echo "Cloning repository: git@github.com:LowObservableTech/${REPO_NAME}.git"
+            git clone git@github.com:LowObservableTech/${REPO_NAME}.git
         fi
     done
 }
