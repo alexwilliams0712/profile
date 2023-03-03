@@ -49,7 +49,7 @@ function attackoftheclones() {
             cd ..
         else
             echo "Cloning repository: git@github.com:LowObservableTech/${REPO_NAME}.git"
-            git clone git@github.com:LowObservableTech/${REPO_NAME}.git
+            git clone "git@github.com:LowObservableTech/${REPO_NAME}.git"
         fi
     done
 }
