@@ -127,6 +127,8 @@ echo "Setting up pyenv"
         cd "$FOLDER"
         git pull $URL
     fi
+    
+    pyenv virtualenv sandbox
 }
 
 
