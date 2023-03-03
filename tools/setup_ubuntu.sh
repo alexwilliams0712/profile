@@ -75,12 +75,19 @@ install_apt_packages() {
     sudo chmod a+r /etc/apt/keyrings/docker.gpg
     sudo apt-get update -y
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    sudo systemctl enable --now docker
-    sudo groupadd docker
-    sudo usermod -aG docker $USER
-    newgrp docker
-    sudo systemctl enable docker.service
+#     sudo systemctl enable --now docker
+#     sudo groupadd docker
+#     sudo usermod -aG docker $USER
+#     newgrp docker
+#     sudo systemctl enable docker.service
     docker run hello-world
+    
+    
+    # Install Tweaks
+    sudo add-apt-repository universe
+    sudo apt install -y gnome-tweak-tool
+    gnome-tweaks
+    sudo apt install $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
 }
 
 set_up_pyenv() {
