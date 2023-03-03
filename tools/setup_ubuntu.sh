@@ -39,6 +39,7 @@ install_apt_packages() {
             wget \
             figlet \
             terminator \
+            piper \
             dos2unix
 
     # Snap classic install
