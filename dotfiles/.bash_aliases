@@ -40,20 +40,16 @@ function attackoftheclones() {
    # Get the organization name from the function argument
     ORG_NAME="$1"
 
-    # Get a list of all repositories in the organization
-    REPO_URLS=$(curl -s "https://api.github.com/orgs/${ORG_NAME}/repos?per_page=1000" | grep -o 'git@[^"]*')
-
     # Clone or pull each repository
-    for REPO_URL in $REPO_URLS; do
-        REPO_NAME=$(echo "$REPO_URL" | cut -d':' -f2 | sed 's/.git//')
+    for REPO_NAME in $(gh repo list "${ORG_NAME}" --json=nameWithOwner --limit 1000 | jq -r '.[].nameWithOwner'); do
         if [ -d "$REPO_NAME" ]; then
             echo "Repository already exists: $REPO_NAME"
             cd "$REPO_NAME"
             git pull
             cd ..
         else
-            echo "Cloning repository: $REPO_URL"
-            git clone "$REPO_URL"
+            echo "Cloning repository: https://github.com/${REPO_NAME}.git"
+            git clone "https://github.com/${REPO_NAME}.git"
         fi
     done
 }
