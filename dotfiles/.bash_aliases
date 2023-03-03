@@ -41,15 +41,15 @@ function attackoftheclones() {
     ORG_NAME="$1"
 
     # Clone or pull each repository
-    for REPO_NAME in $(gh repo list "${ORG_NAME}" --json=nameWithOwner --limit 1000 | jq -r '.[].nameWithOwner'); do
+    for REPO_NAME in $(gh repo list "${ORG_NAME}" --json=name --limit 1000 | jq -r '.[].name'); do
         if [ -d "$REPO_NAME" ]; then
             echo "Repository already exists: $REPO_NAME"
             cd "$REPO_NAME"
             git pull
             cd ..
         else
-            echo "Cloning repository: ${REPO_NAME}"
-            gh repo clone ${REPO_NAME}
+            echo "Cloning repository: ${ORG_NAME}/${REPO_NAME}"
+            gh repo clone ${ORG_NAME}/${REPO_NAME}
         fi
     done
 }
