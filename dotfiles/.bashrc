@@ -116,6 +116,9 @@ eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
+# 1password
+source $HOME/.config/op/plugins.sh
+
 hg_branch() {
     hg branch 2> /dev/null | awk '{print "hg["$1"] "}'
 }
