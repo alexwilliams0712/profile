@@ -8,6 +8,7 @@ export PROJECT_ROOT=$HOME/profile
 export PATH="/usr/local/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
+export DEFAULT_PYTHON_VERSION="3.11.2"
 
 copy_dotfiles() {
     cp $HOME/profile/dotfiles/.profile $HOME/.profile
@@ -72,7 +73,7 @@ install_apt_packages() {
     jetbrains-toolbox
     # Install Docker
     sudo mkdir -m 0755 -p /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg -y
     echo \
       "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
       $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
@@ -106,7 +107,7 @@ install_github_cli() {
 
 install_aws_cli() {
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-    unzip awscliv2.zip
+    unzip -o awscliv2.zip
     sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
     which aws
     aws --version
@@ -135,8 +136,8 @@ echo "Setting up pyenv"
         libbz2-dev \
         liblzma-dev
     curl https://pyenv.run | bash
-    pyenv install -f 3.11.2
-    pyenv global 3.11.2
+    pyenv install -f $DEFAULT_PYTHON_VERSION
+    pyenv global $DEFAULT_PYTHON_VERSION
     
     FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
     URL=https://github.com/pyenv/pyenv-virtualenv.git
@@ -159,7 +160,6 @@ exit_script() {
     fi
     echo "Press Enter to Exit..."
     read
-    # exit
 }
 
 main() {
