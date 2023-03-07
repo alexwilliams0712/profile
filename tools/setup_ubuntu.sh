@@ -113,8 +113,17 @@ install_aws_cli() {
     aws --version
 }
 
+install_one_password_cli() {
+    sudo curl -sSfo op.zip \
+    https://cache.agilebits.com/dist/1P/op2/pkg/v2.14.0/op_linux_amd64_v2.14.0.zip \
+    && sudo unzip -od /usr/local/bin/ op.zip \
+    && rm -f op.zip
+    op --version
+    op update
+}
+
 set_up_pyenv() {
-echo "Setting up pyenv"
+    echo "Setting up pyenv"
     sudo apt-get update -y
     sudo apt-get install -y \
         make \
@@ -168,6 +177,7 @@ main() {
     set_up_pyenv
     install_github_cli
     install_aws_cli
+    install_one_password_cli
     exit_script
 }
 
