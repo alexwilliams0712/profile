@@ -114,9 +114,15 @@ install_aws_cli() {
 }
 
 install_surfshark() {
-    curl -f https://downloads.surfshark.com/linux/debian-install.sh --output surfshark-install.sh #gets the installation script
-    cat surfshark-install.sh #shows script's content
-    sh surfshark-install.sh #installs surfshark
+    curl -f https://downloads.surfshark.com/linux/debian-install.sh --output surfshark-install.sh
+    sudo sh surfshark-install.sh
+}
+
+install_franz() {
+    export FRANZ_VERSION=$(curl https://api.github.com/repos/meetfranz/franz/releases/latest -s | jq .name -r)
+    curl -fsSL https://github.com/meetfranz/franz/releases/download/v5.9.2/franz_5.9.2_amd64.deb -o franz_$FRANZ_VERSION\_amd64.deb
+    sudo dpkg -i franz_$FRANZ_VERSION\_amd64.deb
+    sudo rm -f franz_$FRANZ_VERSION\_amd64.deb
 }
 
 set_up_pyenv() {
@@ -175,6 +181,7 @@ main() {
     install_github_cli
     install_aws_cli
     install_surfshark
+    install_franz
     exit_script
 }
 
