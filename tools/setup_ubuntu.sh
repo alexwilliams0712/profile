@@ -113,13 +113,10 @@ install_aws_cli() {
     aws --version
 }
 
-install_one_password_cli() {
-    sudo curl -sSfo op.zip \
-    https://cache.agilebits.com/dist/1P/op2/pkg/v2.14.0/op_linux_amd64_v2.14.0.zip \
-    && sudo unzip -od /usr/local/bin/ op.zip \
-    && rm -f op.zip
-    op --version
-    op update
+install_surfshark() {
+    curl -f https://downloads.surfshark.com/linux/debian-install.sh --output surfshark-install.sh #gets the installation script
+    cat surfshark-install.sh #shows script's content
+    sh surfshark-install.sh #installs surfshark
 }
 
 set_up_pyenv() {
@@ -177,7 +174,7 @@ main() {
     set_up_pyenv
     install_github_cli
     install_aws_cli
-    install_one_password_cli
+    install_surfshark
     exit_script
 }
 
