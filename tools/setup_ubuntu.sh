@@ -16,7 +16,6 @@ copy_dotfiles() {
     cp $HOME/profile/dotfiles/.bash_aliases $HOME/.bash_aliases
     cp $HOME/profile/dotfiles/.gitconfig $HOME/.gitconfig
 
-
     # you may have to use this instead if you are not a superuser:
     sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
 }
@@ -32,8 +31,6 @@ install_apt_packages() {
             lsb-release
             python3-pip
             
-     
-
     # Apt install
     sudo apt install -y \
             curl \
@@ -47,8 +44,7 @@ install_apt_packages() {
     # Snap classic install
     for i in \
         code \
-        sublime-text \
-        terraform
+        sublime-text
     do
        sudo snap install $i --classic
     done
@@ -57,20 +53,31 @@ install_apt_packages() {
     for i in \
         k9s-nsg \
         1password 
-
     do
        sudo snap install $i
     done
     
-    # Install Chrome
-    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-    sudo apt install ./google-chrome-stable_current_amd64.deb
-    rm google-chrome-stable_current_amd64.deb
-    
+    # Install Tweaks
+    sudo add-apt-repository -y universe
+    sudo apt install $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
+    sudo apt autoremove
+}
+
+install_jetbrains_toolbox() {
     # Install Jetbrains Toolbox
     curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
     cd /opt/jetbrains-toolbox
     jetbrains-toolbox
+}
+
+install_chrome() {
+    # Install Chrome
+    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+    sudo apt install ./google-chrome-stable_current_amd64.deb
+    rm google-chrome-stable_current_amd64.deb
+}
+
+install_and_setup_docker() {
     # Install Docker
     sudo mkdir -m 0755 -p /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg -y
@@ -80,19 +87,24 @@ install_apt_packages() {
     sudo chmod a+r /etc/apt/keyrings/docker.gpg
     sudo apt-get update -y
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-#     sudo systemctl enable --now docker
-#     sudo groupadd docker
-#     sudo usermod -aG docker $USER
-#     newgrp docker
-#     sudo systemctl enable docker.service
-    docker run hello-world
-    
-    
-    # Install Tweaks
-    sudo add-apt-repository -y universe
-    sudo apt install $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
-    
-    sudo apt autoremove
+    sudo systemctl enable --now docker
+    # Check if the docker group exists
+    if ! grep -q "^docker:" /etc/group; then
+        sudo groupadd docker
+    fi
+
+    # Add the current user to the docker group
+    if ! groups $USER | grep -q "\bdocker\b"; then
+        sudo usermod -aG docker $USER
+    fi
+
+    # Activate the new group membership
+    if ! groups | grep -q "\bdocker\b"; then
+        newgrp docker
+    fi
+
+    # Enable the Docker service
+    sudo systemctl enable docker.service
 }
 
 install_github_cli() {
@@ -103,6 +115,19 @@ install_github_cli() {
         && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
         && sudo apt update \
         && sudo apt install gh -y
+}
+
+install_terraform() {
+    # Get the latest version of Terraform from the GitHub repository
+    latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '\"tag_name\":.*' | cut -d'v' -f2 | tr -d \",)
+
+    # Download and extract the latest version of Terraform
+    curl -sLO "https://releases.hashicorp.com/terraform/${latest_version}/terraform_${latest_version}_linux_amd64.zip"
+    unzip "terraform_${latest_version}_linux_amd64.zip"
+    sudo mv terraform /usr/local/bin/
+    sudo rm terraform_${latest_version}_linux_amd64.zip
+    # Verify installation
+    terraform version
 }
 
 install_aws_cli() {
@@ -123,6 +148,14 @@ install_franz() {
     curl -fsSL https://github.com/meetfranz/franz/releases/download/v5.9.2/franz_5.9.2_amd64.deb -o franz_$FRANZ_VERSION\_amd64.deb
     sudo dpkg -i franz_$FRANZ_VERSION\_amd64.deb
     sudo rm -f franz_$FRANZ_VERSION\_amd64.deb
+}
+
+install_node() {
+    curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - &&\
+    sudo apt-get install -y nodejs
+    sudo npm install -g npm
+    node -v
+    npm -v
 }
 
 set_up_pyenv() {
@@ -148,7 +181,8 @@ set_up_pyenv() {
         libbz2-dev \
         liblzma-dev
     curl https://pyenv.run | bash
-    pyenv install -f $DEFAULT_PYTHON_VERSION
+    pyenv update
+    pyenv install -s $DEFAULT_PYTHON_VERSION
     pyenv global $DEFAULT_PYTHON_VERSION
     
     FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
@@ -178,10 +212,15 @@ main() {
     copy_dotfiles
     install_apt_packages
     set_up_pyenv
+    install_node
     install_github_cli
     install_aws_cli
+    install_and_setup_docker
+    install_chrome
+    install_terraform
     install_surfshark
     install_franz
+    install_jetbrains_toolbox
     exit_script
 }
 
