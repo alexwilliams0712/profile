@@ -39,7 +39,8 @@ install_apt_packages() {
             terminator \
             piper \
             libfuse2 \
-            dos2unix
+            dos2unix \
+            net-tools
 
     # Snap classic install
     for i in \
