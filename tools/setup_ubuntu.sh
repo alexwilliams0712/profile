@@ -131,6 +131,12 @@ install_terraform() {
     terraform version
 }
 
+install_spotify() {
+    curl -sS https://download.spotify.com/debian/pubkey_7A3A762FAFD4A51F.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
+    echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+    sudo apt-get update && sudo apt-get install spotify-client
+}
+
 install_aws_cli() {
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     unzip -o awscliv2.zip
@@ -221,6 +227,7 @@ main() {
     install_terraform
     install_surfshark
     install_franz
+    install_spotify
     install_jetbrains_toolbox
     exit_script
 }
