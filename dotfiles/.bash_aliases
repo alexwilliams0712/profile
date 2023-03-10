@@ -60,6 +60,11 @@ function attackoftheclones() {
 # Sublime Text
 alias st=subl
 
+# Pycharm
+if [ -f "$HOME/.local/share/JetBrains/Toolbox/scripts/pycharm" ]; then
+    alias charm=pycharm
+fi
+
 ##
 #general
 ##
