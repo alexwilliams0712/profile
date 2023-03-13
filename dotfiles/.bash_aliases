@@ -45,6 +45,7 @@ function attackoftheclones() {
         if [ -d "$REPO_NAME" ]; then
             echo "Repository already exists: $REPO_NAME"
             cd "$REPO_NAME"
+            git checkout main
             git pull
             cd ..
         else

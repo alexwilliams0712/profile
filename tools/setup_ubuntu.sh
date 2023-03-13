@@ -15,6 +15,8 @@ copy_dotfiles() {
     cp $HOME/profile/dotfiles/.bashrc $HOME/.bashrc
     cp $HOME/profile/dotfiles/.bash_aliases $HOME/.bash_aliases
     cp $HOME/profile/dotfiles/.gitconfig $HOME/.gitconfig
+    read -p "Enter github username: " name && git config --global user.name "$name"
+    read -p "Enter github email address: " email && git config --global user.email "$email"
 
     # you may have to use this instead if you are not a superuser:
     sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
@@ -60,8 +62,8 @@ install_apt_packages() {
     
     # Install Tweaks
     sudo add-apt-repository -y universe
-    sudo apt install $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
-    sudo apt autoremove
+    sudo apt install -y $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
+    sudo apt -y autoremove
 }
 
 install_jetbrains_toolbox() {
