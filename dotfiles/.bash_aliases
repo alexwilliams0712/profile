@@ -63,7 +63,7 @@ alias st=subl
 
 # Pycharm
 if [ -f "$HOME/.local/share/JetBrains/Toolbox/scripts/pycharm" ]; then
-    alias charm="pycharm"
+    alias charm="pycharm . &>/dev/null &"
 fi
 
 ##
