@@ -66,6 +66,12 @@ install_apt_packages() {
     sudo apt -y autoremove
 }
 
+install_rust() {
+  sudo apt update && sudo apt upgrade -y
+  sudo apt install -y curl gcc make build-essential
+  curl https://sh.rustup.rs -sSf | sh
+}
+
 install_jetbrains_toolbox() {
     # Install Jetbrains Toolbox
     curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
@@ -221,6 +227,7 @@ main() {
     copy_dotfiles
     install_apt_packages
     set_up_pyenv
+    install_rust
     install_node
     install_github_cli
     install_aws_cli
