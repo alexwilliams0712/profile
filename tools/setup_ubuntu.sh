@@ -42,7 +42,10 @@ install_apt_packages() {
             piper \
             libfuse2 \
             dos2unix \
-            net-tools
+            net-tools \
+            libsqlite3-dev \
+            libpq-dev \
+            libmysqlclient-dev
 
     # Snap classic install
     for i in \
@@ -70,6 +73,9 @@ install_rust() {
   sudo apt update && sudo apt upgrade -y
   sudo apt install -y curl gcc make build-essential
   curl https://sh.rustup.rs -sSf | sh
+  source "$HOME"/.bashrc
+  # Install diesel cli for databases
+  cargo install diesel_cli --no-default-features --features postgres
 }
 
 install_jetbrains_toolbox() {
