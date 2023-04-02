@@ -74,7 +74,7 @@ alias gohome="cd $CODE_ROOT"
 ##
 #git
 ##
-alias gitthefuckout="git reset HEAD --hard; git clean -fd; git pull --all"
+alias gitthefuckout="git fetch origin; git fetch origin; git pull --all"
 alias multipull="find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \;"
 
 ##
