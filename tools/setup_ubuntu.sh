@@ -47,7 +47,6 @@ install_apt_packages() {
             net-tools \
             libsqlite3-dev \
             libpq-dev \
-            samba \
             libmysqlclient-dev
 
     # Snap classic install
