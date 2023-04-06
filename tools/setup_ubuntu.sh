@@ -41,6 +41,7 @@ install_apt_packages() {
             figlet \
             terminator \
             piper \
+            fail2ban \
             libfuse2 \
             dos2unix \
             net-tools \
@@ -69,6 +70,24 @@ install_apt_packages() {
     sudo add-apt-repository -y universe
     sudo apt install -y $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
     sudo apt -y autoremove
+    
+    # fail2ban
+    sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+    JAIL_FILE="/etc/fail2ban/jail.local"
+
+    # Check if [sshd] exists
+    grep -q "^\[sshd\]" $JAIL_FILE
+
+    if [ $? -ne 0 ]; then
+        # Add [sshd] and enabled = true
+        echo -e "\n[sshd]\nenabled = true" | sudo tee -a $JAIL_FILE > /dev/null
+    else
+        # Set enabled = true if [sshd] exists
+        sudo sed -i '/^\[sshd\]$/,/^\[/ s/^enabled *= *false/enabled = true/' $JAIL_FILE
+    fi
+    
+    sudo systemctl restart fail2ban
+
 }
 
 install_rust() {
