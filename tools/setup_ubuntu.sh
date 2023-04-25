@@ -11,12 +11,37 @@ export PATH="$HOME/.local/bin:$PATH"
 export DEFAULT_PYTHON_VERSION="3.11.2"
 
 copy_dotfiles() {
+    mkdir -p $HOME/.config/terminator
+    cp $HOME/profile/dotfiles/terminal_config $HOME/.config/terminator/config
     cp $HOME/profile/dotfiles/.profile $HOME/.profile
     cp $HOME/profile/dotfiles/.bashrc $HOME/.bashrc
     cp $HOME/profile/dotfiles/.bash_aliases $HOME/.bash_aliases
-    cp $HOME/profile/dotfiles/.gitconfig $HOME/.gitconfig
-    read -p "Enter github username: " name && git config --global user.name "$name"
-    read -p "Enter github email address: " email && git config --global user.email "$email"
+    git config --global core.autocrlf false
+    git config --global pull.rebase false
+    git config --global http.sslVerify false
+    git config --global diff.tool bc3
+    git config --global color.branch auto
+    git config --global color.diff auto
+    git config --global color.interactive auto
+    git config --global color.status auto
+    git config --global push.default simple
+    git config --global merge.tool kdiff3
+    git config --global difftool.prompt false
+    git config --global alias.c commit
+    git config --global alias.ca 'commit -a'
+    git config --global alias.cm 'commit -m'
+    git config --global alias.cam 'commit -am'
+    git config --global alias.d diff
+    git config --global alias.dc 'diff --cached'
+    git config --global alias.l 'log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
+    name=$(git config --global user.name)       
+    email=$(git config --global user.email)
+    if [ -z "$name" ]; then
+        read -p "Enter github username: " name && git config --global user.name "$name"
+    fi
+    if [ -z "$email" ]; then
+        read -p "Enter github email address: " email && git config --global user.email "$email"
+    fi
 
     # you may have to use this instead if you are not a superuser:
     sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
@@ -30,8 +55,7 @@ install_apt_packages() {
             ca-certificates \
             curl \
             gnupg \
-            lsb-release \
-            tree \
+            lsb-release
             python3-pip
             
     # Apt install
@@ -41,12 +65,12 @@ install_apt_packages() {
             figlet \
             terminator \
             piper \
-            fail2ban \
             libfuse2 \
             dos2unix \
             net-tools \
             libsqlite3-dev \
             libpq-dev \
+            samba \
             libmysqlclient-dev
 
     # Snap classic install
@@ -64,29 +88,19 @@ install_apt_packages() {
     do
        sudo snap install $i
     done
+
+    # Snap removes
+    for i in \
+        firefox \
+        rpi-imager
+    do
+        sudo snap remove $i --no-wait --purge
+    done
     
     # Install Tweaks
     sudo add-apt-repository -y universe
     sudo apt install -y $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
     sudo apt -y autoremove
-    
-    # fail2ban
-    sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-    JAIL_FILE="/etc/fail2ban/jail.local"
-
-    # Check if [sshd] exists
-    grep -q "^\[sshd\]" $JAIL_FILE
-
-    if [ $? -ne 0 ]; then
-        # Add [sshd] and enabled = true
-        echo -e "\n[sshd]\nenabled = true" | sudo tee -a $JAIL_FILE > /dev/null
-    else
-        # Set enabled = true if [sshd] exists
-        sudo sed -i '/^\[sshd\]$/,/^\[/ s/^enabled *= *false/enabled = true/' $JAIL_FILE
-    fi
-    
-    sudo systemctl restart fail2ban
-
 }
 
 install_rust() {
@@ -198,6 +212,7 @@ install_node() {
     sudo npm install -g npm
     node -v
     npm -v
+    npm config set prefix '~/.npm-global'
 }
 
 set_up_pyenv() {
