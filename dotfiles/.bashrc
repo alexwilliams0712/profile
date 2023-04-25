@@ -87,6 +87,10 @@ fi
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
+# gsettings
+gsettings set org.gnome.desktop.interface text-scaling-factor 0.8
+gsettings set org.gnome.desktop.interface cursor-size 24
+
 # some more ls aliases
 alias ll='ls -alF'
 alias la='ls -A'
@@ -131,7 +135,7 @@ git_branch() {
 # Set the full bash prompt
 function set_bash_prompt () {
     # Set the PYTHON_VIRTUALENV variable.
-    PS1="${RED}${PYENV_VERSION} ${debian_chroot:+($debian_chroot)}${GREEN}\u${GREEN}@${GREEN}\h\[\033[00m\]:${BLUE}\w\[\033[00m\] ${PURPLE}$(git_branch)$(hg_branch)${COLOR_NONE}$ "
+    PS1="${RED}${PYENV_VERSION} ${debian_chroot:+($debian_chroot)}${BLUE}\u${BLUE}@${BLUE}\h\[\033[00m\]:${YELLOW}\w\[\033[00m\] ${PURPLE}$(git_branch)$(hg_branch)${COLOR_NONE}$ "
 }
 
 # Execute this function before displaying prompt
