@@ -109,7 +109,7 @@ install_apt_packages() {
 install_rust() {
   sudo apt update && sudo apt upgrade -y
   sudo apt install -y curl gcc make build-essential
-  curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable
+  curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
   source "$HOME"/.bashrc
   # Install diesel cli for databases
   cargo install diesel_cli --no-default-features --features postgres
