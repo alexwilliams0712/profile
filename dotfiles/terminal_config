@@ -9,6 +9,7 @@
     show_titlebar = False
     bold_is_bright = True
     copy_on_selection = True
+    handle_size = 5
 [layouts]
   [[default]]
     [[[window0]]]
