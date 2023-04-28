@@ -55,7 +55,7 @@ install_apt_packages() {
             ca-certificates \
             curl \
             gnupg \
-            lsb-release
+            lsb-release \
             python3-pip
             
     # Apt install
