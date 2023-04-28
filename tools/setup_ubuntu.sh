@@ -64,6 +64,8 @@ install_apt_packages() {
             wget \
             figlet \
             terminator \
+            glances \
+            htop \
             piper \
             libfuse2 \
             dos2unix \
