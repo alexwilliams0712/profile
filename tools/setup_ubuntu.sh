@@ -66,6 +66,7 @@ install_apt_packages() {
             terminator \
             glances \
             htop \
+            bpytop \
             piper \
             libfuse2 \
             dos2unix \
