@@ -109,7 +109,7 @@ install_apt_packages() {
 install_rust() {
   sudo apt update && sudo apt upgrade -y
   sudo apt install -y curl gcc make build-essential
-  curl https://sh.rustup.rs -sSf | sh
+  curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable
   source "$HOME"/.bashrc
   # Install diesel cli for databases
   cargo install diesel_cli --no-default-features --features postgres
@@ -117,7 +117,9 @@ install_rust() {
 
 install_jetbrains_toolbox() {
     # Install Jetbrains Toolbox
-    curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
+    if [ ! -d /opt/jetbrains-toolbox ]; then
+        curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
+    fi
     cd /opt/jetbrains-toolbox
     jetbrains-toolbox
 }
