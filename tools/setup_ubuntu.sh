@@ -54,6 +54,7 @@ copy_dotfiles() {
 }
 install_apt_packages() {
 	sudo apt update
+    sudo add-apt-repository -y universe
 	sudo apt-get install -y \
 		ca-certificates \
 		curl \
@@ -77,11 +78,10 @@ install_apt_packages() {
 		libpq-dev \
 		samba \
 		libmysqlclient-dev \
-		speedtest-cli
-	sudo add-apt-repository -y universe
-	sudo apt install -y $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
+		speedtest-cli \
+        $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
+        
 	sudo apt -y autoremove
-	pip install -U pip pip-tools black isort
 	sudo apt-get remove --purge -y ibus
 	sudo apt autoremove -y
 	sudo apt full-upgrade -y
@@ -89,6 +89,7 @@ install_apt_packages() {
 	sudo apt upgrade -y
 	sudo apt dist-upgrade
 	sudo apt install update-manager-core
+    pip install -U pip pip-tools black isort psutil
 }
 install_snaps() {
 	for i in \
