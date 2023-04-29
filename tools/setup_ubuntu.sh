@@ -81,7 +81,7 @@ install_apt_packages() {
 		speedtest-cli \
         $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
 	
-	sudo apt-get remove --purge libreoffice* shotwell
+	sudo apt-get remove --purge -y libreoffice* shotwell
 	sudo apt -y autoremove
 	sudo apt-get remove --purge -y ibus
 	sudo apt autoremove -y
@@ -174,9 +174,13 @@ install_and_setup_docker() {
 	sudo systemctl enable docker.service
 }
 install_github_cli() {
-	echo "running gh setup"
+	echo "Running gh-cli setup"
 	type -p curl >/dev/null || sudo apt install curl -y
-	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null && sudo apt update && sudo apt install gh -y
+	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+	sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
+	sudo apt update -y
+	sudo apt install gh -y
 }
 install_terraform() {
 	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '\"tag_name\":.*' | cut -d'v' -f2 | tr -d \",)
