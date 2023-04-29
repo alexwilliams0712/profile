@@ -281,11 +281,11 @@ set_up_pyenv() {
 
 exit_script() {
     if [[ exit_code -eq 0 ]]; then
-        cd $HOME/profile
+        cd $PROFILE_DIR
         source ~/.bashrc
-        figlet "*** Fresh Install of Alex's Profile Complete! ***"
+        figlet "* Fresh Install Complete! *"
     else
-        figlet "FATAL - Could not install Alex's Profile"
+        figlet "FATAL - Failed to install"
     fi
     echo "Press Enter to Exit..."
     read
