@@ -8,10 +8,10 @@ source $PROJECT_ROOT/dotfiles/shared_aliases.zsh
 
 # Source personal profile if it exists
 if [ -f ~/personal.zsh ]; then
-    source ~/personal.zsh
+	source ~/personal.zsh
 fi
 if [ -f ~/.tokens.zsh ]; then
-    source ~/.tokens.zsh
+	source ~/.tokens.zsh
 fi
 
 figlet Alexs Profile
