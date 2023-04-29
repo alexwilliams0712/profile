@@ -87,7 +87,8 @@ install_apt_packages() {
             libsqlite3-dev \
             libpq-dev \
             samba \
-            libmysqlclient-dev
+            libmysqlclient-dev \
+            speedtest-cli
 
     # Install Tweaks
     sudo add-apt-repository -y universe
@@ -103,8 +104,8 @@ install_apt_packages() {
     sudo apt full-upgrade -y
 
     # Distro upgrader
-    sudo apt update
-    sudo apt upgrade
+    sudo apt update -y
+    sudo apt upgrade -y
     sudo apt dist-upgrade
     sudo apt install update-manager-core
 }
