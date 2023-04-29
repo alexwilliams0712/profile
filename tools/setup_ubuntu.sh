@@ -37,11 +37,18 @@ copy_dotfiles() {
     git config --global alias.l 'log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
     name=$(git config --global user.name)       
     email=$(git config --global user.email)
+    phone=$(git config --global user.phonenumber)
     if [ -z "$name" ]; then
         read -p "Enter github username: " name && git config --global user.name "$name"
     fi
     if [ -z "$email" ]; then
         read -p "Enter github email address: " email && git config --global user.email "$email"
+    fi
+    if [ -z "$phone" ]; then
+        read -p "Enter phone number (leave blank to skip): " phone
+        if [ ! -z "$phone" ]; then
+            git config --global user.phonenumber "$phone"
+        fi
     fi
 
     # you may have to use this instead if you are not a superuser:
@@ -57,7 +64,8 @@ install_apt_packages() {
             curl \
             gnupg \
             lsb-release \
-            python3-pip
+            python3-pip \
+            shellcheck
             
     # Apt install
     sudo apt install -y \
@@ -77,6 +85,21 @@ install_apt_packages() {
             samba \
             libmysqlclient-dev
 
+    # Install Tweaks
+    sudo add-apt-repository -y universe
+    sudo apt install -y $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
+    sudo apt -y autoremove
+    
+    # Global pip installs 
+    pip install -U pip pip-tools black isort
+    
+    # Apt removes
+    sudo apt-get remove --purge -y ibus
+    sudo apt autoremove -y
+    sudo apt full-upgrade -y
+}
+
+install_snaps() {
     # Snap classic install
     for i in \
         code \
@@ -104,26 +127,25 @@ install_apt_packages() {
     
     # Update all installed snaps
     sudo snap refresh
-    
-    ## Espanso settings
+}
+
+setup_espanso() {
+    ## Espanso settings, installation is done in install_snaps
     # Register espanso as a systemd service (required only once)
     espanso service register
     # Start espanso
     espanso start
     espanso --version
-    
-    # Install Tweaks
-    sudo add-apt-repository -y universe
-    sudo apt install -y $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
-    sudo apt -y autoremove
-    
-    # Global pip installs 
-    pip install -U pip pip-tools black isort
-    
-    # Apt removes
-    sudo apt-get remove --purge -y ibus
-    sudo apt autoremove -y
-    sudo apt full-upgrade -y
+    # Set email and phone matches
+    email=$(git config --global user.email)
+    phone=$(git config --global user.phonenumber)
+    config_file="$HOME/.config/espanso/match/base.yml"
+
+    # Copy the espanso_match_file.yml to the Espanso configuration directory
+    cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
+
+    # Replace email and phone placeholders with the values from Git config
+    sed -i "s|youremail@example.com|$email|g; s|07123456789|$phone|g" "$config_file"
 }
 
 install_rust() {
@@ -305,6 +327,7 @@ exit_script() {
 main() {
     copy_dotfiles
     install_apt_packages
+    install_snaps
     set_up_pyenv
     install_rust
     install_node
@@ -317,6 +340,7 @@ main() {
     install_franz
     install_spotify
     install_jetbrains_toolbox
+    setup_espanso
     exit_script
 }
 
