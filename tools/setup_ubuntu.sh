@@ -114,7 +114,8 @@ install_snaps() {
     for i in \
         code \
         sublime-text \
-        espanso
+        espanso \
+        go
     do
        sudo snap install $i --classic
     done
