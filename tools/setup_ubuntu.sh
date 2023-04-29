@@ -112,6 +112,7 @@ install_apt_packages() {
     # Apt removes
     sudo apt-get remove --purge -y ibus
     sudo apt autoremove -y
+    sudo apt full-upgrade -y
 }
 
 install_rust() {
