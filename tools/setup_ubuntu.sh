@@ -91,7 +91,6 @@ install_apt_packages() {
 	sudo apt dist-upgrade
 	sudo apt install update-manager-core
     pip install -U pip pip-tools black isort psutil
-	gsettings reset org.gnome.shell app-picker-layout
 }
 install_snaps() {
 	for i in \
