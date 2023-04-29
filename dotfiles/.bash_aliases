@@ -74,7 +74,15 @@ alias gohome="cd $CODE_ROOT"
 ##
 #git
 ##
-alias gitthefuckout="git fetch origin; git fetch origin; git pull --all"
+gitthefuckout() {
+  git ls-remote --exit-code --heads origin main >/dev/null 2>&1
+  if [ $? -eq 0 ]; then
+    git fetch origin && git reset --hard origin/main
+  else
+    git fetch origin && git reset --hard origin/master
+  fi
+}
+
 alias multipull="find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \;"
 
 ##
