@@ -129,11 +129,12 @@ install_jetbrains_toolbox() {
     jetbrains-toolbox
     
     # Copy watcherDefaultTasks.xml to every PyCharm options directory
-    if [ ! -d ~/.config/JetBrains ]; then
+    if [ -d ~/.config/JetBrains ]; then
         for pycharm_dir in ~/.config/JetBrains/PyCharm*; do
             if [ -d "$pycharm_dir" ]; then
                 mkdir -p "${pycharm_dir}/options"
-                cp $PROFILE_DIR/dotfiles/watcherDefaultTasks.xml "${pycharm_dir}/options/watcherDefaultTasks.xml"
+                echo "Copying to ${pycharm_dir}/options/watcherDefaultTasks.xml"
+                cp $PROFILE_DIR/dotfiles/watcherDefaultTasks.xml ${pycharm_dir}/options/watcherDefaultTasks.xml
             fi
         done
     fi
