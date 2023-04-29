@@ -74,7 +74,7 @@ alias gohome="cd $CODE_ROOT"
 ##
 #git
 ##
-gitthefuckout() {
+function gitthefuckout() {
   git ls-remote --exit-code --heads origin main >/dev/null 2>&1
   if [ $? -eq 0 ]; then
     git fetch origin && git reset --hard origin/main

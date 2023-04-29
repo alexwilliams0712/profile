@@ -44,17 +44,19 @@ copy_dotfiles() {
     if [ -z "$name" ]; then
         read -p "Enter github username: " name && git config --global user.name "$name"
     fi
-    if [ -z "$email" ]; then
-        read -p "Enter github email address: " email && git config --global user.email "$email"
-    fi
-    if [ -z "$phone" ]; then
-        read -p "Enter phone number (leave blank to skip): " phone
-        if [ ! -z "$phone" ]; then
-            git config --global user.phonenumber "$phone"
-        fi
+    read -p "Enter github email address (leave blank to keep current): " new_email
+    if [ ! -z "$new_email" ]; then
+        git config --global user.email "$new_email"
+    else
+        new_email="$email"
     fi
 
-
+    read -p "Enter phone number (leave blank to keep current): " new_phone
+    if [ ! -z "$new_phone" ]; then
+        git config --global user.phonenumber "$new_phone"
+    else
+        new_phone="$phone"
+    fi
 }
 
 install_apt_packages() {
@@ -148,6 +150,7 @@ setup_espanso() {
 
     # Replace email and phone placeholders with the values from Git config
     sed -i "s|youremail@example.com|$email|g; s|07123456789|$phone|g" "$config_file"
+    espanso restart
 }
 
 install_rust() {
@@ -255,14 +258,14 @@ install_aws_cli() {
 }
 
 install_surfshark() {
-    curl -f https://downloads.surfshark.com/linux/debian-install.sh --output surfshark-install.sh
+    sudo curl -f https://downloads.surfshark.com/linux/debian-install.sh --output surfshark-install.sh
     sudo sh surfshark-install.sh
     sudo rm -f surfshark-install.sh
 }
 
 install_franz() {
     export FRANZ_VERSION=$(curl https://api.github.com/repos/meetfranz/franz/releases/latest -s | jq .name -r)
-    curl -fsSL https://github.com/meetfranz/franz/releases/download/v5.9.2/franz_5.9.2_amd64.deb -o franz_$FRANZ_VERSION\_amd64.deb
+    sudo curl -fsSL https://github.com/meetfranz/franz/releases/download/v5.9.2/franz_5.9.2_amd64.deb -o franz_$FRANZ_VERSION\_amd64.deb
     sudo dpkg -i franz_$FRANZ_VERSION\_amd64.deb
     sudo rm -f franz_$FRANZ_VERSION\_amd64.deb
 }
@@ -318,9 +321,9 @@ exit_script() {
     if [[ exit_code -eq 0 ]]; then
         cd $PROFILE_DIR
         source ~/.bashrc
-        figlet "* Fresh Install Complete! *"
+        figlet "* Complete *"
     else
-        figlet "FATAL - Failed to install"
+        figlet "Failed to install"
     fi
     echo "Press Enter to Exit..."
     read
