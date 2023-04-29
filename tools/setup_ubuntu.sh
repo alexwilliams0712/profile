@@ -80,7 +80,8 @@ install_apt_packages() {
 		libmysqlclient-dev \
 		speedtest-cli \
         $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
-        
+	
+	sudo apt-get remove --purge libreoffice* shotwell
 	sudo apt -y autoremove
 	sudo apt-get remove --purge -y ibus
 	sudo apt autoremove -y
@@ -90,6 +91,7 @@ install_apt_packages() {
 	sudo apt dist-upgrade
 	sudo apt install update-manager-core
     pip install -U pip pip-tools black isort psutil
+	gsettings reset org.gnome.shell app-picker-layout
 }
 install_snaps() {
 	for i in \
