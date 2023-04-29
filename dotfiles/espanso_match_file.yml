@@ -43,3 +43,20 @@ matches:
   # Phone
   - trigger: ":phone"
     replace: "07123456789"
+
+  - trigger: ":externalip"
+    replace: "{{my_ip}}"
+    vars:
+      - name: my_ip
+        type: shell
+        params:
+          cmd: "curl -s https://ipinfo.io/ip"
+
+  - trigger: ":ip"
+    replace: "{{my_local_ip}}"
+    vars:
+      - name: my_local_ip
+        type: shell
+        params:
+          cmd: "hostname -I | awk '{print $1}'"
+
