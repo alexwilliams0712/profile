@@ -101,6 +101,12 @@ install_apt_packages() {
     sudo apt-get remove --purge -y ibus
     sudo apt autoremove -y
     sudo apt full-upgrade -y
+
+    # Distro upgrader
+    sudo apt update
+    sudo apt upgrade
+    sudo apt dist-upgrade
+    sudo apt install update-manager-core
 }
 
 install_snaps() {
