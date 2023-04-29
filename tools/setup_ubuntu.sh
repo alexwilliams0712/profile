@@ -278,6 +278,18 @@ set_up_pyenv() {
     fi
 }
 
+install_espanso() {
+    wget https://github.com/federico-terzi/espanso/releases/download/v2.1.8/espanso-debian-x11-amd64.deb
+    sudo apt install ./espanso-debian-x11-amd64.deb
+    espanso --version
+    # Register espanso as a systemd service (required only once)
+    espanso service register
+    # Start espanso
+    espanso start
+    espanso status
+
+}
+
 
 exit_script() {
     if [[ exit_code -eq 0 ]]; then
@@ -306,6 +318,7 @@ main() {
     install_franz
     install_spotify
     install_jetbrains_toolbox
+    install_espanso
     exit_script
 }
 
