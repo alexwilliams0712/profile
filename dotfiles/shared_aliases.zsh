@@ -11,17 +11,15 @@ alias grep='grep --color=auto -E'
 # Open a Windows explorer in the current dir
 alias explore='explorer .'
 
-
 ##
 # LS ALIASES
 ##
 alias ls='ls -F'
-alias l='ls -c'                 # show most recent files first
-alias la='ls -A'                # show all (including '.files', exluding ./ and ../)
-alias ll='ls -lAh'              # show all as a list sorted alphabetically
-alias llf='ll | grep -vE "^d"'  # ll files only
-alias lt='ls -lArth'            # show all as a list sorted by reversed modification time
-
+alias l='ls -c'                # show most recent files first
+alias la='ls -A'               # show all (including '.files', exluding ./ and ../)
+alias ll='ls -lAh'             # show all as a list sorted alphabetically
+alias llf='ll | grep -vE "^d"' # ll files only
+alias lt='ls -lArth'           # show all as a list sorted by reversed modification time
 
 ##
 # CD ALIASES
@@ -31,23 +29,21 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 alias bk='cd $OLDPWD'
 
-
 # Grep and Tail fix logs easily by placing a separator bewtween fields
 function grepcfix() {
-   \grep --color=always $@ | sed 's/\x1/|/g'
+	\grep --color=always $@ | sed 's/\x1/|/g'
 }
 
 function tailfix() {
-   \tail -f  $@ | sed 's/\x1/|/g'
+	\tail -f $@ | sed 's/\x1/|/g'
 }
 
 ##
 # EDITORS
 ##
 
-
 # VSCode
-code () { VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $* ;}
+code() { VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $*; }
 
 # Sublime Text
 st() { sublime & }
@@ -56,7 +52,6 @@ st() { sublime & }
 #general
 ##
 alias gohome="cd $CODE_ROOT"
-
 
 ##
 #Python Dev
@@ -76,7 +71,6 @@ alias setvirtualenvproject="setvirtualenvproject \
                             && pip install setuptools pip-tools --upgrade"
 alias b="black"
 
-
 ##
 #git
 ##
@@ -91,7 +85,6 @@ alias newprofile="gohome \
                   && source tools/setup.zsh \
                   && reload"
 
-
 ##
 #Kubernetes/Docker
 ##
@@ -99,7 +92,7 @@ alias killdeadpods="kubectl get pods --all-namespaces \
                    | grep -E 'CrashLoopBackOff|ImagePullBackOff|ErrImagePull|Terminating|Error' \
                    | awk '{print \$2 \" -n \" \$1}' \
                    | xargs kubectl delete pods --force"
-                   
+
 alias dockerkillall="docker kill $'(docker ps -qa)'; docker rm $'(docker ps -qa)'"
 alias dockerrabbit="docker run -p 5672:5672 -p 15672:15672  --network dev --hostname rabbit --name rabbit -d rabbitmq:3.8.16-management"
 alias dockerredis="docker run -p 6379:6379 --name redis --network dev -d redis"
