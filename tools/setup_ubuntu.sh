@@ -9,13 +9,15 @@ export PATH="/usr/local/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export DEFAULT_PYTHON_VERSION="3.11.2"
+export PROFILE_DIR=$(pwd)
+echo $PROFILE_DIR
 
 copy_dotfiles() {
     mkdir -p $HOME/.config/terminator
-    cp $HOME/profile/dotfiles/terminal_config $HOME/.config/terminator/config
-    cp $HOME/profile/dotfiles/.profile $HOME/.profile
-    cp $HOME/profile/dotfiles/.bashrc $HOME/.bashrc
-    cp $HOME/profile/dotfiles/.bash_aliases $HOME/.bash_aliases
+    cp $PROFILE_DIR/dotfiles/terminal_config $HOME/.config/terminator/config
+    cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
+    cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
+    cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
     git config --global core.autocrlf false
     git config --global pull.rebase false
     git config --global http.sslVerify false
@@ -128,12 +130,14 @@ install_jetbrains_toolbox() {
     jetbrains-toolbox
     
     # Copy watcherDefaultTasks.xml to every PyCharm options directory
-    for pycharm_dir in ~/.config/JetBrains/PyCharm*; do
-        if [ -d "$pycharm_dir" ]; then
-            mkdir -p "${pycharm_dir}/options"
-            cp ~/profile/dotfiles/watcherDefaultTasks.xml "${pycharm_dir}/options/watcherTasks.xml"
-        fi
-    done
+    if [ ! -d ~/.config/JetBrains ]; then
+        for pycharm_dir in ~/.config/JetBrains/PyCharm*; do
+            if [ -d "$pycharm_dir" ]; then
+                mkdir -p "${pycharm_dir}/options"
+                cp $PROFILE_DIR/dotfiles/watcherDefaultTasks.xml "${pycharm_dir}/options/watcherTasks.xml"
+            fi
+        done
+    fi
 }
 
 install_chrome() {
