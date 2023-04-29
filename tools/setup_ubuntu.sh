@@ -10,7 +10,6 @@ export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export DEFAULT_PYTHON_VERSION="3.11.2"
 export PROFILE_DIR=$(pwd)
-echo $PROFILE_DIR
 
 copy_dotfiles() {
     mkdir -p $HOME/.config/terminator
