@@ -79,6 +79,7 @@ install_apt_packages() {
 		samba \
 		libmysqlclient-dev \
 		speedtest-cli \
+		fail2ban \
         $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
 	
 	sudo apt-get remove --purge -y libreoffice* shotwell
@@ -91,6 +92,13 @@ install_apt_packages() {
 	sudo apt dist-upgrade
 	sudo apt install update-manager-core
     pip install -U pip pip-tools black isort psutil
+	sudo systemctl enable fail2ban
+	sudo systemctl start fail2ban
+}
+ssh_stuff() {
+	sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+	sudo sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+	sudo systemctl restart ssh
 }
 install_snaps() {
 	for i in \
@@ -259,9 +267,9 @@ exit_script() {
 	if [[ exit_code -eq 0 ]]; then
 		cd $PROFILE_DIR
 		source ~/.bashrc
-		figlet "* Complete *"
+		figlet "Complete"
 	else
-		figlet "Failed to install"
+		figlet "Failed"
 	fi
 	echo "Press Enter to Exit..."
 	read
@@ -283,6 +291,7 @@ main() {
 	install_spotify
 	install_jetbrains_toolbox
 	setup_espanso
+	ssh_stuff
 	exit_script
 }
 main
