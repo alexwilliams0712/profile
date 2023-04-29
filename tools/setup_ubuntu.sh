@@ -108,6 +108,10 @@ install_apt_packages() {
     
     # Global pip installs 
     pip install -U pip pip-tools black isort
+    
+    # Apt removes
+    sudo apt-get remove --purge -y ibus
+    sudo apt autoremove -y
 }
 
 install_rust() {
