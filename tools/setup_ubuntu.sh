@@ -17,6 +17,9 @@ copy_dotfiles() {
     cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
     cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
     cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
+    # you may have to use this instead if you are not a superuser:
+    sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
+    # Git config setup
     git config --global core.autocrlf false
     git config --global pull.rebase false
     git config --global http.sslVerify false
@@ -51,8 +54,7 @@ copy_dotfiles() {
         fi
     fi
 
-    # you may have to use this instead if you are not a superuser:
-    sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
+
 }
 
 install_apt_packages() {
