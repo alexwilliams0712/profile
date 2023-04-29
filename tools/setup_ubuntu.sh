@@ -102,6 +102,9 @@ install_apt_packages() {
         sudo snap remove $i --no-wait --purge
     done
     
+    # Update all installed snaps
+    sudo snap refresh
+    
     ## Espanso settings
     # Register espanso as a systemd service (required only once)
     espanso service register
