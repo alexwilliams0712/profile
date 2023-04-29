@@ -104,6 +104,9 @@ install_apt_packages() {
     sudo add-apt-repository -y universe
     sudo apt install -y $(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
     sudo apt -y autoremove
+    
+    # Global pip installs 
+    pip install -U pip pip-tools black isort
 }
 
 install_rust() {
@@ -123,6 +126,14 @@ install_jetbrains_toolbox() {
     fi
     cd /opt/jetbrains-toolbox
     jetbrains-toolbox
+    
+    # Copy watcherDefaultTasks.xml to every PyCharm options directory
+    for pycharm_dir in ~/.config/JetBrains/PyCharm*; do
+        if [ -d "$pycharm_dir" ]; then
+            mkdir -p "${pycharm_dir}/options"
+            cp ~/profile/dotfiles/watcherDefaultTasks.xml "${pycharm_dir}/options/watcherTasks.xml"
+        fi
+    done
 }
 
 install_chrome() {
