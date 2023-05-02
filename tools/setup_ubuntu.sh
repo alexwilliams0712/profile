@@ -141,6 +141,9 @@ install_rust() {
 	source "$HOME"/.bashrc
 	rustup update stable
 	cargo install diesel_cli --no-default-features --features postgres
+	rustup component add rustfmt clippy
+	rustup update stable
+
 }
 install_jetbrains_toolbox() {
 	if [ ! -d /opt/jetbrains-toolbox ]; then
