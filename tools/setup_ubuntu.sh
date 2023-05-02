@@ -96,6 +96,7 @@ install_apt_packages() {
     	pip install -U pip pip-tools black isort psutil
 	sudo systemctl enable fail2ban
 	sudo systemctl start fail2ban
+	sudo systemctl start postgresql.service
 }
 ssh_stuff() {
 	sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
