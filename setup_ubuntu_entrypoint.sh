@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo source tools/setup_ubuntu.sh
+source tools/setup_ubuntu.sh
