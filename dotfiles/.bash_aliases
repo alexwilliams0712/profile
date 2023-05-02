@@ -39,11 +39,18 @@ function tailfix() {
 function murder() {
     target_process=$1
 
+    # Check if the target_process is non-empty
+    if [ -z "${target_process}" ]; then
+        echo "Error: Please provide a process name."
+        return 1
+    fi
+
     # Find processes with the target name and store their PIDs
     pids=$(ps aux | grep -i "${target_process}" | grep -v "grep" | awk '{print $2}')
 
     # Send SIGTERM to the processes and wait for 2 seconds
     for pid in $pids; do
+        echo "Attempting graceful shutdown: $pid"
         kill -15 $pid
     done
 
@@ -52,10 +59,12 @@ function murder() {
     # Check if the processes are still running, and if so, send SIGKILL
     for pid in $pids; do
         if ps -p $pid > /dev/null; then
+            echo "Having to kill: $pid"
             kill -9 $pid
         fi
     done
 }
+
 
 function attackoftheclones() {
    # Get the organization name from the function argument
