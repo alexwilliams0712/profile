@@ -50,7 +50,7 @@ function murder() {
 
     # Send SIGTERM to the processes and wait for 2 seconds
     for pid in $pids; do
-        echo "Attempting graceful shutdown: $pid"
+        echo "Attempting graceful shutdown: $target_process - $pid"
         kill -15 $pid
     done
 
@@ -59,7 +59,7 @@ function murder() {
     # Check if the processes are still running, and if so, send SIGKILL
     for pid in $pids; do
         if ps -p $pid > /dev/null; then
-            echo "Having to kill: $pid"
+            echo "Having to kill: $target_process - $pid"
             kill -9 $pid
         fi
     done
