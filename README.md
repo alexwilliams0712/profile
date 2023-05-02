@@ -10,7 +10,7 @@ Run:
 ```zsh
 $ cd ~
 $ git clone https://github.com/alexwilliams0712/profile.git
-$ source profile/tools/setup_ubuntu.zsh
+$ source setup_ubuntu_entrypoint.sh
 ```
 
 or for mac
