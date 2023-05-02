@@ -58,31 +58,34 @@ install_apt_packages() {
 	sudo apt-get install -y \
 		ca-certificates \
 		curl \
+		git \
 		gnupg \
 		lsb-release \
 		python3-pip \
 		shellcheck
+
 	sudo apt install -y \
+		bpytop \
 		curl \
-		wget \
+		dos2unix \
+		fail2ban \
 		figlet \
-		terminator \
 		glances \
 		htop \
-		bpytop \
-		piper \
 		libfuse2 \
-		dos2unix \
-		net-tools \
-		libsqlite3-dev \
-		libpq-dev \
-		samba \
 		libmysqlclient-dev \
-		speedtest-cli \
-		fail2ban \
+		libpq-dev \
+		libsqlite3-dev \
+		net-tools \
+		piper \
 		postgresql \
 		postgresql-contrib \
-        	$(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
+		samba \
+		speedtest-cli \
+		terminator \
+		wget \
+		$(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
+
 	
 	sudo apt-get remove --purge -y libreoffice* shotwell
 	sudo apt -y autoremove
