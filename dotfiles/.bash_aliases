@@ -69,12 +69,13 @@ function murder() {
 
 
 # Python
-# alias pip-compile="sort requirements.in -o requirements.in; pip-compile"
+alias pythonpathify="export PYTHONPATH=$(pwd):$PYTHONPATH"
 alias pipcompiler="pip install -U pip pip-tools && \
                    rm requirements/*.txt; \
                    pip-compile --resolver=backtracking requirements/requirements.in && \
                    pip-compile --resolver=backtracking requirements/requirements-dev.in && \
                    pip install -r requirements/requirements.txt -r requirements/requirements-dev.txt"
+                   
 
 # Sublime Text
 alias st=subl
