@@ -66,24 +66,7 @@ function murder() {
 
 
 
-function attackoftheclones() {
-   # Get the organization name from the function argument
-    ORG_NAME="$1"
 
-    # Clone or pull each repository
-    for REPO_NAME in $(gh repo list "${ORG_NAME}" --json=name --limit 1000 | jq -r '.[].name'); do
-        if [ -d "$REPO_NAME" ]; then
-            echo "Repository already exists: $REPO_NAME"
-            cd "$REPO_NAME"
-            git checkout main
-            git pull
-            cd ..
-        else
-            echo "Cloning repository: ${ORG_NAME}/${REPO_NAME}"
-            gh repo clone ${ORG_NAME}/${REPO_NAME}
-        fi
-    done
-}
 
 # Python
 # alias pip-compile="sort requirements.in -o requirements.in; pip-compile"
@@ -111,6 +94,24 @@ function gitthefuckout() {
   else
     git fetch origin && git reset --hard origin/master
   fi
+}
+
+function attackoftheclones() {
+   # Get the organization name from the function argument
+    ORG_NAME="$1"
+
+    # Clone or pull each repository
+    for REPO_NAME in $(gh repo list "${ORG_NAME}" --json=name --limit 1000 | jq -r '.[].name'); do
+        if [ -d "$REPO_NAME" ]; then
+            echo "Repository already exists: $REPO_NAME"
+            cd "$REPO_NAME"
+            gitthefuckout
+            cd ..
+        else
+            echo "Cloning repository: ${ORG_NAME}/${REPO_NAME}"
+            gh repo clone ${ORG_NAME}/${REPO_NAME}
+        fi
+    done
 }
 
 alias multipull="find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \;"
