@@ -143,11 +143,16 @@ function gitthefuckout() {
 }
 
 function attackoftheclones() {
-   # Get the organization name from the function argument
-    ORG_NAME="$1"
+   # Get the organization name from the function argument or basename of dir
+    if [ -z "$1" ]; then
+        ORG_NAME="$(basename $(pwd))"
+    else
+        ORG_NAME="$1"
+    fi
 
     # Clone or pull each repository
     for REPO_NAME in $(gh repo list "${ORG_NAME}" --json=name --limit 1000 | jq -r '.[].name'); do
+        echo "Checking: $REPO_NAME"
         if [ -d "$REPO_NAME" ]; then
             echo "Repository already exists: $REPO_NAME"
             cd "$REPO_NAME"
