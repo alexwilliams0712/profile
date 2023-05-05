@@ -71,6 +71,12 @@ function murder() {
 # Python
 alias pythonpathify="export PYTHONPATH=$(pwd):$PYTHONPATH"
 function pipcompiler() {
+    # Check if we're in a virtual environment
+    if [ -z "${VIRTUAL_ENV}" ]; then
+        echo "Not in a virtual environment. Please activate a virtual environment and try again."
+        return 1
+    fi
+
     echo "Running pip compiler"
     pip install -U pip pip-tools
 
@@ -108,6 +114,7 @@ function pipcompiler() {
     echo "Executing: ${install_command}"
     ${install_command}
 }
+
                    
 
 # Sublime Text
