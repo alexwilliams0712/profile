@@ -88,7 +88,7 @@ fi
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
 # gsettings
-gsettings set org.gnome.desktop.interface text-scaling-factor 1
+gsettings set org.gnome.desktop.interface text-scaling-factor 0.9
 gsettings set org.gnome.desktop.interface cursor-size 24
 
 # some more ls aliases
