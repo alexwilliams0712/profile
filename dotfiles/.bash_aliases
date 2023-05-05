@@ -72,7 +72,6 @@ function murder() {
 alias pythonpathify="export PYTHONPATH=$(pwd):$PYTHONPATH"
 function pipcompiler() {
     echo "Running pip compiler"
-    set -x
     pip install -U pip pip-tools
 
     # Find .in files in the current directory or in requirements/ directory
