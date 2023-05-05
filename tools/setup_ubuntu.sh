@@ -62,6 +62,7 @@ install_apt_packages() {
 		gnupg \
 		lsb-release \
 		python3-pip \
+		gnuplot \
 		shellcheck
 
 	sudo apt install -y \
