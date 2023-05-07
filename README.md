@@ -1,38 +1,12 @@
 # Alex's profile
 
-If anybody has any suggestions, please feel free to raise a PR.
-
 ## Usage
 
-Open Terminal
+This will first determine if its being run on MacOs or Linux, pull the latest version and then run the required script depending on OS
 Run:
 
-```zsh
+```bash
 $ cd ~
 $ git clone https://github.com/alexwilliams0712/profile.git
-$ source setup_ubuntu_entrypoint.sh
+$ source setup_entry.sh
 ```
-
-or for mac
-
-```zsh
-$ cd ~
-$ git clone https://github.com/alexwilliams0712/profile.git
-$ source profile/tools/setup_macos.zsh
-```
-
-Subsequently, to pick up updates, run:
-
-```zsh
-$ newprofile
-```
-
-## Notes
-
-
-### Apps
-
-This will also brew install the following apps:
-
-* google-chrome
-* sublime-text
