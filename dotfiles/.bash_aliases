@@ -94,10 +94,10 @@ function pipcompiler() {
     pip install -U pip pip-tools
 
     # Find .in files in the current directory or in requirements/ directory
-    if ls *.in &> /dev/null; then
+    if ls requirements*.in &> /dev/null; then
         files=$(ls *.in | grep '^requirements.*in' | sort -V)
     else
-        files=$(ls requirements/*.in | grep '^requirements/requirements.*in' | sort -V)
+        files=$(ls requirements/*.in | grep '^requirements/requirements*.in' | sort -V)
     fi
 
     echo "Requirements files: ${files}"
