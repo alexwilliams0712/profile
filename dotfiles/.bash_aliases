@@ -42,10 +42,10 @@ function murder() {
         return 1
     fi
 
-    # Declare an associative array for PIDs and commands
-    declare -A pid_command_map
-
     for target_process in "$@"; do
+        # Declare an associative array for PIDs and commands
+        declare -A pid_command_map
+
         # Find processes with the target name, and store their PIDs and commands in the associative array
         while IFS= read -r line; do
             pid=$(echo "$line" | awk '{print $2}')
@@ -53,24 +53,23 @@ function murder() {
             pid_command_map["$pid"]="$cmd"
         done < <(ps aux | grep -i "${target_process}" | grep -v "grep")
 
-        # Send SIGTERM to the processes
+        # Send SIGTERM to the processes and wait for 2 seconds
         for pid in "${!pid_command_map[@]}"; do
             cmd="${pid_command_map[$pid]}"
             echo "Attempting graceful shutdown: $target_process - $pid ($cmd)"
             kill -15 "$pid"
         done
-    done
 
-    # Wait for 2 seconds
-    sleep 2
+        sleep 2
 
-    # Check if the processes are still running, and if so, send SIGKILL
-    for pid in "${!pid_command_map[@]}"; do
-        cmd="${pid_command_map[$pid]}"
-        if ps -p "$pid" > /dev/null; then
-            echo "Having to kill: $pid ($cmd)"
-            kill -9 "$pid"
-        fi
+        # Check if the processes are still running, and if so, send SIGKILL
+        for pid in "${!pid_command_map[@]}"; do
+            cmd="${pid_command_map[$pid]}"
+            if ps -p "$pid" > /dev/null; then
+                echo "Having to kill: $target_process - $pid ($cmd)"
+                kill -9 "$pid"
+            fi
+        done
     done
 }
 
