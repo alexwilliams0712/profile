@@ -25,3 +25,15 @@ fi
 if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
+
+IFS=:
+unique_paths=()
+for path in $PATH; do
+    if [[ ! "${unique_paths[*]}" =~ ${path} ]]; then
+        unique_paths+=("$path")
+    fi
+done
+IFS=$' \t\n'
+
+new_path=$(IFS=:; echo "${unique_paths[*]}")
+export PATH="$new_path"

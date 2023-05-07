@@ -117,6 +117,7 @@ COLOR_NONE="\[\e[0m\]"
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 export PATH=$PATH:$HOME/.local/share/JetBrains/Toolbox/scripts
+alias brew='env PATH="${PATH//$(pyenv root)\/shims:/}" brew'
 eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
