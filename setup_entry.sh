@@ -10,4 +10,14 @@ git fetch origin && git reset --hard origin/main
 git checkout main
 git pull
 
-source tools/setup_ubuntu.sh
+
+
+os_name="$(uname)"
+
+if [ "$os_name" = "Darwin" ]; then
+    source tools/setup_macos.sh
+elif [ "$os_name" = "Linux" ]; then
+    source tools/setup_ubuntu.sh
+else
+    echo "Running on an unsupported OS."
+fi

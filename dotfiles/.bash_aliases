@@ -26,6 +26,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias bk='cd $OLDPWD'
+alias ppath='IFS=:; for i in $PATH; do echo $i; done; unset IFS'
 
 # Grep and Tail fix logs easily by placing a separator bewtween fields
 function grepcfix() {
