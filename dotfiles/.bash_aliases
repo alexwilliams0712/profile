@@ -56,7 +56,8 @@ function murder() {
         # Send SIGTERM to the processes and wait for 2 seconds
         for pid in "${!pid_command_map[@]}"; do
             cmd="${pid_command_map[$pid]}"
-            echo "Attempting graceful shutdown: $target_process - $pid ($cmd)"
+            truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
+            echo "Attempting graceful shutdown: $target_process - $pid ($truncated_cmd)"
             kill -15 "$pid"
         done
 
@@ -65,13 +66,19 @@ function murder() {
         # Check if the processes are still running, and if so, send SIGKILL
         for pid in "${!pid_command_map[@]}"; do
             cmd="${pid_command_map[$pid]}"
+            truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
             if ps -p "$pid" > /dev/null; then
-                echo "Having to kill: $target_process - $pid ($cmd)"
+                echo "Having to kill: $target_process - $pid ($truncated_cmd)"
                 kill -9 "$pid"
             fi
         done
+
+        # Clear the pid_command_map associative array
+        unset pid_command_map
+        declare -A pid_command_map
     done
 }
+
 
 # Python
 alias pythonpathify="export PYTHONPATH=$(pwd):$PYTHONPATH"
