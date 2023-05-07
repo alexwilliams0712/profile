@@ -156,13 +156,13 @@ install_jetbrains_toolbox() {
 	cd /opt/jetbrains-toolbox
 	jetbrains-toolbox
 	if [ -d ~/.config/JetBrains ]; then
-		for pycharm_dir in ~/.config/JetBrains/PyCharm*; do
-			if [ -d "$pycharm_dir" ]; then
-				mkdir -p "$pycharm_dir/options"
-				echo "Copying to $pycharm_dir/options/watcherDefaultTasks.xml"
-				cp $PROFILE_DIR/dotfiles/watcherDefaultTasks.xml $pycharm_dir/options/watcherDefaultTasks.xml
-			fi
-		done
+	    for product_dir in ~/.config/JetBrains/*; do
+		if [ -d "$product_dir" ]; then
+		    mkdir -p "$product_dir/options"
+		    echo "Copying to $product_dir/options/watcherDefaultTasks.xml"
+		    cp $PROFILE_DIR/dotfiles/watcherDefaultTasks.xml $product_dir/options/watcherDefaultTasks.xml
+		fi
+	    done
 	fi
 }
 install_chrome() {
