@@ -15,9 +15,9 @@ git pull
 os_name="$(uname)"
 
 if [ "$os_name" = "Darwin" ]; then
-    source tools/setup_macos.sh
+    bash tools/setup_macos.sh
 elif [ "$os_name" = "Linux" ]; then
-    source tools/setup_ubuntu.sh
+    bash tools/setup_ubuntu.sh
 else
     echo "Running on an unsupported OS."
 fi
