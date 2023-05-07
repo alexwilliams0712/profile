@@ -11,10 +11,11 @@ export PROFILE_DIR=$(pwd)
 exit_code=0
 
 copy_dotfiles() {
-    # Add copy commands for your dotfiles here.
-    cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
+    	# Add copy commands for your dotfiles here.
+    	cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
+	chsh -s /bin/bash
 }
 
 install_homebrew() {
@@ -139,23 +140,23 @@ install_jetbrains_toolbox() {
 
 main() {
 	setup_git
-    copy_dotfiles
+    	copy_dotfiles
 	install_homebrew
-    install_packages
-    install_pyenv
-    install_node
-    install_rust
+	install_packages
+	install_pyenv
+	install_node
+	install_rust
 	install_jetbrains_toolbox
 
-    if [[ exit_code -eq 0 ]]; then
+	if [[ exit_code -eq 0 ]]; then
 		cd $PROFILE_DIR
 		source ~/.bashrc
-        figlet "Complete"
-    else
-        figlet "Failed"
-    fi
-    echo "Press Enter to Exit..."
-    read
+	figlet "Complete"
+	else
+	figlet "Failed"
+	fi
+	echo "Press Enter to Exit..."
+	read
 }
 
 main
