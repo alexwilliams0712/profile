@@ -129,10 +129,11 @@ install_snaps() {
 }
 setup_espanso() {
 	if [ "$XDG_SESSION_TYPE" = "X11" ]; then
-		sudo snap install espanso --classic --channel=latest/edge
+		echo "X11!"
 	else
 		sudo sed -i 's/#WaylandEnable=false/WaylandEnable=false/g' /etc/gdm3/custom.conf
 	fi
+	sudo snap install espanso --classic --channel=latest/edge
 	espanso service register
 	espanso service start
 	espanso --version
