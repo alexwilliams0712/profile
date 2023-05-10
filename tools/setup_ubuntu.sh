@@ -130,14 +130,14 @@ install_snaps() {
 }
 setup_espanso() {
 	espanso service register
-	espanso start
+	espanso service start
 	espanso --version
 	email=$(git config --global user.email)
 	phone=$(git config --global user.phonenumber)
 	config_file="$HOME/.config/espanso/match/base.yml"
 	cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
 	sed -i "s|youremail@example.com|$email|g; s|07123456789|$phone|g" "$config_file"
-	espanso restart
+	espanso service restart
 }
 install_rust() {
 	sudo apt update && sudo apt upgrade -y
