@@ -131,8 +131,7 @@ setup_espanso() {
 	if [ "$XDG_SESSION_TYPE" = "X11" ]; then
 		sudo snap install espanso --classic --channel=latest/edge
 	else
-		wget https://github.com/federico-terzi/espanso/releases/download/v2.1.8/espanso-debian-wayland-amd64.deb
-		sudo apt install ./espanso-debian-wayland-amd64.deb
+		sudo sed -i 's/#WaylandEnable=false/WaylandEnable=false/g' /etc/gdm3/custom.conf
 	fi
 	espanso service register
 	espanso service start
