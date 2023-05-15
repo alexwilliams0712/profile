@@ -100,7 +100,6 @@ install_apt_packages() {
 	
 	sudo systemctl enable fail2ban
 	sudo systemctl start fail2ban
-	su -c 'pip install -U pip pip-tools black isort psutil' $SUDO_USER
 	sudo apt-get remove --purge -y libreoffice* shotwell ibus
 	sudo apt -y autoremove
 	sudo apt full-upgrade -y
@@ -287,6 +286,9 @@ set_up_pyenv() {
 		git pull $URL
 	fi
 }
+pip_installs() {
+	su -c 'pip install -U pip pip-tools black isort psutil' $SUDO_USER
+}
 exit_script() {
 	if [[ exit_code -eq 0 ]]; then
 		cd $PROFILE_DIR
@@ -315,6 +317,7 @@ main() {
 	install_jetbrains_toolbox
 	setup_espanso
 	ssh_stuff
+	pip_installs
 	apt_upgrader
 	exit_script
 }
