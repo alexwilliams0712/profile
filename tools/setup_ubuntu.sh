@@ -274,7 +274,7 @@ set_up_pyenv() {
 		liblzma-dev
 	pyenv_dir="$HOME/.pyenv"
 	if [ -d "$pyenv_dir" ]; then
-		echo "WARNING: The $pyenv_dir directory already exists. Please remove it before proceeding."
+		echo "The $pyenv_dir directory already exists. Remove it to reinstall."
 	else
 		curl https://pyenv.run | bash
 	fi
