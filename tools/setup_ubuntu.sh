@@ -70,6 +70,7 @@ install_apt_packages() {
 		lsb-release \
 		python3-pip \
 		gnuplot \
+		openssh-server \
 		shellcheck
 
 	sudo apt install -y \
@@ -111,6 +112,7 @@ ssh_stuff() {
 	sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 	sudo sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
 	sudo systemctl restart ssh
+	sudo systemctl reload ssh
 }
 install_snaps() {
 	for i in \
@@ -205,10 +207,10 @@ install_github_cli() {
 	sudo apt install gh -y
 }
 install_clam_av() {
-	sudo apt-get install clamav-daemon
+	sudo apt-get install -y clamav-daemon
 	sudo freshclam
-	systemctl --system daemon-reload
-	systemctl restart clamav-daemon.service
+	sudo systemctl --system daemon-reload
+	sudo systemctl restart clamav-daemon.service
 	sudo /etc/init.d/clamav-daemon start
 }
 install_terraform() {
