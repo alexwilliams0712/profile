@@ -139,11 +139,18 @@ setup_espanso() {
 	fi
 	sudo snap install espanso --classic --channel=latest/edge
 	espanso service register
-	espanso service start
-	espanso --version
 	config_file="$HOME/.config/espanso/match/base.yml"
 	cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
-	espanso service restart
+	espanso_service_status=$(espanso service status)
+
+	if [[ "$espanso_service_status" == *"running"* ]]; then
+		echo "Espanso service is already running. Restarting..."
+		espanso service restart
+	else
+		echo "Espanso service is not running. Starting..."
+		espanso service start
+	fi
+	espanso --version
 }
 install_rust() {
 	apt_upgrader
