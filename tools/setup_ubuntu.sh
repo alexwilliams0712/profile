@@ -207,6 +207,7 @@ install_github_cli() {
 }
 install_clam_av() {
 	sudo apt-get install -y clamav-daemon
+	sudo systemctl stop clamav-freshclam.service
 	sudo freshclam
 	sudo systemctl --system daemon-reload
 	sudo systemctl restart clamav-daemon.service
