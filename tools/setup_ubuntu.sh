@@ -84,7 +84,7 @@ install_apt_packages() {
 		shellcheck
 
 	sudo apt install -y \
-		bash
+		bash \
 		bpytop \
 		curl \
 		dos2unix \
