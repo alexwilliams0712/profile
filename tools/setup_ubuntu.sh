@@ -287,8 +287,6 @@ exit_script() {
 	else
 		figlet "Failed"
 	fi
-	echo "Press Enter to Exit..."
-	read
 }
 main() {
 	copy_dotfiles
