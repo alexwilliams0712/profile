@@ -187,13 +187,13 @@ alias k9s="k9s-nsg"
 
 alias dockoff='docker rm -vf $(docker ps -aq); docker rmi -f $(docker images -aq)'
 function dockercontainers() {
-    number_chars = 35  
+    number_chars=35  
     docker ps -a --format="{{.Names}}\t{{.Image}}\t{{.Status}}" | awk -v OFS='\t' 'BEGIN {printf "%-15s\t%-30s\t%-40s\n", "NAMES", "IMAGE", "STATUS"} NR>=1 {printf "%-15s\t%-30s\t%-40s\n", substr($1, 1, $number_chars), $2, $3}' | (read -r; printf "%s\n" "$REPLY"; sort -k 1)
 }
 
 
 dockerperv() {
-   sleep_time_secs = 1.0
+   sleep_time_secs=1
     while true; do
         clear
         echo "Every $(sleep_time_secs)s: dockercontainers: $(date)"
