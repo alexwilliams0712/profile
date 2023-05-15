@@ -100,7 +100,7 @@ install_apt_packages() {
 	
 	sudo systemctl enable fail2ban
 	sudo systemctl start fail2ban
-	su -c pip install -U pip pip-tools black isort psutil $SUDO_USER
+	su -c 'pip install -U pip pip-tools black isort psutil' $SUDO_USER
 	sudo apt-get remove --purge -y libreoffice* shotwell ibus
 	sudo apt -y autoremove
 	sudo apt full-upgrade -y
