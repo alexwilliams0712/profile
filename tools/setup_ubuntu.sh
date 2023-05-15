@@ -264,7 +264,7 @@ set_up_pyenv() {
 		libbz2-dev \
 		liblzma-dev
 	curl https://pyenv.run | bash
-	reload
+	source ~/.bashrc
 	pyenv update
 	pyenv install -s $DEFAULT_PYTHON_VERSION
 	pyenv global $DEFAULT_PYTHON_VERSION
