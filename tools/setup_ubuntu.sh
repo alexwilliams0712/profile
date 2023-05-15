@@ -299,10 +299,10 @@ set_up_pyenv() {
 		git pull $URL
 	fi
 }
-pip_installs() {
-	sudo -k
-	pip install -U pip pip-tools black isort psutil
-}
+# pip_installs() {
+# 	sudo -k
+# 	pip install -U pip pip-tools black isort psutil
+# }
 exit_script() {
 	if [[ exit_code -eq 0 ]]; then
 		cd $PROFILE_DIR
@@ -332,7 +332,7 @@ main() {
 	setup_espanso
 	ssh_stuff
 	apt_upgrader
-	pip_installs
+	# pip_installs
 	exit_script
 }
 main
