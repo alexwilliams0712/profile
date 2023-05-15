@@ -9,6 +9,7 @@ export PATH="$HOME/.local/bin:$PATH"
 export DEFAULT_PYTHON_VERSION="3.11.2"
 export PROFILE_DIR=$(pwd)
 exit_code=0
+set -e
 apt_upgrader() {
 	sudo apt update -y
 	sudo apt upgrade -y
@@ -94,19 +95,16 @@ install_apt_packages() {
 		terminator \
 		wget \
 		$(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
-
 	
-	sudo apt-get remove --purge -y libreoffice* shotwell
+	sudo systemctl enable fail2ban
+	sudo systemctl start fail2ban
+	pip install -U pip pip-tools black isort psutil
+	sudo apt-get remove --purge -y libreoffice* shotwell ibus
 	sudo apt -y autoremove
-	sudo apt-get remove --purge -y ibus
-	sudo apt autoremove -y
 	sudo apt full-upgrade -y
 	apt_upgrader
 	sudo apt dist-upgrade
 	sudo apt install update-manager-core
-    	pip install -U pip pip-tools black isort psutil
-	sudo systemctl enable fail2ban
-	sudo systemctl start fail2ban
 }
 ssh_stuff() {
 	sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
@@ -178,7 +176,7 @@ install_chrome() {
 }
 install_and_setup_docker() {
 	sudo mkdir -m 0755 -p /etc/apt/keyrings
-	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
 	echo \
 		"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
       $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
