@@ -293,13 +293,13 @@ main() {
 	copy_dotfiles
 	install_apt_packages
 	install_snaps
+	install_chrome
 	set_up_pyenv
 	install_rust
 	install_node
 	install_github_cli
 	install_aws_cli
 	install_and_setup_docker
-	install_chrome
 	install_terraform
 	install_surfshark
 	install_franz
