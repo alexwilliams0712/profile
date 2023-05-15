@@ -169,7 +169,5 @@ if ! shopt -oq posix; then
   fi
 fi
 
-espanso --version
 pyenv --version
 python --version
-rustc --version
