@@ -101,7 +101,6 @@ install_apt_packages() {
     	pip install -U pip pip-tools black isort psutil
 	sudo systemctl enable fail2ban
 	sudo systemctl start fail2ban
-	sudo systemctl start postgresql.service
 }
 ssh_stuff() {
 	sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
@@ -116,7 +115,7 @@ install_snaps() {
 		sudo snap install $i --classic
 	done
 	for i in \
-		k9s-nsg \
+		# k9s-nsg \
 		1password; do
 		sudo snap install $i
 	done
@@ -153,7 +152,6 @@ install_rust() {
 	cargo install diesel_cli --no-default-features --features postgres
 	rustup component add rustfmt clippy
 	rustup update stable
-
 }
 install_jetbrains_toolbox() {
 	if [ ! -d /opt/jetbrains-toolbox ]; then
