@@ -300,7 +300,8 @@ set_up_pyenv() {
 	fi
 }
 pip_installs() {
-	su -c 'pip install -U pip pip-tools black isort psutil' $SUDO_USER
+	sudo -k
+	pip install -U pip pip-tools black isort psutil
 }
 exit_script() {
 	if [[ exit_code -eq 0 ]]; then
