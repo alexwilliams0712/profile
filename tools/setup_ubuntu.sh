@@ -208,6 +208,13 @@ install_github_cli() {
 	apt_upgrader
 	sudo apt install gh -y
 }
+install_clam_av() {
+	sudo apt-get install clamav-daemon
+	sudo freshclam
+	systemctl --system daemon-reload
+	systemctl restart clamav-daemon.service
+	sudo /etc/init.d/clamav-daemon start
+}
 install_terraform() {
 	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '\"tag_name\":.*' | cut -d'v' -f2 | tr -d \",)
 	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_linux_amd64.zip"
@@ -299,6 +306,7 @@ main() {
 	set_up_pyenv
 	install_rust
 	install_node
+	install_clam_av
 	install_github_cli
 	install_aws_cli
 	install_and_setup_docker
