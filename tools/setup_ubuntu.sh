@@ -9,6 +9,12 @@ export PATH="$HOME/.local/bin:$PATH"
 export DEFAULT_PYTHON_VERSION="3.11.2"
 export PROFILE_DIR=$(pwd)
 exit_code=0
+apt_upgrader() {
+	sudo apt update -y
+	sudo apt upgrade -y
+	sudo apt-get update -y
+	sudo apt-get upgrade -y
+}
 copy_dotfiles() {
 	mkdir -p $HOME/.config/terminator
 	cp $PROFILE_DIR/dotfiles/terminal_config $HOME/.config/terminator/config
@@ -54,7 +60,7 @@ copy_dotfiles() {
 	fi
 }
 install_apt_packages() {
-	sudo apt update
+	apt_upgrader
     	sudo add-apt-repository -y universe
 	sudo apt-get install -y \
 		ca-certificates \
@@ -94,8 +100,7 @@ install_apt_packages() {
 	sudo apt-get remove --purge -y ibus
 	sudo apt autoremove -y
 	sudo apt full-upgrade -y
-	sudo apt update -y
-	sudo apt upgrade -y
+	apt_upgrader
 	sudo apt dist-upgrade
 	sudo apt install update-manager-core
     	pip install -U pip pip-tools black isort psutil
@@ -143,7 +148,7 @@ setup_espanso() {
 	espanso service restart
 }
 install_rust() {
-	sudo apt update && sudo apt upgrade -y
+	apt_upgrader
 	sudo apt install -y curl gcc make build-essential
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 	source "$HOME"/.bashrc
@@ -180,7 +185,7 @@ install_and_setup_docker() {
 		"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
       $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 	sudo chmod a+r /etc/apt/keyrings/docker.gpg
-	sudo apt-get update -y
+	apt_upgrader
 	sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 	sudo systemctl enable --now docker
 	if ! grep -q "^docker:" /etc/group; then
@@ -200,7 +205,7 @@ install_github_cli() {
 	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
 	sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
 	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
-	sudo apt update -y
+	apt_upgrader
 	sudo apt install gh -y
 }
 install_terraform() {
@@ -214,7 +219,7 @@ install_terraform() {
 install_spotify() {
 	curl -sS https://download.spotify.com/debian/pubkey_7A3A762FAFD4A51F.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
 	echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
-	sudo apt-get update && sudo apt-get install spotify-client
+	apt_upgrader && sudo apt-get install spotify-client
 }
 install_aws_cli() {
 	curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -243,7 +248,7 @@ install_node() {
 }
 set_up_pyenv() {
 	echo "Setting up pyenv"
-	sudo apt-get update -y
+	apt_upgrader
 	sudo apt-get install -y \
 		make \
 		build-essential \
@@ -304,6 +309,7 @@ main() {
 	install_jetbrains_toolbox
 	setup_espanso
 	ssh_stuff
+	apt_upgrader
 	exit_script
 }
 main
