@@ -197,8 +197,8 @@ dockerperv() {
    sleep_time_secs=1
     while true; do
         clear
-        echo "Every $(sleep_time_secs)s: dockercontainers: $(date)"
+        echo "Every $sleep_time_secs s: dockercontainers: $(date)"
         dockercontainers
-        sleep $(sleep_time_secs)
+        sleep $sleep_time_secs
     done
 }
