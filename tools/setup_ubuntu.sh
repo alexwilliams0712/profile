@@ -115,7 +115,6 @@ install_snaps() {
 		sudo snap install $i --classic
 	done
 	for i in \
-		# k9s-nsg \
 		1password; do
 		sudo snap install $i
 	done
