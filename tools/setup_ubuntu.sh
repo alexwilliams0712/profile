@@ -12,6 +12,13 @@ exit_code=0
 # Makes it return on any error
 set -e
 set -o pipefail
+
+# Define an error handler function
+handle_error() {
+    echo "An error occurred on line $1"
+}
+trap 'handle_error $LINENO' ERR
+
 apt_upgrader() {
 	sudo apt update -y
 	sudo apt upgrade -y
@@ -77,6 +84,7 @@ install_apt_packages() {
 		shellcheck
 
 	sudo apt install -y \
+		bash
 		bpytop \
 		curl \
 		dos2unix \
