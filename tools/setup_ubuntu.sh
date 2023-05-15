@@ -317,8 +317,8 @@ main() {
 	install_jetbrains_toolbox
 	setup_espanso
 	ssh_stuff
-	pip_installs
 	apt_upgrader
+	pip_installs
 	exit_script
 }
 main
