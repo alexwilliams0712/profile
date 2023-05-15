@@ -38,11 +38,30 @@ matches:
   
   # Email
   - trigger: ":email"
-    replace: "youremail@example.com"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "git config user.email"
+
+  # GitUser
+  - trigger: ":user"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "git config user.name"
     
   # Phone
   - trigger: ":phone"
-    replace: "07123456789"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "git config user.phonenumber"
 
   - trigger: ":externalip"
     replace: "{{my_ip}}"
