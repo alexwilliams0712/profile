@@ -190,5 +190,11 @@ function dockercontainers() {
     docker ps -a --format="table {{.Names}}\t{{.Image}}\t{{.Status}}" | (read -r; printf "%s\n" "$REPLY"; sort -k 1 )
 }
 
-alias dockerperv='watch -n 1 "docker ps -a --format '\''table {{.Names}}\t{{.Image}}\t{{.Status}}'\''"'
-alias dockerpervy='watch -n 1 dockercontainers'
+dockerperv() {
+    while true; do
+        clear
+        echo "Every 1.0s: dockercontainers: $(date)"
+        dockercontainers
+        sleep 1
+    done
+}
