@@ -272,7 +272,12 @@ set_up_pyenv() {
 		lzma \
 		libbz2-dev \
 		liblzma-dev
-	curl https://pyenv.run | bash
+	pyenv_dir="$HOME/.pyenv"
+	if [ -d "$pyenv_dir" ]; then
+		echo "WARNING: The $pyenv_dir directory already exists. Please remove it before proceeding."
+	else
+		curl https://pyenv.run | bash
+	fi
 	source ~/.bashrc
 	pyenv update
 	pyenv install -s $DEFAULT_PYTHON_VERSION
