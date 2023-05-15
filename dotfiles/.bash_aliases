@@ -187,8 +187,9 @@ alias k9s="k9s-nsg"
 
 alias dockoff='docker rm -vf $(docker ps -aq); docker rmi -f $(docker images -aq)'
 function dockercontainers() {
-    docker ps -a --format="table {{.Names}}\t{{.Image}}\t{{.Status}}" | (read -r; printf "%s\n" "$REPLY"; sort -k 1 )
+    docker ps -a --format="{{.Names}}\t{{.Image}}\t{{.Status}}" | awk -v OFS='\t' 'BEGIN {printf "%-15s\t%-30s\t%-40s\n", "NAMES", "IMAGE", "STATUS"} NR>=1 {printf "%-15s\t%-30s\t%-40s\n", substr($1, 1, 25), $2, $3}' | (read -r; printf "%s\n" "$REPLY"; sort -k 1)
 }
+
 
 dockerperv() {
     while true; do
