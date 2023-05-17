@@ -165,6 +165,7 @@ install_rust() {
 	sudo apt install -y curl gcc make build-essential
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 	rustup update stable
+	rustup install nightly
 	cargo install diesel_cli --no-default-features --features postgres
 	rustup component add rustfmt clippy
 	rustup update stable
