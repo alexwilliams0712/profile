@@ -47,32 +47,34 @@ function murder() {
         # Declare an associative array for PIDs and commands
         declare -A pid_command_map
 
-        # Find processes with the target name, and store their PIDs and commands in the associative array
-        while IFS= read -r line; do
-            pid=$(echo "$line" | awk '{print $2}')
-            cmd=$(echo "$line" | awk '{print $11}')
-            pid_command_map["$pid"]="$cmd"
-        done < <(ps aux | grep -i "${target_process}" | grep -v "grep")
+        # Send SIGTERM to the processes and wait for 2 seconds if there's at least one process to terminate
+        if [ ${#pid_command_map[@]} -gt 0 ]; then
+           while IFS= read -r line; do
+               pid=$(echo "$line" | awk '{print $2}')
+               cmd=$(echo "$line" | awk '{print $11}')
+               pid_command_map["$pid"]="$cmd"
+           done < <(ps aux | grep -i "${target_process}" | grep -v "grep")
 
-        # Send SIGTERM to the processes and wait for 2 seconds
-        for pid in "${!pid_command_map[@]}"; do
-            cmd="${pid_command_map[$pid]}"
-            truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
-            echo "Attempting graceful shutdown: $target_process - $pid ($truncated_cmd)"
-            kill -15 "$pid"
-        done
+           # Send SIGTERM to the processes and wait for 2 seconds
+           for pid in "${!pid_command_map[@]}"; do
+               cmd="${pid_command_map[$pid]}"
+               truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
+               echo "Attempting graceful shutdown: $target_process - $pid ($truncated_cmd)"
+               kill -15 "$pid"
+           done
 
-        sleep 2
+           sleep 2
 
-        # Check if the processes are still running, and if so, send SIGKILL
-        for pid in "${!pid_command_map[@]}"; do
-            cmd="${pid_command_map[$pid]}"
-            truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
-            if ps -p "$pid" > /dev/null; then
-                echo "Having to kill: $target_process - $pid ($truncated_cmd)"
-                kill -9 "$pid"
-            fi
-        done
+           # Check if the processes are still running, and if so, send SIGKILL
+           for pid in "${!pid_command_map[@]}"; do
+               cmd="${pid_command_map[$pid]}"
+               truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
+               if ps -p "$pid" > /dev/null; then
+                   echo "Having to kill: $target_process - $pid ($truncated_cmd)"
+                   kill -9 "$pid"
+               fi
+           done
+        fi
 
         # Clear the pid_command_map associative array
         unset pid_command_map
