@@ -19,14 +19,14 @@ handle_error() {
 }
 trap 'handle_error $LINENO' ERR
 
-apt_upgrader() {
-	sudo apt update -y
-	sudo apt upgrade -y
-	sudo apt-get update -y
-	sudo apt-get upgrade -y
-    sudo apt full-upgrade -y
-    sudo apt autoremove -y
-}
+# apt_upgrader() {
+# 	sudo apt update -y
+# 	sudo apt upgrade -y
+# 	sudo apt-get update -y
+# 	sudo apt-get upgrade -y
+#     sudo apt full-upgrade -y
+#     sudo apt autoremove -y
+# }
 
 
 copy_dotfiles() {
@@ -36,7 +36,7 @@ copy_dotfiles() {
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
 	sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
-	. $HOME/.bashrc
+	source $HOME/.bash_aliases
 }
 set_git_config() {
 	git config --global core.autocrlf false
