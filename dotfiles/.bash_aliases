@@ -44,6 +44,7 @@ function murder() {
     fi
 
     for target_process in "$@"; do
+        echo "Killing all $target_process processes"
         # Declare an associative array for PIDs and commands
         declare -A pid_command_map
 
