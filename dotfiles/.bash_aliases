@@ -205,13 +205,10 @@ alias k9s="k9s-nsg"
 ##
 alias dockoff='docker rm -vf $(docker ps -aq); docker rmi -f $(docker images -aq)'
 
-function dockercontainers() {
-    docker ps --format="table {{.Names}}\t{{.Image}}\t{{.Status}}" | (read -r; printf "%s\n" "$REPLY"; sort -k 1 )
-}
-
+alias dockercontainers='docker ps --format="table {{.Names}}\t{{.Image}}\t{{.Status}}" | (read -r; printf "%s\n" "$REPLY"; sort -k 1 )'
 
 function dockerperv() {
-   sleep_time_secs=1
+   sleep_time_secs=2
     while true; do
         clear
         echo "Every $sleep_time_secs s: dockercontainers: $(date)"
