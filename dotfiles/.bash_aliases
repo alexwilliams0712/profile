@@ -87,6 +87,13 @@ function murder() {
 
 alias youdosser='find . -type f -exec dos2unix {} \;'
 
+apt_upgrader() {
+	sudo apt update -y
+	sudo apt upgrade -y
+	sudo apt-get update -y
+	sudo apt-get upgrade -y
+    sudo apt full-upgrade -y
+}
 
 # Python
 alias pythonpathify="export PYTHONPATH=$(pwd):$PYTHONPATH"

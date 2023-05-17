@@ -19,12 +19,7 @@ handle_error() {
 }
 trap 'handle_error $LINENO' ERR
 
-apt_upgrader() {
-	sudo apt update -y
-	sudo apt upgrade -y
-	sudo apt-get update -y
-	sudo apt-get upgrade -y
-}
+
 copy_dotfiles() {
 	mkdir -p $HOME/.config/terminator
 	cp $PROFILE_DIR/dotfiles/terminal_config $HOME/.config/terminator/config
@@ -32,6 +27,9 @@ copy_dotfiles() {
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
 	sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
+	source ~/.bashrc
+}
+set_git_config() {
 	git config --global core.autocrlf false
 	git config --global pull.rebase false
 	git config --global http.sslVerify false
@@ -110,10 +108,7 @@ install_apt_packages() {
 	sudo systemctl start fail2ban
 	sudo apt-get remove --purge -y libreoffice* shotwell ibus
 	sudo apt -y autoremove
-	sudo apt full-upgrade -y
 	apt_upgrader
-	sudo apt dist-upgrade
-	sudo apt install update-manager-core
 }
 ssh_stuff() {
 	sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
@@ -321,6 +316,7 @@ exit_script() {
 	fi
 }
 main() {
+	set_git_config
 	copy_dotfiles
 	install_apt_packages
 	install_snaps

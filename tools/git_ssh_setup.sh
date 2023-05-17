@@ -10,7 +10,6 @@ ssh-add ~/.ssh/id_ed25519
 
 # Step 3: Add Public Key to GitHub
 pub_key=$(cat ~/.ssh/id_ed25519.pub)
-read -p "Enter a title for the SSH key: " key_title
 
 echo "Copy the below into https://github.com/settings/ssh/new & test with $ ssh -T git@github.com"
 cat ~/.ssh/id_ed25519.pub
