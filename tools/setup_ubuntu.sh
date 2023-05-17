@@ -88,14 +88,11 @@ install_apt_packages() {
 		dos2unix \
 		fail2ban \
 		figlet \
-		glances \
-		htop \
 		libfuse2 \
 		libmysqlclient-dev \
 		libpq-dev \
 		libsqlite3-dev \
 		net-tools \
-		piper \
 		postgresql \
 		postgresql-contrib \
 		samba \
