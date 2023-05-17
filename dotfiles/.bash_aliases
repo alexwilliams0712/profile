@@ -184,16 +184,17 @@ alias multipull="find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} p
 #K8s
 ##
 alias k9s="k9s-nsg"
-
+##
+#Docker
+##
 alias dockoff='docker rm -vf $(docker ps -aq); docker rmi -f $(docker images -aq)'
+
 function dockercontainers() {
-    number_chars=35
-    docker ps -a --format="{{.Names}}\t{{.Image}}\t{{.Status}}" | awk -v OFS='\t' -v num_chars=$number_chars 'BEGIN {printf "%-15s\t%-30s\t%-40s\n", "NAMES", "IMAGE", "STATUS"} NR>=1 {printf "%-'$number_chars's\t%-30s\t%-40s\n", substr($1, 1, num_chars), $2, $3}' | (read -r; printf "%s\n" "$REPLY"; sort -k 1)
+    docker ps --format="table {{.Names}}\t{{.Image}}\t{{.Status}}" | (read -r; printf "%s\n" "$REPLY"; sort -k 1 )
 }
 
 
-
-dockerperv() {
+function dockerperv() {
    sleep_time_secs=1
     while true; do
         clear
