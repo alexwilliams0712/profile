@@ -149,10 +149,11 @@ alias gohome="cd $CODE_ROOT"
 function gitthefuckout() {
   git ls-remote --exit-code --heads origin main >/dev/null 2>&1
   if [ $? -eq 0 ]; then
-    git fetch origin && git reset --hard origin/main
+    git fetch origin && git reset --hard origin/main && git checkout main
   else
-    git fetch origin && git reset --hard origin/master
+    git fetch origin && git reset --hard origin/master && git checkout master
   fi
+  git pull
 }
 
 function attackoftheclones() {
