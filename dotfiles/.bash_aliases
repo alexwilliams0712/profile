@@ -62,7 +62,7 @@ function murder() {
             echo "Attempting graceful shutdown: $target_process - $pid ($truncated_cmd)"
             kill -15 "$pid"
         done
-        
+
         # Wait for 2 seconds if there are any processes
         if [ ${#pid_command_map[@]} -gt 0 ]; then
             sleep 2
@@ -83,6 +83,8 @@ function murder() {
         declare -A pid_command_map
     done
 }
+
+alias youdosser='find . -type f -exec dos2unix {} \;'
 
 
 # Python
