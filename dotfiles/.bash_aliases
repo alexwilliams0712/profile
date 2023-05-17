@@ -115,7 +115,8 @@ function pipcompiler() {
         files=$(ls requirements/*.in | grep 'requirements*' | sort -V)
     fi
 
-    echo "Requirements files: ${files}"
+    echo "Requirements files:"
+    echo "${files}"
     # If no files were found, exit
     if [ -z "${files}" ]; then
         echo "No requirements*.in files found."
