@@ -125,6 +125,7 @@ function pipcompiler() {
     # Pip-compile each .in file
     for file in ${files}; do
         echo "Compiling ${file}"
+	rm -f "${file//.in/.txt}"
         pip-compile --resolver=backtracking "${file}"
     done
 
