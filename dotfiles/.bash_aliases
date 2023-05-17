@@ -112,7 +112,7 @@ function pipcompiler() {
     if ls requirements*.in &> /dev/null; then
         files=$(ls *.in | grep '^requirements.*in' | sort -V)
     else
-        files=$(ls requirements/*.in | grep '^requirements/requirements*.in' | sort -V)
+        files=$(ls requirements/*.in | grep 'requirements*' | sort -V)
     fi
 
     echo "Requirements files: ${files}"
