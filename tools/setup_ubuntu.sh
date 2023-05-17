@@ -81,6 +81,7 @@ install_apt_packages() {
 		shellcheck
 
 	sudo apt install -y \
+		at \
 		bash \
 		bpytop \
 		curl \
@@ -213,7 +214,7 @@ install_github_cli() {
 	sudo apt install gh -y
 }
 install_clam_av() {
-	sudo apt-get install -y clamav-daemon
+	sudo apt-get install -y clamav clamav-daemon
 	sudo systemctl stop clamav-freshclam.service
 	sudo freshclam
 	sudo systemctl --system daemon-reload
