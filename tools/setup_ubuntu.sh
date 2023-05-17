@@ -177,7 +177,7 @@ install_jetbrains_toolbox() {
 	cd /opt/jetbrains-toolbox
 	jetbrains-toolbox
 	if [ -d ~/.config/JetBrains ]; then
-	    for product_dir in ~/.config/JetBrains/*; do
+	    for product_dir in ~/.config/JetBrains/pycharm*; do
 		if [ -d "$product_dir" ]; then
 		    mkdir -p "$product_dir/options"
 		    echo "Copying to $product_dir/options/watcherDefaultTasks.xml"
@@ -308,10 +308,9 @@ set_up_pyenv() {
 		git pull $URL
 	fi
 }
-# pip_installs() {
-# 	sudo -k
-# 	pip install -U pip pip-tools black isort psutil
-# }
+pip_installs() {
+	pip install -U pip pip-tools black isort psutil
+}
 exit_script() {
 	if [[ exit_code -eq 0 ]]; then
 		cd $PROFILE_DIR
@@ -341,7 +340,7 @@ main() {
 	setup_espanso
 	ssh_stuff
 	apt_upgrader
-	# pip_installs
+	pip_installs
 	exit_script
 }
 main
