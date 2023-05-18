@@ -10,8 +10,6 @@ git fetch origin && git reset --hard origin/main
 git checkout main
 git pull
 
-
-
 os_name="$(uname)"
 
 if [ "$os_name" = "Darwin" ]; then
