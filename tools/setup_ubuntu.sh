@@ -301,7 +301,7 @@ set_up_pyenv() {
 	fi
 }
 pip_installs() {
-	pip install -U pip pip-tools black isort psutil
+	echo "Please run: \$ pip install -U pip pip-tools black isort psutil"
 }
 exit_script() {
 	if [[ exit_code -eq 0 ]]; then
