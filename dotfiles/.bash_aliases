@@ -104,6 +104,7 @@ function enter_pyenv() {
     else
         expected_env_name="$1"
     fi
+    echo "Activating: $expected_env_name"
     # Check if the virtual environment exists
     if [[ "$(pyenv versions --bare | grep -x $venv_name)" != "" ]]; then
       echo "Virtual environment '$venv_name' exists, activating it..."
