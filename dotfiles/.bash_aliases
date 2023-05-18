@@ -98,11 +98,33 @@ apt_upgrader() {
 
 # Python
 alias pythonpathify="export PYTHONPATH=$(pwd):$PYTHONPATH"
+function enter_pyenv() {
+    if [ -z "$1" ]; then
+        expected_env_name="$(basename $(pwd))"
+    else
+        expected_env_name="$1"
+    fi
+    # Check if the virtual environment exists
+    if [[ "$(pyenv versions --bare | grep -x $venv_name)" != "" ]]; then
+      echo "Virtual environment '$venv_name' exists, activating it..."
+      pyenv activate $venv_name
+    else
+      echo "Virtual environment '$venv_name' does not exist, creating it..."
+      pyenv virtualenv $venv_name
+      pyenv activate $venv_name
+    fi
+}
 function pipcompiler() {
     # Check if we're in a virtual environment
     if [ -z "${VIRTUAL_ENV}" ]; then
         echo "Not in a virtual environment. Please activate a virtual environment and try again."
-        return 1
+        enter_pyenv
+    fi
+    
+    # Confirm the activation worked..
+    if [ -z "${VIRTUAL_ENV}" ]; then
+        echo "Not in a virtual environment. Please activate a virtual environment and try again."
+        exit 1
     fi
 
     echo "Running pip compiler"
@@ -145,7 +167,9 @@ function pipcompiler() {
     ${install_command}
 }
 
-                   
+function version_bumper() {
+    gitthefuckout && pipcompiler && git cam 'bump reqs' &&  git push origin main:bump_reqs
+}             
 
 # Sublime Text
 alias st=subl
