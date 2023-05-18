@@ -106,13 +106,13 @@ function enter_pyenv() {
     fi
     echo "Activating: $expected_env_name"
     # Check if the virtual environment exists
-    if [[ "$(pyenv versions --bare | grep -x $venv_name)" != "" ]]; then
-      echo "Virtual environment '$venv_name' exists, activating it..."
+    if [[ "$(pyenv versions --bare | grep -x $expected_env_name)" != "" ]]; then
+      echo "Virtual environment '$expected_env_name' exists, activating it..."
       pyenv activate $venv_name
     else
-      echo "Virtual environment '$venv_name' does not exist, creating it..."
-      pyenv virtualenv $venv_name
-      pyenv activate $venv_name
+      echo "Virtual environment '$expected_env_name' does not exist, creating it..."
+      pyenv virtualenv $expected_env_name
+      pyenv activate $expected_env_name
     fi
 }
 function pipcompiler() {
