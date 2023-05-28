@@ -97,7 +97,9 @@ apt_upgrader() {
 }
 
 # Python
-alias pythonpathify="export PYTHONPATH=$(pwd):$PYTHONPATH"
+function pypath() {
+    export PYTHONPATH=$(pwd)/src:$(pwd)/tests:$PYTHONPATH; 
+}
 function enter_pyenv() {
     if [ -z "$1" ]; then
         expected_env_name="$(basename $(pwd))"
