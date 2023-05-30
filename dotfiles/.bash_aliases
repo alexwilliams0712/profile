@@ -234,7 +234,7 @@ alias k9s="k9s-nsg"
 ##
 alias dockoff='docker rm -vf $(docker ps -aq); docker rmi -f $(docker images -aq)'
 alias dockeredo='docker compose down -v && docker compose up -d --remove-orphans'
-alias dockercontainers='docker ps --format="table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" | (read -r; printf "%s\n" "$REPLY"; sort -k 1 )'
+alias dockercontainers='docker ps --format="table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" | (read -r; printf "%s\n" "$REPLY"; sort -k 2 )'
 
 function dockerperv() {
    sleep_time_secs=2
