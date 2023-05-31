@@ -259,6 +259,9 @@ install_node() {
 	npm -v
 	npm config set prefix '~/.npm-global'
 }
+install_tailscale() {
+	curl -fsSL https://tailscale.com/install.sh | sh
+}
 set_up_pyenv() {
 	echo "Setting up pyenv"
 	apt_upgrader
@@ -329,6 +332,7 @@ main() {
 	install_surfshark
 	install_franz
 	install_spotify
+	install_tailscale
 	install_jetbrains_toolbox
 	setup_espanso
 	ssh_stuff
