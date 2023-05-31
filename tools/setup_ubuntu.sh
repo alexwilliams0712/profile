@@ -261,7 +261,7 @@ install_node() {
 }
 install_tailscale() {
 	curl -fsSL https://tailscale.com/install.sh | sh
-	sudo tailscale up
+	sudo tailscale up --ssh
 }
 set_up_pyenv() {
 	echo "Setting up pyenv"
