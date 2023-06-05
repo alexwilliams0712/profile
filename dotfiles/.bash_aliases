@@ -100,6 +100,7 @@ apt_upgrader() {
 function pypath() {
     export PYTHONPATH=$(pwd)/src:$(pwd)/tests:$PYTHONPATH; 
 }
+
 function enter_pyenv() {
     if [ -z "$1" ]; then
         expected_env_name="$(basename $(pwd))"
@@ -117,10 +118,23 @@ function enter_pyenv() {
       pyenv activate $expected_env_name
     fi
 }
+
+function pylint() {
+    # Check if we're in a virtual environment
+    if [ -z "${VIRTUAL_ENV}" ]; then
+        echo "Not in a virtual environment. Activating..."
+        enter_pyenv
+    fi
+    pip install -U black isort ruff
+    isort --profile black .
+    black -t py311 .
+    ruff --fix .
+}
+
 function pipcompiler() {
     # Check if we're in a virtual environment
     if [ -z "${VIRTUAL_ENV}" ]; then
-        echo "Not in a virtual environment. Please activate a virtual environment and try again."
+        echo "Not in a virtual environment. Activating..."
         enter_pyenv
     fi
     
