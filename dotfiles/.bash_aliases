@@ -178,6 +178,7 @@ function pipcompiler() {
     # Pip-compile each .in file
     for file in ${files}; do
         echo "Compiling ${file}"
+	(awk '/^--/' ${file}; awk '!/^--/' ${file} | sort) | sponge ${file}
 	rm -f "${file//.in/.txt}"
         pip-compile --resolver=backtracking "${file}"
     done
