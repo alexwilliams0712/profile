@@ -27,6 +27,7 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 alias bk='cd $OLDPWD'
 alias ppath='IFS=:; for i in $PATH; do echo $i; done; unset IFS'
+alias ppypath='IFS=:; for i in $PYTHONPATH; do echo $i; done; unset IFS'
 
 # Grep and Tail fix logs easily by placing a separator bewtween fields
 function grepcfix() {
@@ -99,6 +100,7 @@ function apt_upgrader() {
 # Python
 function pypath() {
     export PYTHONPATH=$(pwd)/src:$(pwd)/tests:$PYTHONPATH; 
+    ppypath
 }
 
 function enter_pyenv() {
