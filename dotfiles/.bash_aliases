@@ -99,8 +99,19 @@ function apt_upgrader() {
 
 # Python
 function pypath() {
-    export PYTHONPATH=$(pwd)/src:$(pwd)/tests:$PYTHONPATH; 
-    ppypath
+	export PYTHONPATH=$(pwd)/src:$(pwd)/tests:$PYTHONPATH;
+	IFS=:
+	unique_paths=()
+	for path in $PYTHONPATH; do
+	    if [[ ! "${unique_paths[*]}" =~ ${path} ]]; then
+		unique_paths+=("$path")
+	    fi
+	done
+	IFS=$' \t\n'
+
+	new_path=$(IFS=:; echo "${unique_paths[*]}")
+	export PYTHONPATH="$new_path"
+	ppypath
 }
 
 function enter_pyenv() {
