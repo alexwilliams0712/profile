@@ -78,6 +78,7 @@ install_apt_packages() {
 		python3-pip \
 		gnuplot \
 		openssh-server \
+		moreutils \
 		shellcheck
 
 	sudo apt install -y \
