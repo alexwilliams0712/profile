@@ -87,7 +87,7 @@ function murder() {
 
 alias youdosser='find . -type f -exec dos2unix {} \;'
 
-apt_upgrader() {
+function apt_upgrader() {
 	sudo apt update -y
 	sudo apt upgrade -y
 	sudo apt-get update -y
