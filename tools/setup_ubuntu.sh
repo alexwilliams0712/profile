@@ -99,6 +99,7 @@ install_apt_packages() {
 		samba \
 		speedtest-cli \
 		terminator \
+		tree \
 		wget \
 		$(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
 	
