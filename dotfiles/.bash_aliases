@@ -273,3 +273,8 @@ function dockerperv() {
         sleep $sleep_time_secs
     done
 }
+
+##
+#vpn
+##
+alias start_vpn="source ~/vpn/start_vpn.sh"
