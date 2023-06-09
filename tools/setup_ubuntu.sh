@@ -124,6 +124,7 @@ install_snaps() {
 	done
 	for i in \
 		1password \
+		whatsapp-for-linux \
 		slack; do
 		sudo snap install $i
 	done
