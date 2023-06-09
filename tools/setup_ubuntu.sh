@@ -10,8 +10,8 @@ export DEFAULT_PYTHON_VERSION="3.11.2"
 export PROFILE_DIR=$(pwd)
 exit_code=0
 # Makes it return on any error
-set -e
-set -o pipefail
+# set -e
+# set -o pipefail
 
 # Define an error handler function
 handle_error() {
