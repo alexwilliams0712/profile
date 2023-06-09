@@ -123,7 +123,8 @@ install_snaps() {
 		sudo snap install $i --classic
 	done
 	for i in \
-		1password; do
+		1password \
+		slack; do
 		sudo snap install $i
 	done
 	for i in \
