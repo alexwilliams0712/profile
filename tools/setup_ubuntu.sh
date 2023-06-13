@@ -262,6 +262,7 @@ install_node() {
 	node -v
 	npm -v
 	npm config set prefix '~/.npm-global'
+	npm install -g wscat
 }
 install_tailscale() {
 	curl -fsSL https://tailscale.com/install.sh | sh
