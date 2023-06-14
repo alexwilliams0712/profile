@@ -278,4 +278,8 @@ function dockerperv() {
 ##
 #vpn
 ##
-alias start_vpn="source ~/vpn/start_vpn.sh"
+function start_vpn {
+  pushd ~/vpn > /dev/null
+  source ./start_vpn.sh
+  popd > /dev/null
+}
