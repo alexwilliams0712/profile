@@ -79,7 +79,8 @@ install_apt_packages() {
 		gnuplot \
 		openssh-server \
 		moreutils \
-		shellcheck
+		shellcheck \
+  		blueman
 
 	sudo apt install -y \
 		at \
