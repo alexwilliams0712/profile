@@ -68,32 +68,53 @@ set_git_config() {
 }
 install_apt_packages() {
 	apt_upgrader
-    	sudo add-apt-repository -y universe
+    sudo add-apt-repository -y universe
 	sudo apt-get install -y \
+		blueman \
+		build-essential \
 		ca-certificates \
+		clamav \
+		clamav-daemon\
 		curl \
 		git \
 		gnupg \
-		lsb-release \
-		python3-pip \
 		gnuplot \
-		openssh-server \
+		libbz2-dev \
+		libffi-dev \
+		liblzma-dev \
+		libncursesw5-dev \
+		libreadline-dev \
+		libsqlite3-dev \
+		libssl-dev \
+		libxml2-dev \
+		libxmlsec1-dev \
+		lsb-release \
+		lzma \
+		make \
 		moreutils \
+		openssh-server \
+		python3-pip \
 		shellcheck \
-  		blueman
+		tk-dev \
+		wget \
+		xz-utils \
+		zlib1g-dev
 
 	sudo apt install -y \
 		at \
 		bash \
 		bpytop \
+		build-essential \
 		curl \
 		dos2unix \
 		fail2ban \
 		figlet \
+		gcc \
 		libfuse2 \
 		libmysqlclient-dev \
 		libpq-dev \
 		libsqlite3-dev \
+		make \
 		net-tools \
 		postgresql \
 		postgresql-contrib \
@@ -103,15 +124,27 @@ install_apt_packages() {
 		terminator \
 		tree \
 		wget
+		  
 
  	sudo systemctl disable postgresql.service
-	sudo systemctl enable fail2ban
-	sudo systemctl start fail2ban
+	ssh_stuff
 	sudo apt-get remove --purge -y libreoffice* shotwell
-	sudo apt -y autoremove
+	install_snaps
 	apt_upgrader
+	set_up_pyenv
+	install_rust
+
+	install_and_setup_docker
+	install_jetbrains_toolbox
+	install_github_cli
+
+	install_chrome
+	setup_espanso
+	install_clam_av
 }
 ssh_stuff() {
+	sudo systemctl enable fail2ban
+	sudo systemctl start fail2ban
 	sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 	sudo sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
 	sudo systemctl restart ssh
@@ -162,8 +195,6 @@ setup_espanso() {
 	fi
 }
 install_rust() {
-	apt_upgrader
-	sudo apt install -y curl gcc make build-essential
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 	rustup update stable
 	rustup install nightly
@@ -223,7 +254,6 @@ install_github_cli() {
 	sudo apt install gh -y
 }
 install_clam_av() {
-	sudo apt-get install -y clamav clamav-daemon
 	sudo systemctl stop clamav-freshclam.service
 	sudo freshclam
 	sudo systemctl --system daemon-reload
@@ -252,7 +282,7 @@ install_surfshark() {
 }
 install_franz() {
 	export FRANZ_VERSION=$(curl https://api.github.com/repos/meetfranz/franz/releases/latest -s | jq .name -r)
-	sudo curl -fsSL https://github.com/meetfranz/franz/releases/download/v5.9.2/franz_5.9.2_amd64.deb -o franz_$FRANZ_VERSION\_amd64.deb
+	sudo curl -fsSL "https://github.com/meetfranz/franz/releases/download/v${FRANZ_VERSION}/franz_${FRANZ_VERSION}_amd64.deb" -o franz_$FRANZ_VERSION\_amd64.deb
 	sudo dpkg -i franz_$FRANZ_VERSION\_amd64.deb
 	sudo rm -f franz_$FRANZ_VERSION\_amd64.deb
 }
@@ -271,26 +301,6 @@ install_tailscale() {
 }
 set_up_pyenv() {
 	echo "Setting up pyenv"
-	apt_upgrader
-	sudo apt-get install -y \
-		make \
-		build-essential \
-		libssl-dev \
-		zlib1g-dev \
-		libbz2-dev \
-		libreadline-dev \
-		libsqlite3-dev \
-		wget \
-		curl \
-		libncursesw5-dev \
-		xz-utils \
-		tk-dev \
-		libxml2-dev \
-		libxmlsec1-dev \
-		libffi-dev \
-		lzma \
-		libbz2-dev \
-		liblzma-dev
 	pyenv_dir="$HOME/.pyenv"
 	if [ -d "$pyenv_dir" ]; then
 		echo "The $pyenv_dir directory already exists. Remove it to reinstall."
@@ -325,22 +335,12 @@ main() {
 	set_git_config
 	copy_dotfiles
 	install_apt_packages
-	install_snaps
-	install_chrome
-	set_up_pyenv
-	install_rust
 	install_node
-	install_clam_av
-	install_github_cli
+	install_tailscale
 	install_aws_cli
-	install_and_setup_docker
 	install_terraform
 	install_surfshark
-	install_franz
-	install_tailscale
-	install_jetbrains_toolbox
-	# setup_espanso
-	ssh_stuff
+	
 	apt_upgrader
 	pip_installs
 	exit_script
