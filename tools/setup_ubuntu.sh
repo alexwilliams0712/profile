@@ -104,7 +104,8 @@ install_apt_packages() {
 		tree \
 		wget \
 		$(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
-	
+
+ 	sudo systemctl disable postgresql.service
 	sudo systemctl enable fail2ban
 	sudo systemctl start fail2ban
 	sudo apt-get remove --purge -y libreoffice* shotwell ibus
