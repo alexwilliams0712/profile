@@ -98,6 +98,7 @@ install_apt_packages() {
 		postgresql \
 		postgresql-contrib \
 		samba \
+  		snapd \
 		speedtest-cli \
 		terminator \
 		tree \
