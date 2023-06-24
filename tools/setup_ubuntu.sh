@@ -132,7 +132,7 @@ install_apt_packages() {
 
  	sudo systemctl disable postgresql.service
 	ssh_stuff
-	sudo apt-get remove --purge -y libreoffice* shotwell
+	# sudo apt-get remove --purge -y libreoffice* shotwell
 	install_snaps
 	apt_upgrader
 	ensure_directory
@@ -175,11 +175,11 @@ install_snaps() {
 		slack; do
 		sudo snap install $i
 	done
-	for i in \
-		firefox \
-		rpi-imager; do
-		sudo snap remove $i --no-wait --purge
-	done
+	# for i in \
+	# 	firefox \
+	# 	rpi-imager; do
+	# 	sudo snap remove $i --no-wait --purge
+	# done
 	sudo snap refresh
 }
 
