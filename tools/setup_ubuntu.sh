@@ -338,7 +338,7 @@ main() {
 	install_franz
 	install_tailscale
 	install_jetbrains_toolbox
-	setup_espanso
+	# setup_espanso
 	ssh_stuff
 	apt_upgrader
 	pip_installs
