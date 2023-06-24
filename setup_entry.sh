@@ -10,6 +10,12 @@ git fetch origin && git reset --hard origin/main
 git checkout main
 git pull
 
+if ! command -v pip >/dev/null 2>&1; then
+  echo "pip is not installed, installing pip."
+  sudo apt-get update
+  sudo apt-get install -y python3-pip
+fi
+
 os_name="$(uname)"
 
 if [ "$os_name" = "Darwin" ]; then
