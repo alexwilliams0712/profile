@@ -102,8 +102,7 @@ install_apt_packages() {
 		speedtest-cli \
 		terminator \
 		tree \
-		wget \
-		$(apt search gnome-shell-extension | grep ^gnome | cut -d / -f1)
+		wget
 
  	sudo systemctl disable postgresql.service
 	sudo systemctl enable fail2ban
