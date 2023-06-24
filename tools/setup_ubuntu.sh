@@ -10,14 +10,18 @@ export DEFAULT_PYTHON_VERSION="3.11.2"
 export PROFILE_DIR=$(pwd)
 exit_code=0
 # Makes it return on any error
-# set -e
-# set -o pipefail
+set -e
+set -o pipefail
 
 # Define an error handler function
 handle_error() {
     echo "An error occurred on line $1"
 }
 trap 'handle_error $LINENO' ERR
+
+ensure_directory() {
+	cd $PROFILE_DIR
+}
 
 copy_dotfiles() {
 	mkdir -p $HOME/.config/terminator
@@ -131,16 +135,23 @@ install_apt_packages() {
 	sudo apt-get remove --purge -y libreoffice* shotwell
 	install_snaps
 	apt_upgrader
+	ensure_directory
 	set_up_pyenv
+	ensure_directory
 	install_rust
-
+	ensure_directory
 	install_and_setup_docker
+	ensure_directory
 	install_jetbrains_toolbox
+	ensure_directory
 	install_github_cli
-
+	ensure_directory
 	install_chrome
+	ensure_directory
 	setup_espanso
+	ensure_directory
 	install_clam_av
+	ensure_directory
 }
 ssh_stuff() {
 	sudo systemctl enable fail2ban
@@ -232,7 +243,7 @@ install_and_setup_docker() {
 	sudo chmod a+r /etc/apt/keyrings/docker.gpg
 	apt_upgrader
 	sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-	sudo systemctl enable --now docker
+	sudo systemctl enable --now docker.service
 	if ! grep -q "^docker:" /etc/group; then
 		sudo groupadd docker
 	fi
@@ -243,6 +254,7 @@ install_and_setup_docker() {
 		newgrp docker
 	fi
 	sudo systemctl enable docker.service
+	echo "Docker setup complete"
 }
 install_github_cli() {
 	echo "Running gh-cli setup"
