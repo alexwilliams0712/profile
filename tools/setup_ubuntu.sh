@@ -141,23 +141,24 @@ install_snaps() {
 setup_espanso() {
 	if [ "$XDG_SESSION_TYPE" = "X11" ]; then
 		echo "X11!"
+  		wget https://github.com/federico-terzi/espanso/releases/download/v2.1.8/espanso-debian-x11-amd64.deb
+    		sudo apt install -y ./espanso-debian-x11-amd64.deb
+      		sudo rm espanso-*
+		espanso service register
+  		config_file="$HOME/.config/espanso/match/base.yml"
+		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
+		espanso_service_status=$(espanso service status)
+  		if [[ "$espanso_service_status" == *"running"* ]]; then
+			echo "Espanso service is already running. Restarting..."
+			espanso service restart
+		else
+			echo "Espanso service is not running. Starting..."
+			espanso service start
+		fi
+		espanso --version
 	else
-		sudo sed -i 's/#WaylandEnable=false/WaylandEnable=false/g' /etc/gdm3/custom.conf
+		echo "Running Wayland... try again later... maybe years"
 	fi
-	sudo snap install espanso --classic --channel=latest/edge
-	espanso service register
-	config_file="$HOME/.config/espanso/match/base.yml"
-	cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
-	espanso_service_status=$(espanso service status)
-
-	if [[ "$espanso_service_status" == *"running"* ]]; then
-		echo "Espanso service is already running. Restarting..."
-		espanso service restart
-	else
-		echo "Espanso service is not running. Starting..."
-		espanso service start
-	fi
-	espanso --version
 }
 install_rust() {
 	apt_upgrader
