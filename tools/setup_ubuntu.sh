@@ -139,7 +139,7 @@ install_snaps() {
 	sudo snap refresh
 }
 setup_espanso() {
-	if [ "$XDG_SESSION_TYPE" = "X11" ]; then
+	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
 		echo "X11!"
   		wget https://github.com/federico-terzi/espanso/releases/download/v2.1.8/espanso-debian-x11-amd64.deb
     		sudo apt install -y ./espanso-debian-x11-amd64.deb
