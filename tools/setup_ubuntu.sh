@@ -311,7 +311,7 @@ install_aws_cli() {
 }
 install_surfshark() {
 	sudo curl -f https://downloads.surfshark.com/linux/debian-install.sh --output surfshark-install.sh
-	chmod o+r surfshark-install.sh
+	sudo chmod o+r surfshark-install.sh
 	sudo sh surfshark-install.sh
 	sudo rm -f surfshark-install.sh
 }
