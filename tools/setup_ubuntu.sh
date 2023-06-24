@@ -175,7 +175,6 @@ install_jetbrains_toolbox() {
 	if [ ! -d /opt/jetbrains-toolbox ]; then
 		curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
 	fi
-	cd /opt/jetbrains-toolbox
 	jetbrains-toolbox
 	if [ -d ~/.config/JetBrains ]; then
 	    for product_dir in ~/.config/JetBrains/pycharm*; do
