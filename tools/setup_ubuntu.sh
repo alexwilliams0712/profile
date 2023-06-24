@@ -182,27 +182,25 @@ install_snaps() {
 	done
 	sudo snap refresh
 }
-setup_espanso() {
-	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
-		echo "X11!"
-  		wget https://github.com/federico-terzi/espanso/releases/download/v2.1.8/espanso-debian-x11-amd64.deb
-    		chmod o+r espanso-debian-x11-amd64.deb
-    		sudo apt install -y ./espanso-debian-x11-amd64.deb
-      		sudo rm espanso-*
-		espanso service register
-  		config_file="$HOME/.config/espanso/match/base.yml"
-		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
-		espanso_service_status=$(espanso service status)
-  		if [[ "$espanso_service_status" == *"running"* ]]; then
-			echo "Espanso service is already running. Restarting..."
-			espanso service restart
-		else
-			echo "Espanso service is not running. Starting..."
-			espanso service start
-		fi
-		espanso --version
+
+set_up_pyenv() {
+	echo "Setting up pyenv"
+	pyenv_dir="$HOME/.pyenv"
+	if [ -d "$pyenv_dir" ]; then
+		echo "The $pyenv_dir directory already exists. Remove it to reinstall."
 	else
-		echo "Running Wayland... try again later... maybe years"
+		curl https://pyenv.run | bash
+	fi
+	pyenv update
+	pyenv install -s $DEFAULT_PYTHON_VERSION
+	pyenv global $DEFAULT_PYTHON_VERSION
+	FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
+	URL=https://github.com/pyenv/pyenv-virtualenv.git
+	if [ ! -d "$FOLDER" ]; then
+		git clone $URL $FOLDER
+	else
+		cd "$FOLDER"
+		git pull $URL
 	fi
 }
 install_rust() {
@@ -226,6 +224,29 @@ install_jetbrains_toolbox() {
 		    cp $PROFILE_DIR/dotfiles/watcherDefaultTasks.xml $product_dir/options/watcherDefaultTasks.xml
 		fi
 	    done
+	fi
+}
+setup_espanso() {
+	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
+		echo "X11!"
+  		wget https://github.com/federico-terzi/espanso/releases/download/v2.1.8/espanso-debian-x11-amd64.deb
+    		chmod o+r espanso-debian-x11-amd64.deb
+    		sudo apt install -y ./espanso-debian-x11-amd64.deb
+      		sudo rm espanso-*
+		espanso service register
+  		config_file="$HOME/.config/espanso/match/base.yml"
+		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
+		espanso_service_status=$(espanso service status)
+  		if [[ "$espanso_service_status" == *"running"* ]]; then
+			echo "Espanso service is already running. Restarting..."
+			espanso service restart
+		else
+			echo "Espanso service is not running. Starting..."
+			espanso service start
+		fi
+		espanso --version
+	else
+		echo "Running Wayland... try again later... maybe years"
 	fi
 }
 install_chrome() {
@@ -286,9 +307,11 @@ install_aws_cli() {
 	sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
 	which aws
 	aws --version
+	sudo rm -r aws*
 }
 install_surfshark() {
 	sudo curl -f https://downloads.surfshark.com/linux/debian-install.sh --output surfshark-install.sh
+	chmod o+r surfshark-install.sh
 	sudo sh surfshark-install.sh
 	sudo rm -f surfshark-install.sh
 }
@@ -311,32 +334,13 @@ install_tailscale() {
 	sudo tailscale up --ssh
 	sudo ufw deny ssh
 }
-set_up_pyenv() {
-	echo "Setting up pyenv"
-	pyenv_dir="$HOME/.pyenv"
-	if [ -d "$pyenv_dir" ]; then
-		echo "The $pyenv_dir directory already exists. Remove it to reinstall."
-	else
-		curl https://pyenv.run | bash
-	fi
-	pyenv update
-	pyenv install -s $DEFAULT_PYTHON_VERSION
-	pyenv global $DEFAULT_PYTHON_VERSION
-	FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
-	URL=https://github.com/pyenv/pyenv-virtualenv.git
-	if [ ! -d "$FOLDER" ]; then
-		git clone $URL $FOLDER
-	else
-		cd "$FOLDER"
-		git pull $URL
-	fi
-}
+
 pip_installs() {
-	echo "Please run: \$ pip install -U pip pip-tools black isort psutil"
+	sudo -u $USER pip install -U pip pip-tools psutil
 }
 exit_script() {
 	if [[ exit_code -eq 0 ]]; then
-		cd $PROFILE_DIR
+		ensure_directory
 		source ~/.bashrc
 		figlet "Complete"
 	else
@@ -347,12 +351,17 @@ main() {
 	set_git_config
 	copy_dotfiles
 	install_apt_packages
+	ensure_directory
 	install_node
+	ensure_directory
 	install_tailscale
+	ensure_directory
 	install_aws_cli
+	ensure_directory
 	install_terraform
+	ensure_directory
 	install_surfshark
-	
+	ensure_directory
 	apt_upgrader
 	pip_installs
 	exit_script
