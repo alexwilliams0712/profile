@@ -107,7 +107,7 @@ install_apt_packages() {
  	sudo systemctl disable postgresql.service
 	sudo systemctl enable fail2ban
 	sudo systemctl start fail2ban
-	sudo apt-get remove --purge -y libreoffice* shotwell ibus
+	sudo apt-get remove --purge -y libreoffice* shotwell
 	sudo apt -y autoremove
 	apt_upgrader
 }
