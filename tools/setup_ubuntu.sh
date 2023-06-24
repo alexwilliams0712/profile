@@ -127,6 +127,7 @@ install_snaps() {
 	for i in \
 		1password \
 		whatsapp-for-linux \
+  		spotify \
 		slack; do
 		sudo snap install $i
 	done
@@ -235,11 +236,6 @@ install_terraform() {
 	sudo rm terraform_${latest_version}_linux_amd64.zip
 	terraform version
 }
-install_spotify() {
-	curl -sS https://download.spotify.com/debian/pubkey_7A3A762FAFD4A51F.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
-	echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
-	apt_upgrader && sudo apt-get install spotify-client
-}
 install_aws_cli() {
 	curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 	unzip -o awscliv2.zip
@@ -340,7 +336,6 @@ main() {
 	install_terraform
 	install_surfshark
 	install_franz
-	install_spotify
 	install_tailscale
 	install_jetbrains_toolbox
 	setup_espanso
