@@ -218,7 +218,7 @@ install_espanso() {
 		echo "X11!"
   		wget https://github.com/federico-terzi/espanso/releases/download/v2.1.8/espanso-debian-x11-amd64.deb
     		chmod o+r espanso-debian-x11-amd64.deb
-    		sudo apt install -y ./espanso-debian-x11-amd64.deb
+    		sudo apt -o DPkg::Lock::Timeout=60 install -y ./espanso-debian-x11-amd64.deb
       		sudo rm espanso-*
 		espanso service register
   		config_file="$HOME/.config/espanso/match/base.yml"
@@ -244,7 +244,7 @@ install_and_setup_docker() {
       $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 	sudo chmod a+r /etc/apt/keyrings/docker.gpg
 	apt_upgrader
-	sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+	sudo apt-get -o DPkg::Lock::Timeout=60 install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 	sudo systemctl enable --now docker.service
 	if ! grep -q "^docker:" /etc/group; then
 		sudo groupadd docker
@@ -260,12 +260,11 @@ install_and_setup_docker() {
 }
 install_github_cli() {
 	echo "Running gh-cli setup"
-	type -p curl >/dev/null || sudo apt install curl -y
 	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
 	sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
 	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
 	apt_upgrader
-	sudo apt install gh -y
+	sudo apt -o DPkg::Lock::Timeout=60 install gh -y
 }
 install_clam_av() {
 	sudo systemctl stop clamav-freshclam.service
@@ -298,7 +297,7 @@ install_surfshark() {
 }
 
 install_node() {
-	curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - && sudo apt-get install -y nodejs
+	curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - && sudo apt-get -o DPkg::Lock::Timeout=60 install -y nodejs
 	sudo npm install -g npm
 	node -v
 	npm -v
