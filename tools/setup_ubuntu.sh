@@ -19,7 +19,10 @@ handle_error() {
 }
 trap 'handle_error $LINENO' ERR
 
+
+
 ensure_directory() {
+	print_function_name
 	cd $PROFILE_DIR
 }
 
@@ -33,6 +36,7 @@ copy_dotfiles() {
 	source $HOME/.bash_aliases
 }
 set_git_config() {
+	print_function_name
 	git config --global core.autocrlf false
 	git config --global pull.rebase false
 	git config --global http.sslVerify false
@@ -71,6 +75,7 @@ set_git_config() {
 	fi
 }
 install_apt_packages() {
+	print_function_name
 	apt_upgrader
 	echo "Running installs"
     sudo add-apt-repository -y universe
@@ -147,6 +152,7 @@ install_apt_packages() {
 	ensure_directory
 }
 ssh_stuff() {
+	print_function_name
 	sudo systemctl enable fail2ban
 	sudo systemctl start fail2ban
 	sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
@@ -155,6 +161,7 @@ ssh_stuff() {
 	sudo systemctl reload ssh
 }
 install_flatpaks() {
+	print_function_name
 	for app in \
 		com.meetfranz.Franz \
 		com.github.phase1geo.minder \
@@ -170,12 +177,13 @@ install_flatpaks() {
 	done
 }
 install_portmaster() {
+	print_function_name
 	curl -fsSL https://updates.safing.io/latest/linux_amd64/packages/portmaster-installer.deb -o postmaster-installer.deb
 	sudo dpkg -i postmaster-installer.deb
 	sudo rm postmaster-installer.deb
 }
 install_pyenv() {
-	echo "Setting up pyenv"
+	print_function_name
 	pyenv_dir="$HOME/.pyenv"
 	if [ -d "$pyenv_dir" ]; then
 		echo "The $pyenv_dir directory already exists. Remove it to reinstall."
@@ -195,6 +203,7 @@ install_pyenv() {
 	fi
 }
 install_rust() {
+	print_function_name
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 	rustup update stable
 	rustup install nightly
@@ -203,6 +212,7 @@ install_rust() {
 	rustup update stable
 }
 install_jetbrains_toolbox() {
+	print_function_name
 	if [ ! -d /opt/jetbrains-toolbox ]; then
 		curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
 	fi
@@ -218,6 +228,7 @@ install_jetbrains_toolbox() {
 	fi
 }
 install_espanso() {
+	print_function_name
 	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
 		echo "X11!"
   		wget https://github.com/federico-terzi/espanso/releases/download/v2.1.8/espanso-debian-x11-amd64.deb
@@ -241,6 +252,7 @@ install_espanso() {
 	fi
 }
 install_and_setup_docker() {
+	print_function_name
 	sudo mkdir -m 0755 -p /etc/apt/keyrings
 	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
 	echo \
@@ -263,6 +275,7 @@ install_and_setup_docker() {
 	echo "Docker setup complete"
 }
 install_github_cli() {
+	print_function_name
 	echo "Running gh-cli setup"
 	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
 	sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -271,6 +284,7 @@ install_github_cli() {
 	sudo apt -o DPkg::Lock::Timeout=60 install gh -y
 }
 install_clam_av() {
+	print_function_name
 	sudo systemctl stop clamav-freshclam.service
 	sudo freshclam
 	sudo systemctl --system daemon-reload
@@ -278,6 +292,7 @@ install_clam_av() {
 	sudo /etc/init.d/clamav-daemon start
 }
 install_terraform() {
+	print_function_name
 	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '\"tag_name\":.*' | cut -d'v' -f2 | tr -d \",)
 	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_linux_amd64.zip"
 	unzip "terraform_${latest_version}_linux_amd64.zip"
@@ -286,6 +301,7 @@ install_terraform() {
 	terraform version
 }
 install_aws_cli() {
+	print_function_name
 	curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 	unzip -o awscliv2.zip
 	sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
@@ -294,6 +310,7 @@ install_aws_cli() {
 	sudo rm -r aws*
 }
 install_surfshark() {
+	print_function_name
 	sudo curl -f https://downloads.surfshark.com/linux/debian-install.sh --output surfshark-install.sh
 	sudo chmod o+r surfshark-install.sh
 	sudo sh surfshark-install.sh
@@ -301,6 +318,7 @@ install_surfshark() {
 }
 
 install_node() {
+	print_function_name
 	curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - && sudo apt-get -o DPkg::Lock::Timeout=60 install -y nodejs
 	sudo npm install -g npm
 	node -v
@@ -309,15 +327,18 @@ install_node() {
 	npm install -g wscat
 }
 install_tailscale() {
+	print_function_name
 	curl -fsSL https://tailscale.com/install.sh | sh
 	sudo tailscale up --ssh
 	sudo ufw deny ssh
 }
 
 pip_installs() {
+	print_function_name
 	sudo -u $USER pip install -U pip pip-tools psutil
 }
 exit_script() {
+	print_function_name
 	if [[ exit_code -eq 0 ]]; then
 		ensure_directory
 		source ~/.bashrc
