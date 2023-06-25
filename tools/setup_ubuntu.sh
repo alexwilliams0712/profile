@@ -141,16 +141,17 @@ install_apt_packages() {
 	# sudo apt-get remove --purge -y libreoffice* shotwell
 	ssh_stuff
 	install_pyenv
+ 	pip_installs
 	install_chrome
 	install_vscode
 	install_flatpaks
 	install_portmaster
 	install_rust
 	install_and_setup_docker
-	install_jetbrains_toolbox
 	install_github_cli
 	install_espanso
 	install_clam_av
+ 	install_jetbrains_toolbox
 	ensure_directory
 }
 ssh_stuff() {
@@ -373,7 +374,6 @@ main() {
 	install_terraform
 	install_surfshark
 	apt_upgrader
-	pip_installs
 	exit_script
 }
 main
