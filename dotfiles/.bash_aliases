@@ -89,12 +89,12 @@ function murder() {
 alias youdosser='find . -type f -exec dos2unix {} \;'
 
 function apt_upgrader() {
-	sudo apt update -y
-	sudo apt upgrade -y
+	sudo apt -o DPkg::Lock::Timeout=60 update -y
+	sudo apt -o DPkg::Lock::Timeout=60 upgrade -y
 	sudo apt-get -o DPkg::Lock::Timeout=60 update -y
 	sudo apt-get -o DPkg::Lock::Timeout=60 upgrade -y
-    sudo apt full-upgrade -y
-    sudo apt autoremove -y
+    sudo apt -o DPkg::Lock::Timeout=60 full-upgrade -y
+    sudo apt -o DPkg::Lock::Timeout=60 autoremove -y
 }
 
 # Python
