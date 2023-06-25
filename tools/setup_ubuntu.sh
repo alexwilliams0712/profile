@@ -164,7 +164,7 @@ install_flatpaks() {
 		com.google.Chrome \
 		com.valvesoftware.Steam \
 	; do
-		flatpak install --or-update flathub $app
+		flatpak install --or-update -y flathub $app
 	done
 }
 install_portmaster() {
