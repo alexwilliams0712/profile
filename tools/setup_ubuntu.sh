@@ -33,7 +33,7 @@ copy_dotfiles() {
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
 	sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
-	source $HOME/.bash_aliases
+	source $HOME/.bashrc
 }
 set_git_config() {
 	print_function_name
@@ -78,7 +78,7 @@ install_apt_packages() {
 	print_function_name
 	apt_upgrader
 	echo "Running installs"
-    sudo add-apt-repository -y universe
+    	sudo add-apt-repository -y universe
 	sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
 		blueman \
 		build-essential \
