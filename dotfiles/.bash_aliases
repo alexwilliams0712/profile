@@ -268,6 +268,28 @@ function attackoftheclones() {
 
 alias multipull="find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \;"
 
+function git_https_to_ssh() {
+  # Get the fetch URL
+  url=$(git remote -v | grep fetch | awk '{print $2}')
+
+  # Check if it's an HTTPS URL
+  if [[ $url != https://* ]]; then
+    echo "Remote origin is not an HTTPS URL. No change made."
+    return 1
+  fi
+
+  # Convert the HTTPS URL to SSH format
+  ssh_url="git@${url#https://}"
+  ssh_url="${ssh_url/\//:}"
+  ssh_url="${ssh_url/\/.git/.git}"
+
+  # Set the new URL
+  git remote set-url origin $ssh_url
+
+  echo "Origin URL successfully changed to SSH format:"
+  git remote -v
+}
+
 ##
 #K8s
 ##
