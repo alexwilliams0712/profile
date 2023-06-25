@@ -29,6 +29,10 @@ alias bk='cd $OLDPWD'
 alias ppath='IFS=:; for i in $PATH; do echo $i; done; unset IFS'
 alias ppypath='IFS=:; for i in $PYTHONPATH; do echo $i; done; unset IFS'
 
+print_function_name() {
+    echo -e "\033[1;36mExecuting function: ${FUNCNAME[1]}\033[0m"
+}
+
 # Grep and Tail fix logs easily by placing a separator bewtween fields
 function grepcfix() {
    \grep --color=always $@ | sed 's/\x1/|/g'
@@ -39,6 +43,7 @@ function tailfix() {
 }
 
 function murder() {
+    print_function_name
     if [ "$#" -eq 0 ]; then
         echo "Error: Please provide at least one process name."
         return 1
@@ -63,8 +68,9 @@ function murder() {
             truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
             echo "Attempting graceful shutdown: $target_process - $pid ($truncated_cmd)"
             kill -15 "$pid"
-        done
-
+        doneprint_function_name() {
+    echo -e "\033[1;36mExecuting function: ${FUNCNAME[1]}\033[0m"
+}
         # Wait for 2 seconds if there are any processes
         if [ ${#pid_command_map[@]} -gt 0 ]; then
             sleep 2
@@ -89,6 +95,7 @@ function murder() {
 alias youdosser='find . -type f -exec dos2unix {} \;'
 
 function apt_upgrader() {
+    print_function_name
 	sudo apt -o DPkg::Lock::Timeout=60 update -y
 	sudo apt -o DPkg::Lock::Timeout=60 upgrade -y
 	sudo apt-get -o DPkg::Lock::Timeout=60 update -y
@@ -115,6 +122,7 @@ function pypath() {
 }
 
 function enter_pyenv() {
+    print_function_name
     if [ -z "$1" ]; then
         expected_env_name="$(basename $(pwd))"
     else
@@ -133,6 +141,7 @@ function enter_pyenv() {
 }
 
 function pylint() {
+    print_function_name
     # Check if we're in a virtual environment
     if [ -z "${VIRTUAL_ENV}" ]; then
         echo "Not in a virtual environment. Activating..."
@@ -145,6 +154,7 @@ function pylint() {
 }
 
 function pipcompiler() {
+    print_function_name
     # Check if we're in a virtual environment
     if [ -z "${VIRTUAL_ENV}" ]; then
         echo "Not in a virtual environment. Activating..."
@@ -200,7 +210,11 @@ function pipcompiler() {
 }
 
 function version_bumper() {
-    gitthefuckout && pipcompiler && git cam 'bump reqs' &&  git push origin main:bump_reqs
+    print_function_name
+    gitthefuckout
+    pipcompiler
+    git cam 'bump reqs'
+    git push origin main:bump_reqs
 }             
 
 # Sublime Text
@@ -220,16 +234,18 @@ alias gohome="cd $CODE_ROOT"
 #git
 ##
 function gitthefuckout() {
-  git ls-remote --exit-code --heads origin main >/dev/null 2>&1
-  if [ $? -eq 0 ]; then
-    git fetch origin && git reset --hard origin/main && git checkout main
-  else
-    git fetch origin && git reset --hard origin/master && git checkout master
-  fi
-  git pull
+    print_function_name
+    git ls-remote --exit-code --heads origin main >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        git fetch origin && git reset --hard origin/main && git checkout main
+    else
+        git fetch origin && git reset --hard origin/master && git checkout master
+    fi
+    git pull
 }
 
 function attackoftheclones() {
+    print_function_name
    # Get the organization name from the function argument or basename of dir
     if [ -z "$1" ]; then
         ORG_NAME="$(basename $(pwd))"
@@ -266,7 +282,8 @@ alias dockeredo='docker compose down -v && docker network create main && docker 
 alias dockercontainers='docker ps --format="table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" | (read -r; printf "%s\n" "$REPLY"; sort -k 2,2 -k 1,1 )'
 
 function dockerperv() {
-   sleep_time_secs=2
+    print_function_name
+    sleep_time_secs=2
     while true; do
         clear
         echo "Every $sleep_time_secs s: dockercontainers: $(date)"
@@ -279,7 +296,8 @@ function dockerperv() {
 #vpn
 ##
 function start_vpn {
-  pushd ~/vpn > /dev/null
-  source ./start_vpn.sh
-  popd > /dev/null
+    print_function_name
+    pushd ~/vpn > /dev/null
+    source ./start_vpn.sh
+    popd > /dev/null
 }
