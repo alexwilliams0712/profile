@@ -73,7 +73,7 @@ set_git_config() {
 install_apt_packages() {
 	apt_upgrader
     sudo add-apt-repository -y universe
-	sudo apt-get install -y \
+	sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
 		blueman \
 		build-essential \
 		ca-certificates \
