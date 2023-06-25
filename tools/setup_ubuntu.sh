@@ -33,7 +33,7 @@ copy_dotfiles() {
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
 	sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
-	source $HOME/.bashrc
+	source $HOME/.bash_aliases
 }
 set_git_config() {
 	print_function_name
