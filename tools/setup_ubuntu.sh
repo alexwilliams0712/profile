@@ -156,7 +156,7 @@ install_flatpaks() {
 	for app in \
 		com.meetfranz.Franz \
 		com.github.phase1geo.minder \
-		com.spotify.Client
+		com.spotify.Client \
 		com.github.eneshecan.WhatsAppForLinux \
 		com.slack.Slack \
 		com.sublimetext.three \
