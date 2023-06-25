@@ -68,9 +68,7 @@ function murder() {
             truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
             echo "Attempting graceful shutdown: $target_process - $pid ($truncated_cmd)"
             kill -15 "$pid"
-        doneprint_function_name() {
-    echo -e "\033[1;36mExecuting function: ${FUNCNAME[1]}\033[0m"
-}
+        done
         # Wait for 2 seconds if there are any processes
         if [ ${#pid_command_map[@]} -gt 0 ]; then
             sleep 2
