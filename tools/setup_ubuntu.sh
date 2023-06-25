@@ -113,6 +113,7 @@ install_apt_packages() {
 		dos2unix \
 		fail2ban \
 		figlet \
+		flatpak \
 		gcc \
 		libfuse2 \
 		libmysqlclient-dev \
@@ -123,7 +124,6 @@ install_apt_packages() {
 		postgresql \
 		postgresql-contrib \
 		samba \
-  		snapd \
 		speedtest-cli \
 		terminator \
 		tree \
@@ -131,25 +131,16 @@ install_apt_packages() {
 		  
 
  	sudo systemctl disable postgresql.service
-	ssh_stuff
 	# sudo apt-get remove --purge -y libreoffice* shotwell
-	install_snaps
-	apt_upgrader
-	ensure_directory
-	set_up_pyenv
-	ensure_directory
+	ssh_stuff
+	install_pyenv
+	install_flatpaks
+	install_portmaster
 	install_rust
-	ensure_directory
 	install_and_setup_docker
-	ensure_directory
 	install_jetbrains_toolbox
-	ensure_directory
 	install_github_cli
-	ensure_directory
-	install_chrome
-	ensure_directory
-	setup_espanso
-	ensure_directory
+	install_espanso
 	install_clam_av
 	ensure_directory
 }
@@ -161,29 +152,25 @@ ssh_stuff() {
 	sudo systemctl restart ssh
 	sudo systemctl reload ssh
 }
-install_snaps() {
-	for i in \
-		code \
-		sublime-text \
-		go; do
-		sudo snap install $i --classic
-	done
-	for i in \
-		1password \
-		whatsapp-for-linux \
-  		spotify \
-		slack; do
-		sudo snap install $i
-	done
-	# for i in \
-	# 	firefox \
-	# 	rpi-imager; do
-	# 	sudo snap remove $i --no-wait --purge
-	# done
-	sudo snap refresh
-}
+install_flatpaks() {
+	for app in \
+		com.meetfranz.Franz \
+		com.github.phase1geo.minder \
+		com.spotify.Client
+		com.github.eneshecan.WhatsAppForLinux \
+		com.slack.Slack \
+		com.sublimetext.three \
+		com.visualstudio.code \
+		com.google.Chrome \
+		com.valvesoftware.Steam \
+	; do
+	flatpak install --or-update flathub $app
 
-set_up_pyenv() {
+}
+install_portmaster() {
+	curl -fsSL https://updates.safing.io/latest/linux_all/packages/install.sh | sudo bash
+}
+install_pyenv() {
 	echo "Setting up pyenv"
 	pyenv_dir="$HOME/.pyenv"
 	if [ -d "$pyenv_dir" ]; then
@@ -226,7 +213,7 @@ install_jetbrains_toolbox() {
 	    done
 	fi
 }
-setup_espanso() {
+install_espanso() {
 	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
 		echo "X11!"
   		wget https://github.com/federico-terzi/espanso/releases/download/v2.1.8/espanso-debian-x11-amd64.deb
@@ -248,12 +235,6 @@ setup_espanso() {
 	else
 		echo "Running Wayland... try again later... maybe years"
 	fi
-}
-install_chrome() {
-	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
- 	chmod o+r google-chrome-stable_current_amd64.deb
-	sudo apt install -y ./google-chrome-stable_current_amd64.deb
-	rm google-chrome-*
 }
 install_and_setup_docker() {
 	sudo mkdir -m 0755 -p /etc/apt/keyrings
@@ -315,12 +296,7 @@ install_surfshark() {
 	sudo sh surfshark-install.sh
 	sudo rm -f surfshark-install.sh
 }
-install_franz() {
-	export FRANZ_VERSION=$(curl https://api.github.com/repos/meetfranz/franz/releases/latest -s | jq .name -r)
-	sudo curl -fsSL "https://github.com/meetfranz/franz/releases/download/v${FRANZ_VERSION}/franz_${FRANZ_VERSION}_amd64.deb" -o franz_$FRANZ_VERSION\_amd64.deb
-	sudo dpkg -i franz_$FRANZ_VERSION\_amd64.deb
-	sudo rm -f franz_$FRANZ_VERSION\_amd64.deb
-}
+
 install_node() {
 	curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - && sudo apt-get install -y nodejs
 	sudo npm install -g npm
@@ -351,17 +327,11 @@ main() {
 	set_git_config
 	copy_dotfiles
 	install_apt_packages
-	ensure_directory
 	install_node
-	ensure_directory
 	install_tailscale
-	ensure_directory
 	install_aws_cli
-	ensure_directory
 	install_terraform
-	ensure_directory
 	install_surfshark
-	ensure_directory
 	apt_upgrader
 	pip_installs
 	exit_script
