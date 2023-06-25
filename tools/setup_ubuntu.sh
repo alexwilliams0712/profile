@@ -72,6 +72,7 @@ set_git_config() {
 }
 install_apt_packages() {
 	apt_upgrader
+	echo "Running installs"
     sudo add-apt-repository -o DPkg::Lock::Timeout=60  -y universe
 	sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
 		blueman \
