@@ -72,7 +72,7 @@ set_git_config() {
 }
 install_apt_packages() {
 	apt_upgrader
-    sudo add-apt-repository -y universe
+    sudo add-apt-repository -o DPkg::Lock::Timeout=60  -y universe
 	sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
 		blueman \
 		build-essential \
@@ -104,7 +104,7 @@ install_apt_packages() {
 		xz-utils \
 		zlib1g-dev
 
-	sudo apt install -y \
+	sudo apt install -o DPkg::Lock::Timeout=60 -y \
 		at \
 		bash \
 		bpytop \
