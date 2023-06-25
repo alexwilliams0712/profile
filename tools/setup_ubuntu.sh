@@ -118,6 +118,7 @@ install_apt_packages() {
 		gcc \
 		libfuse2 \
 		libmysqlclient-dev \
+		libnetfilter-queue1 \
 		libpq-dev \
 		libsqlite3-dev \
 		make \
@@ -169,7 +170,9 @@ install_flatpaks() {
 	done
 }
 install_portmaster() {
-	curl -fsSL https://updates.safing.io/latest/linux_all/packages/install.sh | sudo bash
+	curl -fsSL https://updates.safing.io/latest/linux_amd64/packages/portmaster-installer.deb -o postmaster-installer.deb
+	sudo dpkg -i postmaster-installer.deb
+	sudo rm postmaster-installer.deb
 }
 install_pyenv() {
 	echo "Setting up pyenv"
