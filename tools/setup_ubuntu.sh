@@ -201,6 +201,7 @@ install_pyenv() {
 		cd "$FOLDER"
 		git pull $URL
 	fi
+ 	ensure_directory
 }
 install_rust() {
 	print_function_name
@@ -226,6 +227,7 @@ install_jetbrains_toolbox() {
 		fi
 	    done
 	fi
+ 	ensure_directory
 }
 install_espanso() {
 	print_function_name
@@ -272,6 +274,7 @@ install_and_setup_docker() {
 		newgrp docker
 	fi
 	sudo systemctl enable docker.service
+ 	ensure_directory
 	echo "Docker setup complete"
 }
 install_github_cli() {
