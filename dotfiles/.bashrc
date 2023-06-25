@@ -170,5 +170,5 @@ if ! shopt -oq posix; then
   fi
 fi
 
-pyenv --version
-python --version
+if command -v pyenv >/dev/null 2>&1; then pyenv --version; fi
+if command -v python >/dev/null 2>&1; then python --version; fi
