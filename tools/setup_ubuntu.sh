@@ -164,8 +164,8 @@ install_flatpaks() {
 		com.google.Chrome \
 		com.valvesoftware.Steam \
 	; do
-	flatpak install --or-update flathub $app
-
+		flatpak install --or-update flathub $app
+	done
 }
 install_portmaster() {
 	curl -fsSL https://updates.safing.io/latest/linux_all/packages/install.sh | sudo bash
