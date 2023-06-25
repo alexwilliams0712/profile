@@ -348,8 +348,8 @@ exit_script() {
 	fi
 }
 main() {
-	set_git_config
 	copy_dotfiles
+	set_git_config
 	install_apt_packages
 	install_node
 	install_tailscale
