@@ -352,7 +352,7 @@ install_tailscale() {
 
 pip_installs() {
 	print_function_name
-	sudo -u $USER pip install -U pip pip-tools psutil
+	sudo -u $USER pip install -U --break-system-packages pip pip-tools psutil
 }
 exit_script() {
 	print_function_name
