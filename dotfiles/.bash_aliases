@@ -203,7 +203,7 @@ function pipcompiler() {
     done
 
     # Execute the pip install command
-    echo -e "\033[0;33mExecuting: ${install_command}\033[0m"
+    echo -e "\033[1;33mExecuting: ${install_command}\033[0m"
     ${install_command}
 }
 
@@ -253,7 +253,7 @@ function attackoftheclones() {
 
     # Clone or pull each repository
     for REPO_NAME in $(gh repo list "${ORG_NAME}" --json=name --limit 1000 | jq -r '.[].name'); do
-	echo -e "\033[0;Checking: ${REPO_NAME}\033[0m"
+	echo -e "\033[1;33mChecking: ${REPO_NAME}\033[0m"
         if [ -d "$REPO_NAME" ]; then
             echo "Repository already exists: $REPO_NAME"
             cd "$REPO_NAME"
