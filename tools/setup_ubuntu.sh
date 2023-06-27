@@ -253,7 +253,6 @@ install_jetbrains_toolbox() {
 		fi
 	    done
 	fi
- 	ensure_directory
 }
 install_espanso() {
 	print_function_name
