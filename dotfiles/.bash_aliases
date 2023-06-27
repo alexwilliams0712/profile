@@ -297,8 +297,32 @@ alias k9s="k9s-nsg"
 ##
 #Docker
 ##
+function ghcr_docker_login() {
+    if [ -z "$1" ]
+    then
+        echo "No username supplied!"
+        return 1
+    fi
+
+    local USERNAME=$1
+    local GH_TOKEN=$(gh auth token)
+    if [ -z "$GH_TOKEN" ]
+    then
+        echo "No token available from 'gh auth token'!"
+        return 1
+    fi
+    echo $GH_TOKEN | docker login ghcr.io -u $USERNAME --password-stdin
+}
+function dockeredo() {
+    local NETWORK_NAME="main"
+    docker compose down -v
+
+    if ! docker network ls | grep -q " $NETWORK_NAME "; then
+        docker network create $NETWORK_NAME
+    fi
+    docker compose up -d --remove-orphans
+}
 alias dockoff='docker rm -vf $(docker ps -aq); docker rmi -f $(docker images -aq); docker system prune -f; docker network create main'
-alias dockeredo='docker compose down -v && docker network create main && docker compose up -d --remove-orphans'
 alias dockercontainers='docker ps --format="table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" | (read -r; printf "%s\n" "$REPLY"; sort -k 2,2 -k 1,1 )'
 
 function dockerperv() {
