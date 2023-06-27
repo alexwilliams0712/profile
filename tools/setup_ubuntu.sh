@@ -232,9 +232,8 @@ install_rust() {
 install_jetbrains_toolbox() {
 	print_function_name
 	if [ ! -d /opt/jetbrains-toolbox ]; then
-		curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
+		sudo curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
 	fi
-	jetbrains-toolbox
 	if [ -d ~/.config/JetBrains ]; then
 	    for product_dir in ~/.config/JetBrains/pycharm*; do
 		if [ -d "$product_dir" ]; then
