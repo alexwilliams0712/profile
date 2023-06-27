@@ -175,7 +175,7 @@ install_flatpaks() {
 		com.sublimetext.three \
 		com.valvesoftware.Steam \
 	; do
-		flatpak install --or-update -y flathub $app
+		flatpak install --user --or-update -y flathub $app
 	done
 }
 install_chrome() {
