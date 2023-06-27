@@ -298,6 +298,7 @@ alias k9s="k9s-nsg"
 #Docker
 ##
 function ghcr_docker_login() {
+    print_function_name
     if [ -z "$1" ]
     then
         echo "No username supplied!"
@@ -314,6 +315,7 @@ function ghcr_docker_login() {
     echo $GH_TOKEN | docker login ghcr.io -u $USERNAME --password-stdin
 }
 function dockeredo() {
+    print_function_name
     local NETWORK_NAME="main"
     docker compose down -v
 
