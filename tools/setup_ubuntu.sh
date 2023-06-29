@@ -145,7 +145,6 @@ install_apt_packages() {
 	install_chrome
 	install_vscode
 	install_flatpaks
-	install_portmaster
 	install_rust
 	install_and_setup_docker
 	install_github_cli
@@ -192,12 +191,6 @@ install_vscode() {
 	apt_upgrader
  	sudo apt-get install -y code
  	rm -f packages.microsoft.gpg
-}
-install_portmaster() {
-	print_function_name
-	curl -fsSL https://updates.safing.io/latest/linux_amd64/packages/portmaster-installer.deb -o postmaster-installer.deb
-	sudo dpkg -i postmaster-installer.deb
-	sudo rm postmaster-installer.deb
 }
 install_1password() {
 	print_function_name
