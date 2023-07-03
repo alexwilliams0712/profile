@@ -111,6 +111,7 @@ install_apt_packages() {
 		zlib1g-dev
 
 	sudo apt install -o DPkg::Lock::Timeout=60 -y \
+ 		aptitude \
 		at \
 		bash \
 		bpytop \
