@@ -164,7 +164,7 @@ ssh_stuff() {
 }
 install_flatpaks() {
 	print_function_name
- 	sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+ 	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	for app in \
 		com.meetfranz.Franz \
 		com.github.phase1geo.minder \
