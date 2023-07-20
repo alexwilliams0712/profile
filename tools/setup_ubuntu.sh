@@ -331,14 +331,6 @@ install_aws_cli() {
 	aws --version
 	sudo rm -r aws*
 }
-install_surfshark() {
-	print_function_name
-	sudo curl -f https://downloads.surfshark.com/linux/debian-install.sh --output surfshark-install.sh
-	sudo chmod o+r surfshark-install.sh
-	sudo sh surfshark-install.sh
-	sudo rm -f surfshark-install.sh
-}
-
 install_node() {
 	print_function_name
 	curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - && sudo apt-get -o DPkg::Lock::Timeout=60 install -y nodejs
@@ -377,7 +369,6 @@ main() {
 	install_tailscale
 	install_aws_cli
 	install_terraform
-	install_surfshark
 	apt_upgrader
 	exit_script
 }
