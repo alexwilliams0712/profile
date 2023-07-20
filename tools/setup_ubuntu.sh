@@ -253,11 +253,10 @@ install_espanso() {
 	print_function_name
 	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
 		echo "X11!"
-  		wget https://github.com/federico-terzi/espanso/releases/download/v2.1.8/espanso-debian-x11-amd64.deb
-    		chmod o+r espanso-debian-x11-amd64.deb
-    		sudo apt -o DPkg::Lock::Timeout=60 install -y ./espanso-debian-x11-amd64.deb
-      		sudo rm espanso-*
-		espanso service register
+  		mkdir -p ~/opt
+    		wget -O ~/opt/Espanso.AppImage 'https://github.com/federico-terzi/espanso/releases/download/v2.1.8/Espanso-X11.AppImage'
+		chmod u+x ~/opt/Espanso.AppImage
+		sudo ~/opt/Espanso.AppImage env-path register
   		config_file="$HOME/.config/espanso/match/base.yml"
 		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
 		espanso_service_status=$(espanso service status)
