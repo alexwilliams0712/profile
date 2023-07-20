@@ -175,6 +175,7 @@ install_flatpaks() {
 		com.sublimetext.three \
 		com.valvesoftware.Steam \
 	; do
+ 		echo "Looking for $app"
 		flatpak install --user --or-update -y flathub $app
 	done
 }
