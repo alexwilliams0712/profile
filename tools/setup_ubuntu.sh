@@ -251,11 +251,14 @@ install_jetbrains_toolbox() {
 }
 install_espanso() {
 	print_function_name
+	version_number="2.1.8"
 	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
 		echo "X11!"
   		mkdir -p ~/opt
-    		wget -O ~/opt/Espanso.AppImage 'https://github.com/federico-terzi/espanso/releases/download/v2.1.8/Espanso-X11.AppImage'
-		chmod u+x ~/opt/Espanso.AppImage
+    		if [ ! -f ~/opt/Espanso.AppImage ]; then
+			wget -O ~/opt/Espanso.AppImage "https://github.com/federico-terzi/espanso/releases/download/v$version_number/Espanso-X11.AppImage"
+			chmod u+x ~/opt/Espanso.AppImage
+		fi
 		sudo ~/opt/Espanso.AppImage env-path register
   		config_file="$HOME/.config/espanso/match/base.yml"
 		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
@@ -272,6 +275,7 @@ install_espanso() {
 		echo "Running Wayland... try again later... maybe years"
 	fi
 }
+
 install_and_setup_docker() {
 	print_function_name
 	sudo mkdir -m 0755 -p /etc/apt/keyrings
