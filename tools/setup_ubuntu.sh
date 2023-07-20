@@ -258,8 +258,8 @@ install_espanso() {
     		if [ ! -f ~/opt/Espanso.AppImage ]; then
 			wget -O ~/opt/Espanso.AppImage "https://github.com/federico-terzi/espanso/releases/download/v$version_number/Espanso-X11.AppImage"
 			chmod u+x ~/opt/Espanso.AppImage
+   			sudo ~/opt/Espanso.AppImage env-path register
 		fi
-		sudo ~/opt/Espanso.AppImage env-path register
   		config_file="$HOME/.config/espanso/match/base.yml"
 		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
 		espanso_service_status=$(espanso service status)
