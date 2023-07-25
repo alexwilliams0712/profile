@@ -94,12 +94,14 @@ alias youdosser='find . -type f -exec dos2unix {} \;'
 
 function apt_upgrader() {
 	print_function_name
+    sudo systemctl stop packagekit
 	sudo apt update -y
 	sudo apt upgrade -y
 	sudo apt full-upgrade -y
 	sudo apt autoremove -y
 	sudo apt-get -o DPkg::Lock::Timeout=-1 update -y
 	sudo apt-get -o DPkg::Lock::Timeout=-1 upgrade -y
+    sudo systemctl start packagekit
 }
 
 # Python
