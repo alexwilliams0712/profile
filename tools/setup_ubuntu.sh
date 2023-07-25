@@ -265,9 +265,9 @@ install_espanso() {
 		echo "X11!"
   		mkdir -p /opt
     		if [ ! -f /opt/Espanso.AppImage ]; then
-				wget -O /opt/Espanso.AppImage \
+				sudo wget -O /opt/Espanso.AppImage \
 					"https://github.com/federico-terzi/espanso/releases/download/v$version_number/Espanso-X11.AppImage"
-				chmod u+x /opt/Espanso.AppImage
+				sudo chmod u+x /opt/Espanso.AppImage
 				sudo /opt/Espanso.AppImage env-path register
 			fi
   		config_file="$HOME/.config/espanso/match/base.yml"
