@@ -191,19 +191,24 @@ install_vscode() {
 	print_function_name
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
 	sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
-	sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+	sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] \
+		https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
 	apt_upgrader
  	sudo apt-get install -y code
  	rm -f packages.microsoft.gpg
 }
 install_1password() {
 	print_function_name
-	curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
-	echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' | sudo tee /etc/apt/sources.list.d/1password.list
+	curl -sS https://downloads.1password.com/linux/keys/1password.asc \
+		| sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
+	echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] \
+		https://downloads.1password.com/linux/debian/amd64 stable main' | sudo tee /etc/apt/sources.list.d/1password.list
 	sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
-	curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol | sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
+	curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol \
+		| sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
 	sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
-	curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+	curl -sS https://downloads.1password.com/linux/keys/1password.asc \
+		| sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
 	apt_upgrader && sudo apt install -y 1password 1password-cli
 	op --version
 }
@@ -240,7 +245,8 @@ install_rust() {
 install_jetbrains_toolbox() {
 	print_function_name
 	if [ ! -d /opt/jetbrains-toolbox ]; then
-		sudo curl -fsSL https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
+		sudo curl -fsSL \
+			https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
 	fi
 	if [ -d ~/.config/JetBrains ]; then
 	    for product_dir in ~/.config/JetBrains/pycharm*; do
@@ -259,10 +265,11 @@ install_espanso() {
 		echo "X11!"
   		mkdir -p ~/opt
     		if [ ! -f ~/opt/Espanso.AppImage ]; then
-			wget -O ~/opt/Espanso.AppImage "https://github.com/federico-terzi/espanso/releases/download/v$version_number/Espanso-X11.AppImage"
-			chmod u+x ~/opt/Espanso.AppImage
-   			sudo ~/opt/Espanso.AppImage env-path register
-		fi
+				wget -O ~/opt/Espanso.AppImage \
+					"https://github.com/federico-terzi/espanso/releases/download/v$version_number/Espanso-X11.AppImage"
+				chmod u+x ~/opt/Espanso.AppImage
+				sudo ~/opt/Espanso.AppImage env-path register
+			fi
   		config_file="$HOME/.config/espanso/match/base.yml"
 		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
 		espanso_service_status=$(espanso service status)
@@ -288,7 +295,12 @@ install_and_setup_docker() {
       $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 	sudo chmod a+r /etc/apt/keyrings/docker.gpg
 	apt_upgrader
-	sudo apt-get -o DPkg::Lock::Timeout=60 install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+	sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
+		docker-ce \
+		docker-ce-cli \
+		containerd.io \
+		docker-buildx-plugin \
+		docker-compose-plugin
 	sudo systemctl enable --now docker.service
 	if ! grep -q "^docker:" /etc/group; then
 		sudo groupadd docker
@@ -306,9 +318,11 @@ install_and_setup_docker() {
 install_github_cli() {
 	print_function_name
 	echo "Running gh-cli setup"
-	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+		| sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
 	sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
+	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] \
+		https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
 	apt_upgrader
 	sudo apt -o DPkg::Lock::Timeout=60 install gh -y
 }
