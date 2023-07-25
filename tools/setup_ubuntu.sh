@@ -136,7 +136,7 @@ install_apt_packages() {
 		terminator \
 		tree \
 		wget
-		  
+
 
  	sudo systemctl disable postgresql.service
 	# sudo apt-get remove --purge -y libreoffice* shotwell
@@ -151,6 +151,7 @@ install_apt_packages() {
 	install_github_cli
 	install_espanso
 	install_clam_av
+	install_1password
  	install_jetbrains_toolbox
 	ensure_directory
 }
@@ -203,7 +204,8 @@ install_1password() {
 	curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol | sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
 	sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
 	curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
-	apt_upgrader && sudo apt install -y 1password
+	apt_upgrader && sudo apt install -y 1password 1password-cli
+	op --version
 }
 install_pyenv() {
 	print_function_name
