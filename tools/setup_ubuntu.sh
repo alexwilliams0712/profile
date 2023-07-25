@@ -172,6 +172,7 @@ install_flatpaks() {
 		com.spotify.Client \
 		com.github.eneshecan.WhatsAppForLinux \
 		com.slack.Slack \
+  		org.remmina.Remmina \
 		com.sublimetext.three \
 		com.valvesoftware.Steam \
 	; do
