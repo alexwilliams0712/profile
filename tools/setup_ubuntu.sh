@@ -130,7 +130,6 @@ install_apt_packages() {
 		make \
 		net-tools \
 		nfs-common \
-		nfs-utils \
 		postgresql \
 		postgresql-contrib \
 		samba \
