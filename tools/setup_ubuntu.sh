@@ -129,6 +129,8 @@ install_apt_packages() {
 		libsqlite3-dev \
 		make \
 		net-tools \
+		nfs-common \
+		nfs-utils \
 		postgresql \
 		postgresql-contrib \
 		samba \
@@ -199,6 +201,7 @@ install_vscode() {
 }
 install_1password() {
 	print_function_name
+	sudo rm -f /usr/share/keyrings/1password-archive-keyring.gpg
 	curl -sS https://downloads.1password.com/linux/keys/1password.asc \
 		| sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
 	echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] \
@@ -207,11 +210,13 @@ install_1password() {
 	curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol \
 		| sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
 	sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
+	sudo rm -f /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
 	curl -sS https://downloads.1password.com/linux/keys/1password.asc \
 		| sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
 	apt_upgrader && sudo apt install -y 1password 1password-cli
 	op --version
 }
+
 install_pyenv() {
 	print_function_name
 	pyenv_dir="$HOME/.pyenv"
