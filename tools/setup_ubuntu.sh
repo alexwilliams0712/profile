@@ -391,7 +391,7 @@ main() {
 	copy_dotfiles
 	set_git_config
 	install_apt_packages
-	install_node
+	# install_node
 	install_tailscale
 	install_aws_cli
 	install_terraform
