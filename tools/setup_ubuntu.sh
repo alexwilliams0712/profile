@@ -358,7 +358,8 @@ install_aws_cli() {
 }
 install_node() {
 	print_function_name
-	curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - && sudo apt-get -o DPkg::Lock::Timeout=60 install -y nodejs
+	curl -fsSL https://deb.nodesource.com/setup_19.x \
+		| sudo -E bash - && sudo apt-get -o DPkg::Lock::Timeout=60 install -y nodejs npm
 	sudo npm install -g npm
 	node -v
 	npm -v
