@@ -272,6 +272,7 @@ install_espanso() {
 			fi
   		config_file="$HOME/.config/espanso/match/base.yml"
 		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
+		espanso service register
 		espanso_service_status=$(espanso service status)
   		if [[ "$espanso_service_status" == *"running"* ]]; then
 			echo "Espanso service is already running. Restarting..."
