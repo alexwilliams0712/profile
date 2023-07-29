@@ -11,7 +11,7 @@ export PROFILE_DIR=$(pwd)
 exit_code=0
 # Makes it return on any error
 set -e
-set -o pipefail
+# set -o pipefail
 
 # Define an error handler function
 handle_error() {
