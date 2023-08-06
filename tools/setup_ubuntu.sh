@@ -275,6 +275,7 @@ install_espanso() {
 				sudo ~/opt/Espanso.AppImage env-path register
 			fi
   		config_file="$HOME/.config/espanso/match/base.yml"
+    		mkdir -p "$HOME/.config/espanso/match"
 		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
 		espanso service register
 		espanso_service_status=$(espanso service status)
