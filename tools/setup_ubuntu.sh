@@ -122,6 +122,7 @@ install_apt_packages() {
 		figlet \
 		flatpak \
 		gcc \
+  		jq \
 		libfuse2 \
 		libmysqlclient-dev \
 		libnetfilter-queue1 \
