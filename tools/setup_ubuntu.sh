@@ -224,6 +224,7 @@ install_pyenv() {
 	else
 		curl https://pyenv.run | bash
 	fi
+ 	source ~/.bashrc
 	pyenv update
 	pyenv install -s $DEFAULT_PYTHON_VERSION
 	pyenv global $DEFAULT_PYTHON_VERSION
