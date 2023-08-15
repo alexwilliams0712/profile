@@ -241,6 +241,7 @@ install_pyenv() {
 install_rust() {
 	print_function_name
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
+ 	source ~/.cargo/env
  	source ~/.bashrc
 	rustup update stable
 	rustup install nightly
