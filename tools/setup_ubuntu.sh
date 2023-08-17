@@ -144,7 +144,7 @@ install_apt_packages() {
 	# sudo apt-get remove --purge -y libreoffice* shotwell
 	ssh_stuff
 	install_pyenv
- 	pip_installs
+ 	# pip_installs
 	install_chrome
 	install_vscode
 	install_flatpaks
