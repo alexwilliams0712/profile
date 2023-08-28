@@ -106,6 +106,7 @@ install_apt_packages() {
 		python3-pip \
 		shellcheck \
 		tk-dev \
+  		vlc \
 		wget \
 		xz-utils \
 		zlib1g-dev
