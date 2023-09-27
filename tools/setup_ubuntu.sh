@@ -55,9 +55,9 @@ set_git_config() {
 	git config --global alias.d diff
 	git config --global alias.dc 'diff --cached'
 	git config --global alias.l 'log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
-	name=$(git config --global user.name)
-	email=$(git config --global user.email)
-	phone=$(git config --global user.phonenumber)
+	name=$(git config --global user.name 2>/dev/null)
+	email=$(git config --global user.email 2>/dev/null)
+	phone=$(git config --global user.phonenumber 2>/dev/null)
 	if [ -z "$name" ]; then
 		read -p "Enter github username: " name && git config --global user.name "$name"
 	fi
