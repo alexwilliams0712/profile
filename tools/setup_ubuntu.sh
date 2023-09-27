@@ -269,31 +269,31 @@ install_jetbrains_toolbox() {
 install_espanso() {
 	print_function_name
 	version_number="2.1.8"
+	cargo install --force cargo-make --version 0.34.0
+	git clone https://github.com/federico-terzi/espanso
+	cd espanso
+
 	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
 		echo "X11!"
-  		mkdir -p ~/opt
-    		if [ ! -f ~/opt/Espanso.AppImage ]; then
-				wget -O ~/opt/Espanso.AppImage \
-					"https://github.com/federico-terzi/espanso/releases/download/v$version_number/Espanso-X11.AppImage"
-				chmod u+x ~/opt/Espanso.AppImage
-				sudo ~/opt/Espanso.AppImage env-path register
-			fi
-  		config_file="$HOME/.config/espanso/match/base.yml"
-    		mkdir -p "$HOME/.config/espanso/match"
-		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$config_file"
-		espanso service register
-		espanso_service_status=$(espanso service status)
-  		if [[ "$espanso_service_status" == *"running"* ]]; then
-			echo "Espanso service is already running. Restarting..."
-			espanso service restart
-		else
-			echo "Espanso service is not running. Starting..."
-			espanso service start
-		fi
-		espanso --version
+  		cargo make --profile release build-binary 
 	else
-		echo "Running Wayland... try again later... maybe years"
+		echo "Wayland"
+		cargo make --profile release --env NO_X11=true build-binary 
 	fi
+	sudo mv target/release/espanso /usr/local/bin/espanso
+	sudo setcap "cap_dac_override+p" $(which espanso)
+	cd ..
+	rm -r espanso
+	espanso service register
+	espanso_service_status=$(espanso service status)
+	if [[ "$espanso_service_status" == *"running"* ]]; then
+		echo "Espanso service is already running. Restarting..."
+		espanso service restart
+	else
+		echo "Espanso service is not running. Starting..."
+		espanso service start
+	fi
+	espanso --version
 }
 
 install_and_setup_docker() {
