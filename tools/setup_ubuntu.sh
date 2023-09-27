@@ -278,6 +278,7 @@ install_espanso() {
   		cargo make --profile release build-binary 
 	else
 		echo "Wayland"
+		sudo apt install -y build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev libssl-dev
 		cargo make --profile release --env NO_X11=true build-binary 
 	fi
 	sudo mv target/release/espanso /usr/local/bin/espanso
