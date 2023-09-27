@@ -402,7 +402,7 @@ main() {
 	set_git_config
 	install_apt_packages
 	# install_node
-	install_tailscale
+	# install_tailscale
 	install_aws_cli
 	install_terraform
 	apt_upgrader
