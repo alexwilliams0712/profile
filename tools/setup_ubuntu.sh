@@ -284,7 +284,7 @@ install_espanso() {
 	sudo mv target/release/espanso /usr/local/bin/espanso
 	sudo setcap "cap_dac_override+p" $(which espanso)
 	cd ..
-	rm -r espanso
+	rm -rf espanso
 	espanso service register
 	espanso_service_status=$(espanso service status)
 	if [[ "$espanso_service_status" == *"running"* ]]; then
