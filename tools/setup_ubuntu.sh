@@ -228,6 +228,7 @@ install_pyenv() {
 	fi
  	source ~/.bashrc
 	pyenv update
+ 	source ~/.bashrc
 	pyenv install -s $DEFAULT_PYTHON_VERSION
 	pyenv global $DEFAULT_PYTHON_VERSION
 	FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
@@ -270,9 +271,9 @@ install_jetbrains_toolbox() {
 install_espanso() {
 	print_function_name
 	if which espanso > /dev/null 2>&1; then
-        echo "espanso is already installed."
-        return
-    fi
+		echo "espanso is already installed."
+	        return
+	fi
 	cargo install --force cargo-make --version 0.34.0
 	git clone https://github.com/federico-terzi/espanso
 	cd espanso
@@ -291,7 +292,7 @@ install_espanso() {
 	rm -rf espanso
 	espanso service register
 	espanso_service_status=$(espanso service status)
-	if [[ "$espanso_service_status" == *"running"* ]]; then
+	if [[ "$espanso_service_status" == "espanso is running!" ]]; then
 		echo "Espanso service is already running. Restarting..."
 		espanso service restart
 	else
@@ -403,7 +404,7 @@ main() {
 	set_git_config
 	install_apt_packages
 	# install_node
-	# install_tailscale
+	install_tailscale
 	install_aws_cli
 	install_terraform
 	apt_upgrader
