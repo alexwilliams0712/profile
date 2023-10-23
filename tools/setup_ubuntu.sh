@@ -258,15 +258,6 @@ install_jetbrains_toolbox() {
 		sudo curl -fsSL \
 			https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
 	fi
-	if [ -d ~/.config/JetBrains ]; then
-	    for product_dir in ~/.config/JetBrains/pycharm*; do
-		if [ -d "$product_dir" ]; then
-		    mkdir -p "$product_dir/options"
-		    echo "Copying to $product_dir/options/watcherDefaultTasks.xml"
-		    cp $PROFILE_DIR/dotfiles/watcherDefaultTasks.xml $product_dir/options/watcherDefaultTasks.xml
-		fi
-	    done
-	fi
 }
 install_espanso() {
 	print_function_name
