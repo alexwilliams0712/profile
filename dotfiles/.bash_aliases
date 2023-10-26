@@ -107,9 +107,11 @@ function apt_upgrader() {
 # Rust
 function clippy() {
     local current_toolchain=$(rustup show active-toolchain | cut -d '-' -f1)
-	cargo +stable clippy
+	echo "Current toolchain: $current_toolchain"
+    cargo +stable clippy
     cargo +nightly fmt
     rustup default "$current_toolchain"
+    echo "Switched back to $current_toolchain toolchain"
     git status
 }
 
