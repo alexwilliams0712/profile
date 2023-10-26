@@ -104,6 +104,14 @@ function apt_upgrader() {
     sudo systemctl start packagekit
 }
 
+# Rust
+function clippy() {
+	cargo +stable clippy
+    cargo +nightly fmt
+    git status
+}
+
+
 # Python
 function pypath() {
 	export PYTHONPATH=$(pwd)/src:$(pwd)/tests:$PYTHONPATH;
