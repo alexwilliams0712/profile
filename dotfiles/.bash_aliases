@@ -108,7 +108,7 @@ function apt_upgrader() {
 function clippy() {
     local current_toolchain=$(rustup show active-toolchain | cut -d '-' -f1)
 	echo "Current toolchain: $current_toolchain"
-    cargo +stable clippy
+    cargo +stable clippy --fix
     cargo +nightly fmt
     rustup default "$current_toolchain"
     echo "Switched back to $current_toolchain toolchain"
