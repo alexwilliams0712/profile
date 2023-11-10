@@ -227,10 +227,15 @@ function version_bumper() {
     print_function_name
     gitthefuckout
     pipcompiler
-    git cam 'bump reqs'
-    git push origin main:bump_reqs
-    gh pr create --base main --head bump_reqs --title "Bump version requirements" --body "Bump requirements"
+    if [[ -z $(git status --porcelain) ]]; then
+        echo "No changes to commit"
+    else
+        git cam 'bump reqs'
+        git push origin main:bump_reqs
+        gh pr create --base main --head bump_reqs --title "Bump version requirements" --body "Bump requirements"
+    fi
 }
+
 
 function multi_version_bumper() {
     for dir in "$@"; do
