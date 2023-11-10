@@ -230,7 +230,6 @@ function version_bumper() {
     git cam 'bump reqs'
     git push origin main:bump_reqs
     gh pr create --base main --head bump_reqs --title "Bump version requirements" --body "Bump requirements"
-
 }
 
 function multi_version_bumper() {
@@ -238,8 +237,10 @@ function multi_version_bumper() {
         if [ -d "$dir" ]; then
             echo "Entering directory: $dir"
             cd "$dir"
+            enter_pyenv
             version_bumper
             cd ..
+            pyenv deactivate
             echo "Exited directory: $dir"
         else
             echo "Directory not found: $dir"
