@@ -160,10 +160,12 @@ function pylint() {
         enter_pyenv
     fi
     pip install -U black isort ruff
-    isort --profile black .
+
+    isort --profile black --skip __init__.py .
     black -t py311 .
     ruff --fix .
 }
+
 
 function pipcompiler() {
     print_function_name
