@@ -200,9 +200,9 @@ function pipcompiler() {
     # Pip-compile each .in file
     for file in ${files}; do
         echo "Compiling ${file}"
-	cat -s ${file} > tmp.txt && mv tmp.txt ${file}
-	(awk '/^--/' ${file}; awk '!/^--/' ${file} | sort) | sponge ${file}
-	rm -f "${file//.in/.txt}"
+        cat -s ${file} > tmp.txt && mv tmp.txt ${file}
+        (grep "^-" ${file}; grep -v "^-" ${file} | sort) | sponge ${file}
+        rm -f "${file//.in/.txt}"
         pip-compile "${file}"
     done
 
@@ -211,9 +211,9 @@ function pipcompiler() {
     echo "Generated requirements*.txt files: ${txt_files}"
 
     # Build pip install command with each .txt file
-    install_command="pip install"
+    install_command="pip-sync"
     for txt_file in ${txt_files}; do
-        install_command+=" -r ${txt_file}"
+        install_command+=" ${txt_file}"
     done
 
     # Execute the pip install command
