@@ -231,6 +231,21 @@ function version_bumper() {
     git push origin main:bump_reqs
 }
 
+function multi_version_bumper() {
+    for dir in "$@"; do
+        if [ -d "$dir" ]; then
+            echo "Entering directory: $dir"
+            cd "$dir"
+            version_bumper
+            cd ..
+            echo "Exited directory: $dir"
+        else
+            echo "Directory not found: $dir"
+        fi
+    done
+}
+
+
 # Sublime Text
 alias st=subl
 
