@@ -229,6 +229,8 @@ function version_bumper() {
     pipcompiler
     git cam 'bump reqs'
     git push origin main:bump_reqs
+    gh pr create --base main --head bump_reqs --title "Bump version requirements" --body "Bump requirements"
+
 }
 
 function multi_version_bumper() {
