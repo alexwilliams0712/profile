@@ -159,12 +159,11 @@ function pylint() {
         echo "Not in a virtual environment. Activating..."
         enter_pyenv
     fi
-    pip install -U black isort ruff mypy
+    pip install -U black isort ruff
 
     isort --profile black --skip __init__.py .
     black -t py311 .
     ruff --fix .
-    mypy .
 }
 
 
