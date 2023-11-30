@@ -236,6 +236,18 @@ function version_bumper() {
     fi
 }
 
+function new_pr() {
+    if [[ $# -eq 0 ]] || [[ $1 =~ [[:space:]] ]]; then
+        echo "Error: Argument required with no spaces."
+        return 1
+    fi
+
+    local branch_name=$1
+
+    git cam "$branch_name" && \
+    git push origin main:"$branch_name" && \
+    gh pr create --base main --head "$branch_name" --title "$branch_name" --body "$branch_name"
+}
 
 function multi_version_bumper() {
     for dir in "$@"; do
