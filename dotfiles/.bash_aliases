@@ -223,23 +223,14 @@ function pipcompiler() {
     ${install_command}
 }
 
-function version_bumper() {
-    print_function_name
-    gitthefuckout
-    pipcompiler
-    if [[ -z $(git status --porcelain) ]]; then
-        echo "No changes to commit"
-    else
-        git cam 'bump reqs'
-        git push origin main:bump_reqs
-        gh pr create --base main --head bump_reqs --title "Bump version requirements" --body "Bump requirements"
-    fi
-}
-
 function new_pr() {
     if [[ $# -eq 0 ]] || [[ $1 =~ [[:space:]] ]]; then
         echo "Error: Argument required with no spaces."
         return 1
+    fi
+    if [[ -z $(git status --porcelain) ]]; then
+        echo "No changes to commit"
+        return
     fi
 
     local branch_name=$1
@@ -247,6 +238,13 @@ function new_pr() {
     git cam "$branch_name" && \
     git push origin main:"$branch_name" && \
     gh pr create --base main --head "$branch_name" --title "$branch_name" --body "$branch_name"
+}
+
+function version_bumper() {
+    print_function_name
+    gitthefuckout
+    pipcompiler
+    new_pr bump_reqs
 }
 
 function multi_version_bumper() {
