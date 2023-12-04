@@ -27,7 +27,6 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 alias bk='cd $OLDPWD'
 alias ppath='IFS=:; for i in $PATH; do echo $i; done; unset IFS'
-alias ppypath='IFS=:; for i in $PYTHONPATH; do echo $i; done; unset IFS'
 
 print_function_name() {
     echo -e "\033[1;36mExecuting function: ${FUNCNAME[1]}\033[0m"
@@ -130,7 +129,7 @@ function pypath() {
 
 	new_path=$(IFS=:; echo "${unique_paths[*]}")
 	export PYTHONPATH="$new_path"
-	ppypath
+	IFS=:; for i in $PYTHONPATH; do echo $i; done; unset IFS
 }
 
 function enter_pyenv() {
