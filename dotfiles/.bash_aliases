@@ -235,9 +235,8 @@ function new_pr() {
     local branch_name=$1
     
     git cam "$branch_name"
-    git push origin main:"$branch_name"
     git checkout -b $branch_name
-    git pull
+    git push --set-upstream origin "$branch_name"
     gh pr create --base main --head "$branch_name" --title "$branch_name" --body "$branch_name"
 }
 
