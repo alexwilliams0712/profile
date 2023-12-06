@@ -241,6 +241,7 @@ function new_pr() {
     gh pr create --base main --head "$branch_name" --title "$branch_name" --body "$branch_name"
 }
 
+
 function version_bumper() {
     print_function_name
     gitthefuckout
