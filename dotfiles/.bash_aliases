@@ -237,6 +237,7 @@ function new_pr() {
     git cam "$branch_name"
     git push origin main:"$branch_name"
     git checkout -b $branch_name
+    git pull
     gh pr create --base main --head "$branch_name" --title "$branch_name" --body "$branch_name"
 }
 
