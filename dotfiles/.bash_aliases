@@ -234,12 +234,11 @@ function new_pr() {
 
     local branch_name=$1
     
-    git cam "$branch_name"
     git checkout -b $branch_name
+    git cam "$branch_name"
     git push --set-upstream origin "$branch_name"
     gh pr create --base main --head "$branch_name" --title "$branch_name" --body "$branch_name"
 }
-
 
 function version_bumper() {
     print_function_name
