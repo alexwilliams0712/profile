@@ -373,7 +373,8 @@ function dockeredo() {
     fi
     docker compose up -d --remove-orphans
 }
-alias dockoff='docker rm -vf $(docker ps -aq); docker rmi -f $(docker images -aq); docker system prune -f; docker network create main'
+alias dockill='docker rm -vf $(docker ps -aq)'
+alias dockoff='dockill; docker rmi -f $(docker images -aq); docker system prune -f; docker network create main'
 alias dockercontainers='docker ps --format="table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" | (read -r; printf "%s\n" "$REPLY"; sort -k 2,2 -k 1,1 )'
 
 function dockerperv() {
