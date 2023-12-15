@@ -377,16 +377,31 @@ alias dockill='docker rm -vf $(docker ps -aq)'
 alias dockoff='dockill; docker rmi -f $(docker images -aq); docker system prune -f; docker network create main'
 alias dockercontainers='docker ps --format="table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" | (read -r; printf "%s\n" "$REPLY"; sort -k 2,2 -k 1,1 )'
 
-function dockerperv() {
+dockerperv () {
     print_function_name
     sleep_time_secs=2
+    sort_option="-k 2,2 -k 1,1"
+    if [ "$1" ]; then
+        case "$(echo "$1" | tr '[:upper:]' '[:lower:]')" in
+            name)
+                sort_option="-k 1,1 -k 2,2"
+                ;;
+            image)
+                sort_option="-k 2,2 -k 1,1"
+                ;;
+            *)
+                echo "Invalid argument. Sorting by default (image)."
+                ;;
+        esac
+    fi
     while true; do
         clear
         echo "Every $sleep_time_secs s: dockercontainers: $(date)"
-        dockercontainers
+        docker ps --format="table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" | ( read -r; printf "%s\n" "$REPLY"; sort $sort_option )
         sleep $sleep_time_secs
     done
 }
+
 
 function dockerbuild() {
     print_function_name
