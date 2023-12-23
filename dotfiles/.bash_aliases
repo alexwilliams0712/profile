@@ -439,17 +439,17 @@ function ecsclusters() {
     done
 
     # Print the table header with borders
-    printf "+----------------------------------------+---------------+---------------+\n"
-    printf "| %-38s | %-13s | %-13s |\n" "ClusterName" "RunningTasks" "PendingTasks"
-    printf "+----------------------------------------+---------------+---------------+\n"
+    printf "+--------------------------------------------------+---------------+---------------+\n"
+    printf "| %-48s | %-13s | %-13s |\n" "ClusterName" "RunningTasks" "PendingTasks"
+    printf "+--------------------------------------------------+---------------+---------------+\n"
 
     # Print each row of the table
     for info in "${cluster_info[@]}"; do
-        printf "| %-38s | %-13s | %-13s |\n" $info
+        printf "| %-48s | %-13s | %-13s |\n" $info
     done | sort
 
     # Bottom border of the table
-    printf "+----------------------------------------+---------------+---------------+\n"
+    printf "+--------------------------------------------------+---------------+---------------+\n"
 }
 
 
