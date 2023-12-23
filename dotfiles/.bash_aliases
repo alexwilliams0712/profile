@@ -422,6 +422,34 @@ function dockerbuild() {
 }
 
 ##
+# AWS
+##
+function ecsclusters() {
+    clusters=$(aws ecs list-clusters --output json | jq -r '.clusterArns[]')
+    declare -a cluster_info
+    for cluster in $clusters; do
+        cluster_name=$(echo $cluster | rev | cut -d'/' -f1 | rev)
+        if [[ -z "$1" ]] || [[ $cluster_name == *$1* ]]; then
+            task_counts=$(aws ecs describe-clusters --clusters $cluster --output json --query 'clusters[0].{runningTasksCount:runningTasksCount, pendingTasksCount:pendingTasksCount}')
+            running_tasks=$(echo $task_counts | jq -r '.runningTasksCount')
+            pending_tasks=$(echo $task_counts | jq -r '.pendingTasksCount')
+            cluster_info+=("$cluster_name $running_tasks $pending_tasks")
+        fi
+    done
+    printf "%-40s\t%-15s\t%-15s\n" "ClusterName" "RunningTasks" "PendingTasks"
+    for info in "${cluster_info[@]}"; do
+        printf "%-40s\t%-15s\t%-15s\n" $info
+    done | sort
+}
+
+function awsperv() {
+    watch -x bash -ic "ecsclusters $1"
+}
+
+
+
+
+##
 #vpn
 ##
 function start_vpn {
