@@ -427,6 +427,7 @@ function dockerbuild() {
 function ecsclusters() {
     clusters=$(aws ecs list-clusters --output json | jq -r '.clusterArns[]')
     declare -a cluster_info
+
     for cluster in $clusters; do
         cluster_name=$(echo $cluster | rev | cut -d'/' -f1 | rev)
         if [[ -z "$1" ]] || [[ $cluster_name == *$1* ]]; then
@@ -436,17 +437,25 @@ function ecsclusters() {
             cluster_info+=("$cluster_name $running_tasks $pending_tasks")
         fi
     done
-    printf "%-40s\t%-15s\t%-15s\n" "ClusterName" "RunningTasks" "PendingTasks"
+
+    # Print the table header with borders
+    printf "+----------------------------------------+---------------+---------------+\n"
+    printf "| %-38s | %-13s | %-13s |\n" "ClusterName" "RunningTasks" "PendingTasks"
+    printf "+----------------------------------------+---------------+---------------+\n"
+
+    # Print each row of the table
     for info in "${cluster_info[@]}"; do
-        printf "%-40s\t%-15s\t%-15s\n" $info
+        printf "| %-38s | %-13s | %-13s |\n" $info
     done | sort
+
+    # Bottom border of the table
+    printf "+----------------------------------------+---------------+---------------+\n"
 }
+
 
 function awsperv() {
     watch -x bash -ic "ecsclusters $1"
 }
-
-
 
 
 ##
