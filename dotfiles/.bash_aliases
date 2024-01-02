@@ -454,7 +454,7 @@ function ecsclusters() {
 
 
 function awsperv() {
-    watch -x bash -ic "ecsclusters $1"
+    watch -n 10 -x bash -ic "ecsclusters $1"
 }
 
 
