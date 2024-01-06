@@ -457,6 +457,14 @@ function awsperv() {
     watch -n 10 -x bash -ic "ecsclusters $1"
 }
 
+function ssh_aws_dublin() {
+    ssh -i ~/.ssh/aws_key_dublin.pem ec2-user@"$1"
+}
+
+function ssh_aws_tokyo() {
+    ssh -i ~/.ssh/aws_key_tokyo.pem ec2-user@"$1"
+}
+
 
 ##
 #vpn
