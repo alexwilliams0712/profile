@@ -149,6 +149,7 @@ function enter_pyenv() {
       pyenv virtualenv $expected_env_name
       pyenv activate $expected_env_name
     fi
+    pypath
 }
 
 function pylint() {
@@ -179,7 +180,7 @@ function pipcompiler() {
         echo "Not in a virtual environment. Please activate a virtual environment and try again."
         exit 1
     fi
-
+    
     echo "Running pip compiler"
     pip install -U pip pip-tools
 
