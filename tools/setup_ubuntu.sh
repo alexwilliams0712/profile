@@ -375,7 +375,16 @@ install_tailscale() {
 	sudo tailscale up --ssh
 	sudo ufw deny ssh
 }
-
+install_k3s() {
+	curl -sfL https://get.k3s.io | sh -
+}
+webinstalls() {
+	curl -sS https://webi.sh/awless | sh
+	curl -sS https://webi.sh/k9s | sh
+	curl -sS https://webi.sh/redis-commander | sh
+	curl -sS https://webi.sh/shfmt | sh
+	curl -sS https://webi.sh/shellcheck | sh
+}
 pip_installs() {
 	print_function_name
 	sudo -u $USER pip install -U pip pip-tools psutil
@@ -398,6 +407,8 @@ main() {
 	install_tailscale
 	install_aws_cli
 	install_terraform
+	install_k3s
+	webinstalls
 	apt_upgrader
 	exit_script
 }
