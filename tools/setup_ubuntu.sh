@@ -361,12 +361,10 @@ install_aws_cli() {
 }
 install_node() {
 	print_function_name
-	curl -fsSL https://deb.nodesource.com/setup_19.x \
-		| sudo -E bash - && sudo apt-get -o DPkg::Lock::Timeout=60 install -y nodejs npm
-	sudo npm install -g npm
+	curl -fsSL https://deb.nodesource.com/setup_21.x | sudo -E bash - &&\
+	sudo apt-get install -y nodejs
 	node -v
 	npm -v
-	npm config set prefix '~/.npm-global'
 	npm install -g wscat
 }
 install_tailscale() {
@@ -408,7 +406,7 @@ main() {
 	copy_dotfiles
 	set_git_config
 	install_apt_packages
-	# install_node
+	install_node
 	install_tailscale
 	install_aws_cli
 	install_terraform
