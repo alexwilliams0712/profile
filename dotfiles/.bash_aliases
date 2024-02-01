@@ -343,7 +343,8 @@ function git_https_to_ssh() {
 ##
 #K8s
 ##
-alias k9s="k9s-nsg"
+
+
 ##
 #Docker
 ##
