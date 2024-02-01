@@ -378,6 +378,11 @@ install_tailscale() {
 install_k3s() {
 	curl -sfL https://get.k3s.io | sh -
 }
+install_helm() {
+	curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+	chmod 700 get_helm.sh
+	./get_helm.sh
+}
 webinstalls() {
 	curl -sS https://webi.sh/awless | sh
 	curl -sS https://webi.sh/k9s | sh
@@ -408,6 +413,7 @@ main() {
 	install_aws_cli
 	install_terraform
 	install_k3s
+	install_helm
 	webinstalls
 	apt_upgrader
 	exit_script
