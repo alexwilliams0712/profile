@@ -343,7 +343,7 @@ function git_https_to_ssh() {
 ##
 #K8s
 ##
-
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
 ##
 #Docker
