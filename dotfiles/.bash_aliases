@@ -344,7 +344,24 @@ function git_https_to_ssh() {
 #K8s
 ##
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-
+function kube_ghcr_secret() {
+  if [ "$#" -ne 1 ]; then
+    echo "Usage: kube_secret <namespace>"
+    return 1
+  fi
+  local namespace="$1"
+  if ! kubectl get namespace "$namespace" > /dev/null 2>&1; then
+    echo "Namespace '$namespace' does not exist. Creating it..."
+    kubectl create namespace "$namespace"
+  fi
+  kubectl create secret docker-registry ghcr-credentials \
+    --docker-server=https://ghcr.io \
+    --docker-username="$(git config --global user.name)" \
+    --docker-password="$(gh auth token)" \
+    -n "$namespace"
+}
+alias helm_launch='helm template helm/ | kubectl apply -f -'
+alias helm_kill='helm template helm/ | kubectl delete -f -'
 ##
 #Docker
 ##
