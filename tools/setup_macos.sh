@@ -11,8 +11,8 @@ export PROFILE_DIR=$(pwd)
 exit_code=0
 
 copy_dotfiles() {
-    	# Add copy commands for your dotfiles here.
-    	cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
+	# Add copy commands for your dotfiles here.
+	cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
 	chsh -s /bin/bash
@@ -34,14 +34,14 @@ install_homebrew() {
 }
 
 install_packages() {
-    brew update
-    brew upgrade
-    brew bundle install --file=$PROFILE_DIR/Brewfile
+	brew update
+	brew upgrade
+	brew bundle install --file=$PROFILE_DIR/Brewfile
 }
 
 setup_git() {
-    # Set up global Git configuration.
-    git config --global core.autocrlf false
+	# Set up global Git configuration.
+	git config --global core.autocrlf false
 	git config --global pull.rebase false
 	git config --global http.sslVerify false
 	git config --global diff.tool bc3
@@ -80,67 +80,66 @@ setup_git() {
 }
 
 install_pyenv() {
-    brew install pyenv
-    pyenv update
-    pyenv install -s $DEFAULT_PYTHON_VERSION
-    pyenv global $DEFAULT_PYTHON_VERSION
+	brew install pyenv
+	pyenv update
+	pyenv install -s $DEFAULT_PYTHON_VERSION
+	pyenv global $DEFAULT_PYTHON_VERSION
 }
 
 install_node() {
-    brew install node
-    sudo npm install -g npm
+	brew install node
+	sudo npm install -g npm
 	node -v
 	npm -v
 	npm config set prefix '~/.npm-global'
 }
 
 install_rust() {
-    curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
-    source "$HOME"/.bashrc
-    rustup update stable
-    cargo install diesel_cli --no-default-features --features postgres
-    rustup component add rustfmt clippy
-    rustup update stable
+	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
+	source "$HOME"/.bashrc
+	rustup update stable
+	cargo install diesel_cli --no-default-features --features postgres
+	rustup component add rustfmt clippy
+	rustup update stable
 }
 
 install_jetbrains_toolbox() {
-    TOOLBOX_APP="/Applications/JetBrains Toolbox.app"
-    if [ ! -d "$TOOLBOX_APP" ]; then
-        # Download JetBrains Toolbox
-        curl -L -o jetbrains-toolbox.dmg "https://download.jetbrains.com/toolbox/jetbrains-toolbox-1.21.9712.dmg"
+	TOOLBOX_APP="/Applications/JetBrains Toolbox.app"
+	if [ ! -d "$TOOLBOX_APP" ]; then
+		# Download JetBrains Toolbox
+		curl -L -o jetbrains-toolbox.dmg "https://download.jetbrains.com/toolbox/jetbrains-toolbox-1.21.9712.dmg"
 
-        # Attach the downloaded DMG file
-        hdiutil attach jetbrains-toolbox.dmg
+		# Attach the downloaded DMG file
+		hdiutil attach jetbrains-toolbox.dmg
 
-        # Copy the JetBrains Toolbox app to the /Applications folder
-        cp -R "/Volumes/JetBrains Toolbox/JetBrains Toolbox.app" /Applications/
+		# Copy the JetBrains Toolbox app to the /Applications folder
+		cp -R "/Volumes/JetBrains Toolbox/JetBrains Toolbox.app" /Applications/
 
-        # Detach the DMG file
-        hdiutil detach "/Volumes/JetBrains Toolbox"
+		# Detach the DMG file
+		hdiutil detach "/Volumes/JetBrains Toolbox"
 
-        # Remove the downloaded DMG file
-        rm jetbrains-toolbox.dmg
-    fi
+		# Remove the downloaded DMG file
+		rm jetbrains-toolbox.dmg
+	fi
 
-    # Run JetBrains Toolbox
-    open "$TOOLBOX_APP"
+	# Run JetBrains Toolbox
+	open "$TOOLBOX_APP"
 
-    CONFIG_DIR="$HOME/Library/Application Support/JetBrains"
-    if [ -d "$CONFIG_DIR" ]; then
-        for product_dir in "$CONFIG_DIR"/*; do
-            if [ -d "$product_dir" ]; then
-                mkdir -p "$product_dir/options"
-                echo "Copying to $product_dir/options/watcherDefaultTasks.xml"
-                cp "$PROFILE_DIR/dotfiles/watcherDefaultTasks.xml" "$product_dir/options/watcherDefaultTasks.xml"
-            fi
-        done
-    fi
+	CONFIG_DIR="$HOME/Library/Application Support/JetBrains"
+	if [ -d "$CONFIG_DIR" ]; then
+		for product_dir in "$CONFIG_DIR"/*; do
+			if [ -d "$product_dir" ]; then
+				mkdir -p "$product_dir/options"
+				echo "Copying to $product_dir/options/watcherDefaultTasks.xml"
+				cp "$PROFILE_DIR/dotfiles/watcherDefaultTasks.xml" "$product_dir/options/watcherDefaultTasks.xml"
+			fi
+		done
+	fi
 }
-
 
 main() {
 	setup_git
-    	copy_dotfiles
+	copy_dotfiles
 	install_homebrew
 	install_packages
 	install_pyenv
@@ -151,9 +150,9 @@ main() {
 	if [[ exit_code -eq 0 ]]; then
 		cd $PROFILE_DIR
 		source ~/.bashrc
-	figlet "Complete"
+		figlet "Complete"
 	else
-	figlet "Failed"
+		figlet "Failed"
 	fi
 	echo "Press Enter to Exit..."
 	read

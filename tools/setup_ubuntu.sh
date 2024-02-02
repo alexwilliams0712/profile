@@ -15,11 +15,9 @@ set -o pipefail
 
 # Define an error handler function
 handle_error() {
-    echo "An error occurred on line $1"
+	echo "An error occurred on line $1"
 }
 trap 'handle_error $LINENO' ERR
-
-
 
 ensure_directory() {
 	print_function_name
@@ -79,14 +77,13 @@ install_apt_packages() {
 	print_function_name
 	apt_upgrader
 	echo "Running installs"
-    	sudo add-apt-repository -y universe
+	sudo add-apt-repository -y universe
 	sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
 		blueman \
 		build-essential \
 		ca-certificates \
 		clamav \
-		clamav-daemon\
-		curl \
+		clamav-daemon curl \
 		git \
 		gnupg \
 		gnuplot \
@@ -107,13 +104,13 @@ install_apt_packages() {
 		python3-pip \
 		shellcheck \
 		tk-dev \
-  		vlc \
+		vlc \
 		wget \
 		xz-utils \
 		zlib1g-dev
 
 	sudo apt install -o DPkg::Lock::Timeout=60 -y \
- 		aptitude \
+		aptitude \
 		at \
 		bash \
 		bpytop \
@@ -124,7 +121,7 @@ install_apt_packages() {
 		figlet \
 		flatpak \
 		gcc \
-  		jq \
+		jq \
 		libfuse2 \
 		libmysqlclient-dev \
 		libnetfilter-queue1 \
@@ -141,12 +138,11 @@ install_apt_packages() {
 		tree \
 		wget
 
-
- 	sudo systemctl disable postgresql.service
+	sudo systemctl disable postgresql.service
 	# sudo apt-get remove --purge -y libreoffice* shotwell
 	ssh_stuff
 	install_pyenv
- 	# pip_installs
+	# pip_installs
 	install_chrome
 	install_vscode
 	install_flatpaks
@@ -156,7 +152,7 @@ install_apt_packages() {
 	install_espanso
 	install_clam_av
 	install_1password
- 	install_jetbrains_toolbox
+	install_jetbrains_toolbox
 	ensure_directory
 }
 ssh_stuff() {
@@ -170,18 +166,17 @@ ssh_stuff() {
 }
 install_flatpaks() {
 	print_function_name
- 	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	for app in \
 		com.meetfranz.Franz \
 		com.github.phase1geo.minder \
 		com.spotify.Client \
 		com.github.eneshecan.WhatsAppForLinux \
 		com.slack.Slack \
-  		org.remmina.Remmina \
+		org.remmina.Remmina \
 		com.sublimetext.three \
-		com.valvesoftware.Steam \
-	; do
- 		echo "Looking for $app"
+		com.valvesoftware.Steam; do
+		echo "Looking for $app"
 		flatpak install --user --or-update -y flathub $app
 	done
 }
@@ -193,27 +188,27 @@ install_chrome() {
 }
 install_vscode() {
 	print_function_name
-	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >packages.microsoft.gpg
 	sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
 	sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] \
 		https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
 	apt_upgrader
- 	sudo apt-get install -y code
- 	rm -f packages.microsoft.gpg
+	sudo apt-get install -y code
+	rm -f packages.microsoft.gpg
 }
 install_1password() {
 	print_function_name
 	sudo rm -f /usr/share/keyrings/1password-archive-keyring.gpg
-	curl -sS https://downloads.1password.com/linux/keys/1password.asc \
-		| sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
+	curl -sS https://downloads.1password.com/linux/keys/1password.asc |
+		sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
 	echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' | sudo tee /etc/apt/sources.list.d/1password.list
 	sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
-	curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol \
-		| sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
+	curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol |
+		sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
 	sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
 	sudo rm -f /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
-	curl -sS https://downloads.1password.com/linux/keys/1password.asc \
-		| sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+	curl -sS https://downloads.1password.com/linux/keys/1password.asc |
+		sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
 	apt_upgrader && sudo apt install -y 1password 1password-cli
 	op --version
 }
@@ -226,9 +221,9 @@ install_pyenv() {
 	else
 		curl https://pyenv.run | bash
 	fi
- 	source ~/.bashrc
+	source ~/.bashrc
 	pyenv update
- 	source ~/.bashrc
+	source ~/.bashrc
 	pyenv install -s $DEFAULT_PYTHON_VERSION
 	pyenv global $DEFAULT_PYTHON_VERSION
 	FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
@@ -239,13 +234,13 @@ install_pyenv() {
 		cd "$FOLDER"
 		git pull $URL
 	fi
- 	ensure_directory
+	ensure_directory
 }
 install_rust() {
 	print_function_name
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
- 	source ~/.cargo/env
- 	source ~/.bashrc
+	source ~/.cargo/env
+	source ~/.bashrc
 	rustup update stable
 	rustup install nightly
 	# cargo install diesel_cli --no-default-features --features postgres
@@ -261,9 +256,9 @@ install_jetbrains_toolbox() {
 }
 install_espanso() {
 	print_function_name
-	if which espanso > /dev/null 2>&1; then
+	if which espanso >/dev/null 2>&1; then
 		echo "espanso is already installed."
-	        return
+		return
 	fi
 	cargo install --force cargo-make --version 0.34.0
 	git clone https://github.com/federico-terzi/espanso
@@ -271,11 +266,11 @@ install_espanso() {
 
 	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
 		echo "X11!"
-  		cargo make --profile release build-binary 
+		cargo make --profile release build-binary
 	else
 		echo "Wayland"
 		sudo apt install -y build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev libssl-dev
-		cargo make --profile release --env NO_X11=true build-binary 
+		cargo make --profile release --env NO_X11=true build-binary
 	fi
 	sudo mv target/release/espanso /usr/local/bin/espanso
 	sudo setcap "cap_dac_override+p" $(which espanso)
@@ -319,14 +314,14 @@ install_and_setup_docker() {
 		newgrp docker
 	fi
 	sudo systemctl enable docker.service
- 	ensure_directory
+	ensure_directory
 	echo "Docker setup complete"
 }
 install_github_cli() {
 	print_function_name
 	echo "Running gh-cli setup"
-	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-		| sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg |
+		sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
 	sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
 	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] \
 		https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
@@ -361,8 +356,8 @@ install_aws_cli() {
 }
 install_node() {
 	print_function_name
-	curl -fsSL https://deb.nodesource.com/setup_21.x | sudo -E bash - &&\
-	sudo apt-get install -y nodejs
+	curl -fsSL https://deb.nodesource.com/setup_21.x | sudo -E bash - &&
+		sudo apt-get install -y nodejs
 	node -v
 	npm -v
 	sudo npm install wscat
