@@ -365,6 +365,7 @@ install_node() {
 	sudo apt-get install -y nodejs
 	node -v
 	npm -v
+	sudo npm install wscat
 }
 install_tailscale() {
 	print_function_name
@@ -383,7 +384,7 @@ install_helm() {
 webinstalls() {
 	curl -sS https://webi.sh/awless | sh
 	curl -sS https://webi.sh/k9s | sh
-	curl -sS https://webi.sh/redis-commander | sh
+	curl -sS https://webi.sh/redis-commander | sudo sh
 	curl -sS https://webi.sh/shfmt | sh
 	curl -sS https://webi.sh/shellcheck | sh
 }
