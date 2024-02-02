@@ -365,7 +365,6 @@ install_node() {
 	sudo apt-get install -y nodejs
 	node -v
 	npm -v
-	npm install -g wscat
 }
 install_tailscale() {
 	print_function_name
