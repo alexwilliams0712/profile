@@ -285,6 +285,8 @@ install_espanso() {
 		echo "Espanso service is not running. Starting..."
 		espanso service start
 	fi
+	cp $PROFILE_DIR/dotfiles/espanso_match_file.yml $(espanso path config)/base.yaml
+	espanso install basic-emojis
 	espanso --version
 }
 
