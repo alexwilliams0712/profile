@@ -163,7 +163,7 @@ function pylint() {
 
     isort --profile black --skip __init__.py .
     black -t py311 .
-    ruff --fix .
+    ruff check --fix .
 }
 
 
