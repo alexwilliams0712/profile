@@ -378,6 +378,13 @@ install_helm() {
 	chmod 700 get_helm.sh
 	./get_helm.sh
 }
+
+install_zoom() {
+	wget https://zoom.us/client/5.17.11.3835/zoom_amd64.deb
+	sudo apt install -y ./zoom_amd64.deb
+	sudo rm zoom_amd64.deb
+}
+
 webinstalls() {
 	curl -sS https://webi.sh/awless | sh
 	curl -sS https://webi.sh/k9s | sh
@@ -409,6 +416,7 @@ main() {
 	install_terraform
 	install_k3s
 	install_helm
+	install_zoom
 	webinstalls
 	apt_upgrader
 	exit_script
