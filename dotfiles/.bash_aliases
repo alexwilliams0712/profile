@@ -66,7 +66,7 @@ function murder() {
             cmd="${pid_command_map[$pid]}"
             truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
             echo "Attempting graceful shutdown: $target_process - $pid ($truncated_cmd)"
-            kill -15 "$pid"
+            sudo kill -15 "$pid"
         done
         # Wait for 2 seconds if there are any processes
         if [ ${#pid_command_map[@]} -gt 0 ]; then
@@ -79,7 +79,7 @@ function murder() {
             truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
             if ps -p "$pid" > /dev/null; then
                 echo "Having to kill: $target_process - $pid ($truncated_cmd)"
-                kill -9 "$pid"
+                sudo kill -9 "$pid"
             fi
         done
 
