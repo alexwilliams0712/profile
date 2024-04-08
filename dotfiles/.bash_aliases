@@ -365,6 +365,16 @@ alias helm_kill='helm template helm/ | kubectl delete -f -'
 ##
 #Docker
 ##
+
+function postgres_docker_reset() {
+	sudo apt-get install bridge-utils
+	sudo pkill docker
+	sudo iptables -t nat -F
+	sudo ifconfig docker0 down
+	sudo brctl delbr docker0
+	sudo service docker restart
+}
+
 function ghcr_docker_login() {
     print_function_name
     if [ -z "$1" ]
