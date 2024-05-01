@@ -4,6 +4,6 @@ source ~/.bash_aliases
 apt_upgrader
 sudo apt dist-upgrade
 sudo apt install update-manager-core
-sudo do-release-upgrade
+sudo do-release-upgrade -d
 
 echo "You'll need to restart to pick up any changes"
