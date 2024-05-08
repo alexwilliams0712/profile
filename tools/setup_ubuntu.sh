@@ -169,6 +169,7 @@ install_flatpaks() {
 	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	for app in \
 		com.meetfranz.Franz \
+		org.telegram.desktop \
 		com.github.phase1geo.minder \
 		com.spotify.Client \
 		com.github.eneshecan.WhatsAppForLinux \
