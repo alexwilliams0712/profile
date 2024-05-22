@@ -216,10 +216,10 @@ install_1password() {
 
 install_pyenv() {
 	print_function_name
- 	sudo apt_upgrader
+ 	apt_upgrader
   	sudo apt install -y software-properties-common
    	sudo add-apt-repository ppa:deadsnakes/ppa
-    	sudo apt_upgrader
+    	apt_upgrader
      	sudo apt install -y python3.11 python3.11-dev python3.12 python3.12-dev
 	pyenv_dir="$HOME/.pyenv"
 	if [ -d "$pyenv_dir" ]; then
