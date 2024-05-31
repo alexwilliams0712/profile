@@ -132,6 +132,7 @@ install_apt_packages() {
 		nfs-common \
 		postgresql \
 		postgresql-contrib \
+  		redis-tools \
 		samba \
 		speedtest-cli \
 		terminator \
