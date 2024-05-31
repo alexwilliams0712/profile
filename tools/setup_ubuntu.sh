@@ -374,7 +374,7 @@ install_node() {
 install_tailscale() {
 	print_function_name
 	curl -fsSL https://tailscale.com/install.sh | sh
-	sudo tailscale up --ssh
+	sudo tailscale up --ssh --stateful-filtering
 	sudo ufw deny ssh
 }
 install_k3s() {
