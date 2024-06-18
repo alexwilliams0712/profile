@@ -136,8 +136,14 @@ git_branch() {
 
 # Set the full bash prompt
 function set_bash_prompt () {
-    # Set the PYTHON_VIRTUALENV variable.
-    ENV_NAME=$(echo $VIRTUAL_ENV | awk -F'/' '{print $(NF-1)}')
+    # Check if VIRTUAL_ENV is set and not empty
+    if [ -z "$VIRTUAL_ENV" ]; then
+        ENV_NAME=""
+    else
+        ENV_NAME=$(echo $VIRTUAL_ENV | awk -F'/' '{print $(NF-1)}')
+    fi
+    
+    # Set the PS1 variable with the updated ENV_NAME
     PS1="${RED}${ENV_NAME} ${debian_chroot:+($debian_chroot)}${BLUE}\u${BLUE}@${BLUE}\h\[\033[00m\]:${YELLOW}\w\[\033[00m\] ${PURPLE}$(git_branch)$(hg_branch)${COLOR_NONE}$ "
 }
 
@@ -172,4 +178,4 @@ if ! shopt -oq posix; then
 fi
 
 # if command -v pyenv >/dev/null 2>&1; then pyenv --version; fi
-if command -v python >/dev/null 2>&1; then python --version; fi
+# if command -v python >/dev/null 2>&1; then python --version; fi
