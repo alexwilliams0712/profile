@@ -106,6 +106,7 @@ RED="\[\033[0;31m\]"
 YELLOW="\[\033[1;33m\]"
 GREEN="\[\033[0;32m\]"
 BLUE="\[\033[1;34m\]"
+LIGHT_BLUE="\[\033[1;36m\]"
 PURPLE="\[\033[1;35m\]"
 LIGHT_RED="\[\033[1;31m\]"
 LIGHT_GREEN="\[\033[1;32m\]"
@@ -148,7 +149,7 @@ function set_bash_prompt () {
     fi
     
     # Set the PS1 variable with the updated ENV_NAME
-    PS1="${RED}${ENV_NAME} ${debian_chroot:+($debian_chroot)}${BLUE}\u${BLUE}@${BLUE}\h\[\033[00m\]:${YELLOW}\w\[\033[00m\] ${PURPLE}$(git_branch)$(hg_branch)${COLOR_NONE}$ "
+    PS1="${LIGHT_BLUE}${ENV_NAME} ${debian_chroot:+($debian_chroot)}${BLUE}\u${BLUE}@${BLUE}\h\[\033[00m\]:${YELLOW}\w\[\033[00m\] ${PURPLE}$(git_branch)$(hg_branch)${COLOR_NONE}$ "
 }
 
 # Execute this function before displaying prompt
