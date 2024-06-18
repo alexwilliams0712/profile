@@ -207,9 +207,17 @@ function pipcompiler() {
         return 1
     fi
 
+    # Initialize an array to hold the install flags
+    install_flags=()
+
     # Pip-compile each .in file
     for file in ${files}; do
         echo "Compiling ${file}"
+        flags=$(grep '^--' ${file})
+        # Add the flags to the install_flags array
+        if [ -n "${flags}" ]; then
+            install_flags+=(${flags})
+        fi
         cat -s ${file} > tmp.txt && mv tmp.txt ${file}
         (grep "^-" ${file}; grep -v "^-" ${file} | sort) | sponge ${file}
         rm -f "${file//.in/.txt}"
@@ -222,6 +230,9 @@ function pipcompiler() {
 
     # Build pip install command with each .txt file
     install_command="uv pip sync"
+    for flag in "${install_flags[@]}"; do
+        install_command+=" ${flag}"
+    done
     for txt_file in ${txt_files}; do
         install_command+=" ${txt_file}"
     done
