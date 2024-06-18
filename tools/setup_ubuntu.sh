@@ -372,6 +372,8 @@ install_node() {
 	node -v
 	npm -v
 	sudo npm install wscat
+	sudo rm package.json package-lock.json 
+	sudo rm -r node_modules
 }
 install_tailscale() {
 	print_function_name
@@ -422,7 +424,7 @@ main() {
 	install_node
 	install_tailscale
 	install_aws_cli
-	install_terraform
+	# install_terraform
 	install_k3s
 	install_helm
 	install_zoom
