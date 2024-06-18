@@ -134,11 +134,15 @@ git_branch() {
     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/git[\1] /'
 }
 
+pyenv_python_version() {
+  pyenv global 2>/dev/null || echo "No pyenv global"
+}
+
 # Set the full bash prompt
 function set_bash_prompt () {
     # Check if VIRTUAL_ENV is set and not empty
     if [ -z "$VIRTUAL_ENV" ]; then
-        ENV_NAME=${ pyenv global 2>/dev/null || echo "No pyenv global"}
+        ENV_NAME=$(pyenv_python_version)
     else
         ENV_NAME=$(echo $VIRTUAL_ENV | awk -F'/' '{print $(NF-1)}')
     fi
