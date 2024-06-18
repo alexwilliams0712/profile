@@ -114,14 +114,14 @@ LIGHT_GRAY="\[\033[0;37m\]"
 COLOR_NONE="\[\e[0m\]"
 
 # pyenv
-export PYENV_ROOT="$HOME/.pyenv"
+# export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 export PATH=$PATH:$HOME/.local/share/JetBrains/Toolbox/scripts
 export PATH=$PATH:$HOME/.local/bin
-alias brew='env PATH="${PATH//$(pyenv root)\/shims:/}" brew'
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
+# alias brew='env PATH="${PATH//$(pyenv root)\/shims:/}" brew'
+# eval "$(pyenv init --path)"
+# eval "$(pyenv init -)"
+# eval "$(pyenv virtualenv-init -)"
 
 # npm
 export PATH=~/.npm-global/bin:$PATH
@@ -137,7 +137,8 @@ git_branch() {
 # Set the full bash prompt
 function set_bash_prompt () {
     # Set the PYTHON_VIRTUALENV variable.
-    PS1="${RED}${PYENV_VERSION} ${debian_chroot:+($debian_chroot)}${BLUE}\u${BLUE}@${BLUE}\h\[\033[00m\]:${YELLOW}\w\[\033[00m\] ${PURPLE}$(git_branch)$(hg_branch)${COLOR_NONE}$ "
+    ENV_NAME=$(echo $VIRTUAL_ENV | awk -F'/' '{print $(NF-1)}')
+    PS1="${RED}${ENV_NAME} ${debian_chroot:+($debian_chroot)}${BLUE}\u${BLUE}@${BLUE}\h\[\033[00m\]:${YELLOW}\w\[\033[00m\] ${PURPLE}$(git_branch)$(hg_branch)${COLOR_NONE}$ "
 }
 
 # Execute this function before displaying prompt
@@ -170,5 +171,5 @@ if ! shopt -oq posix; then
   fi
 fi
 
-if command -v pyenv >/dev/null 2>&1; then pyenv --version; fi
+# if command -v pyenv >/dev/null 2>&1; then pyenv --version; fi
 if command -v python >/dev/null 2>&1; then python --version; fi
