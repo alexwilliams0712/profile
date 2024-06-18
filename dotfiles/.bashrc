@@ -138,7 +138,7 @@ git_branch() {
 function set_bash_prompt () {
     # Check if VIRTUAL_ENV is set and not empty
     if [ -z "$VIRTUAL_ENV" ]; then
-        ENV_NAME=""
+        ENV_NAME=${ pyenv global 2>/dev/null || echo "No pyenv global"}
     else
         ENV_NAME=$(echo $VIRTUAL_ENV | awk -F'/' '{print $(NF-1)}')
     fi
