@@ -222,25 +222,25 @@ install_pyenv() {
    	sudo add-apt-repository -y ppa:deadsnakes/ppa
     	apt_upgrader
      	sudo apt install -y python3.11 python3.11-dev python3.12 python3.12-dev
-	# pyenv_dir="$HOME/.pyenv"
-	# if [ -d "$pyenv_dir" ]; then
-	# 	echo "The $pyenv_dir directory already exists. Remove it to reinstall."
-	# else
-	# 	curl https://pyenv.run | bash
-	# fi
-	# source ~/.bashrc
-	# pyenv update
-	# source ~/.bashrc
-	# pyenv install -s $DEFAULT_PYTHON_VERSION
-	# pyenv global $DEFAULT_PYTHON_VERSION
-	# FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
-	# URL=https://github.com/pyenv/pyenv-virtualenv.git
-	# if [ ! -d "$FOLDER" ]; then
-	# 	git clone $URL $FOLDER
-	# else
-	# 	cd "$FOLDER"
-	# 	git pull $URL
-	# fi
+	pyenv_dir="$HOME/.pyenv"
+	if [ -d "$pyenv_dir" ]; then
+		echo "The $pyenv_dir directory already exists. Remove it to reinstall."
+	else
+		curl https://pyenv.run | bash
+	fi
+	source ~/.bashrc
+	pyenv update
+	source ~/.bashrc
+	pyenv install -s $DEFAULT_PYTHON_VERSION
+	pyenv global $DEFAULT_PYTHON_VERSION
+	FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
+	URL=https://github.com/pyenv/pyenv-virtualenv.git
+	if [ ! -d "$FOLDER" ]; then
+		git clone $URL $FOLDER
+	else
+		cd "$FOLDER"
+		git pull $URL
+	fi
 	curl -LsSf https://astral.sh/uv/install.sh | sh
 
 	ensure_directory
