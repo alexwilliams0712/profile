@@ -123,8 +123,7 @@ if command -v pyenv >/dev/null 2>&1; then
     alias brew='env PATH="${PATH//$(pyenv root)\/shims:/}" brew'
     eval "$(pyenv init --path)"
     eval "$(pyenv init -)"
-    eval "$(pyenv virtualenv-init -)"
-    ;
+    eval "$(pyenv virtualenv-init -)";
 fi
 
 
