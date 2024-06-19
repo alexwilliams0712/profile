@@ -119,9 +119,9 @@ COLOR_NONE="\[\e[0m\]"
 export PATH="$PYENV_ROOT/bin:$PATH"
 export PATH=$PATH:$HOME/.local/share/JetBrains/Toolbox/scripts
 export PATH=$PATH:$HOME/.local/bin
-# alias brew='env PATH="${PATH//$(pyenv root)\/shims:/}" brew'
-# eval "$(pyenv init --path)"
-# eval "$(pyenv init -)"
+alias brew='env PATH="${PATH//$(pyenv root)\/shims:/}" brew'
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
 # eval "$(pyenv virtualenv-init -)"
 
 # npm
@@ -182,5 +182,6 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# if command -v pyenv >/dev/null 2>&1; then pyenv --version; fi
-# if command -v python >/dev/null 2>&1; then python --version; fi
+if command -v pyenv >/dev/null 2>&1; then pyenv --version; fi
+if command -v uv >/dev/null 2>&1; then uv --version; fi
+if command -v python >/dev/null 2>&1; then python --version; fi
