@@ -458,6 +458,32 @@ function dockerbuild() {
     docker image push $NEW_TAG
 }
 
+function docker_build_with_netrc() {
+    local image_name=$1
+    local dockerfile=${2:-Dockerfile}
+    local netrc_file=${3:-~/.netrc}
+    local temp_secrets_file=$(mktemp)
+
+    # Extract username and password from .netrc
+    local username=$(awk '/machine api.packagr.app/ {print $4}' "$netrc_file")
+    local password=$(awk '/machine api.packagr.app/ {print $6}' "$netrc_file")
+
+    # Create temporary secrets file
+    echo "PACKAGR_USERNAME=$username" > "$temp_secrets_file"
+    echo "PACKAGR_PASSWORD=$password" >> "$temp_secrets_file"
+
+    # Build Docker image
+    DOCKER_BUILDKIT=1 docker build \
+        --secret id=env,src="$temp_secrets_file" \
+        -t "$image_name" \
+        -f "$dockerfile" .
+
+    # Remove temporary secrets file
+    rm "$temp_secrets_file"
+
+    echo "Docker image $image_name built successfully."
+}
+
 ##
 # AWS
 ##
