@@ -458,11 +458,45 @@ function dockerbuild() {
     docker image push $NEW_TAG
 }
 
-function docker_build_with_netrc() {
-    local image_name=$1
-    local dockerfile=${2:-Dockerfile}
-    local netrc_file=${3:-~/.netrc}
+docker_build_with_netrc() {
+    print_function_name
+    local image_name=""
+    local target=""
+    local dockerfile="Dockerfile"
+    local netrc_file="$HOME/.netrc"
     local temp_secrets_file=$(mktemp)
+
+    # Parse named arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --image-name)
+                image_name="$2"
+                shift 2
+                ;;
+            --target)
+                target="$2"
+                shift 2
+                ;;
+            --dockerfile)
+                dockerfile="$2"
+                shift 2
+                ;;
+            --netrc)
+                netrc_file="$2"
+                shift 2
+                ;;
+            *)
+                echo "Unknown option: $1"
+                return 1
+                ;;
+        esac
+    done
+
+    # Check if image_name is provided
+    if [[ -z "$image_name" ]]; then
+        echo "Error: --image-name is required"
+        return 1
+    fi
 
     # Extract username and password from .netrc
     local username=$(awk '/machine api.packagr.app/ {print $4}' "$netrc_file")
@@ -473,10 +507,19 @@ function docker_build_with_netrc() {
     echo "PACKAGR_PASSWORD=$password" >> "$temp_secrets_file"
 
     # Build Docker image
-    DOCKER_BUILDKIT=1 docker build \
-        --secret id=env,src="$temp_secrets_file" \
-        -t "$image_name" \
-        -f "$dockerfile" .
+    local build_command="DOCKER_BUILDKIT=1 docker build \
+        --secret id=env,src=\"$temp_secrets_file\" \
+        -t \"$image_name\" \
+        -f \"$dockerfile\""
+
+    # Add target if specified
+    if [[ -n "$target" ]]; then
+        build_command+=" --target \"$target\""
+    fi
+
+    build_command+=" ."
+
+    eval $build_command
 
     # Remove temporary secrets file
     rm "$temp_secrets_file"
