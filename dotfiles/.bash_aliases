@@ -231,6 +231,27 @@ function pipcompiler() {
     ${install_command}
 }
 
+function pyspy_profile() {
+    local app_name="$1"
+    if [ -z "$app_name" ]; then
+        echo "Usage: pyspy_profile <app_name>"
+        return 1
+    fi
+    
+    local pid=$(ps aux | grep "[${app_name:0:1}]${app_name:1}" | awk '{print $2}')
+    if [ -z "$pid" ]; then
+        echo "No process found matching '$app_name'"
+        return 1
+    fi
+    
+    local output_file="${app_name}_profile.svg"
+    
+    echo "Profiling process '$app_name' (PID: $pid)"
+    sudo env "PATH=$PATH" py-spy record -o "$output_file" --pid "$pid"
+    
+    echo "Profile saved to $output_file"
+}
+
 function new_pr() {
     if [[ $# -eq 0 ]] || [[ $1 =~ [[:space:]] ]]; then
         echo "Error: Argument required with no spaces."
