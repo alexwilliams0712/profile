@@ -274,7 +274,8 @@ function version_bumper() {
     print_function_name
     gitthefuckout
     pipcompiler
-    new_pr bump_reqs
+    uuid=$(uuidgen)
+    new_pr "bump_reqs_${uuid}"
 }
 
 function multi_version_bumper() {
