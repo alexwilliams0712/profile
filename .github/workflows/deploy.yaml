@@ -1,0 +1,66 @@
+name: Deploy New Profile
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - closed
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    - name: Checkout Code
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.DEPLOY_USER_PAT }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 14
+
+    - name: Installs
+      run: |
+        npm install -g semver @actions/github
+
+    - name: Get PR labels
+      id: pr-labels
+      uses: joerick/pr-labels-action@v1.0.7
+    
+    - name: Bump version
+      id: bump-version
+      run: |
+        if [ -f "VERSION" ]; then
+          version=$(cat VERSION)
+        else
+          version="0.0.0"
+          echo $version > VERSION
+        fi
+        echo "Current version is $version"
+        ver=$(cat VERSION)
+        labels="${{ steps.pr-labels.outputs.labels }}"
+        echo "Labels: $labels"
+        if echo "$labels" | grep -q "major"; then
+            NEW_VERSION=$(semver -i major $ver)
+        elif echo "$labels" | grep -q "minor"; then
+            NEW_VERSION=$(semver -i minor $ver)
+        else
+            NEW_VERSION=$(semver -i patch $ver)
+        fi
+        export NEW_VERSION
+        echo "New version is $NEW_VERSION"
+        echo $NEW_VERSION > VERSION
+
+      env:
+          NEW_VERSION: ${{ steps.bump-version.outputs.version }}
+        
+    - name: Commit and push version to Github
+      run: |
+        git config --global user.email "alexwilliams0712@hotmail.com"
+        git config --global user.name "alexwilliams0712"
+        git add .
+        git commit -m "Bump version to ${{ steps.bump-version.outputs.version }}"
+        git push https://x-access-token:${{ secrets.DEPLOY_USER_PAT }}@github.com/${{ github.repository }}.git
+        git checkout main
+        git pull
