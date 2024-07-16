@@ -8,8 +8,8 @@ on:
       - closed
 jobs:
   deploy:
-    - runs-on: ubuntu-latest
-    - steps:
+    runs-on: ubuntu-latest
+    steps:
 
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -52,6 +52,7 @@ jobs:
           export NEW_VERSION
           echo "New version is $NEW_VERSION"
           echo $NEW_VERSION > VERSION
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
         env:
             NEW_VERSION: ${{ steps.bump-version.outputs.version }}
