@@ -399,9 +399,12 @@ install_zoom() {
 }
 
 install_burpsuite() {
-	wget https://portswigger.net/burp/releases/community/latest -O burpsuite_community_linux.deb
-	sudo gdebi -n burpsuite_community_linux.deb
-	rm burpsuite_community_linux.deb
+	latest_version="2024.5.5"
+
+	wget "https://portswigger-cdn.net/burp/releases/download?product=community&version=${latest_version}&type=Linux" -O burpsuite_installer.sh
+	chmod +x burpsuite_installer.sh
+	sudo ./burpsuite_installer.sh
+	rm burpsuite_installer.sh
 }
 
 webinstalls() {
@@ -436,7 +439,7 @@ main() {
 	install_k3s
 	install_helm
 	install_zoom
-	# install_burpsuite
+	install_burpsuite
 	webinstalls
 	apt_upgrader
 	exit_script
