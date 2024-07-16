@@ -28,6 +28,7 @@ copy_dotfiles() {
 	mkdir -p $HOME/.config/terminator
 	cp $PROFILE_DIR/dotfiles/terminal_config $HOME/.config/terminator/config
 	cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
+	cp $PROFILE_DIR/VERSION $HOME/VERSION
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
 	sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
@@ -397,6 +398,12 @@ install_zoom() {
 	sudo rm zoom_amd64.deb
 }
 
+install_burpsuite() {
+	wget https://portswigger.net/burp/releases/community/latest -O burpsuite_community_linux.deb
+	sudo gdebi -n burpsuite_community_linux.deb
+	rm burpsuite_community_linux.deb
+}
+
 webinstalls() {
 	curl -sS https://webi.sh/awless | sh
 	curl -sS https://webi.sh/k9s | sh
@@ -429,6 +436,7 @@ main() {
 	install_k3s
 	install_helm
 	install_zoom
+	install_burpsuite
 	webinstalls
 	apt_upgrader
 	exit_script
