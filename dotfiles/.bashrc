@@ -186,6 +186,6 @@ if ! shopt -oq posix; then
 fi
 
 echo "Running profile version: $(cat $HOME/VERSION)"
-if command -v pyenv >/dev/null 2>&1; then pyenv --version; fi
-if command -v uv >/dev/null 2>&1; then uv --version; fi
+# if command -v pyenv >/dev/null 2>&1; then pyenv --version; fi
+# if command -v uv >/dev/null 2>&1; then uv --version; fi
 # if command -v python3 >/dev/null 2>&1; then python3 --version; fi
