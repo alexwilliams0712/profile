@@ -28,7 +28,7 @@ copy_dotfiles() {
 	mkdir -p $HOME/.config/terminator
 	cp $PROFILE_DIR/dotfiles/terminal_config $HOME/.config/terminator/config
 	cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
-	cp $PROFILE_DIR/VERSION $HOME/VERSION
+	cp $PROFILE_DIR/VERSION $HOME/BASH_PROFILE_VERSION
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
 	sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
