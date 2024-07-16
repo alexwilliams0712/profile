@@ -312,6 +312,8 @@ alias gohome="cd $CODE_ROOT"
 ##
 #git
 ##
+alias git_compress="git gc --aggressive --prune=now"
+
 function gitthefuckout() {
     print_function_name
     git ls-remote --exit-code --heads origin main >/dev/null 2>&1
