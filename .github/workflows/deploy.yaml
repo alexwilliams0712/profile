@@ -8,7 +8,7 @@ on:
       - closed
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    - runs-on: ubuntu-latest
 
     - name: Checkout Code
       uses: actions/checkout@v3
