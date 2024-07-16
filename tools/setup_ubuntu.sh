@@ -403,7 +403,7 @@ install_burpsuite() {
 
 	wget "https://portswigger-cdn.net/burp/releases/download?product=community&version=${latest_version}&type=Linux" -O burpsuite_installer.sh
 	chmod +x burpsuite_installer.sh
-	sudo ./burpsuite_installer.sh
+	sudo ./burpsuite_installer.sh || true
 	rm burpsuite_installer.sh
 }
 
