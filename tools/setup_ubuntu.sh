@@ -436,7 +436,7 @@ main() {
 	install_k3s
 	install_helm
 	install_zoom
-	install_burpsuite
+	# install_burpsuite
 	webinstalls
 	apt_upgrader
 	exit_script
