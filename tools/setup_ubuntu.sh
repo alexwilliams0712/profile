@@ -78,6 +78,7 @@ install_apt_packages() {
 	print_function_name
 	apt_upgrader
 	echo "Running installs"
+	sudo apt-get install -y software-properties-common
 	sudo add-apt-repository -y universe
 	sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
 		blueman \
