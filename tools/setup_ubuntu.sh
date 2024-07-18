@@ -80,7 +80,7 @@ install_apt_packages() {
 	echo "Running installs"
 	sudo apt-get install -y software-properties-common
 	sudo add-apt-repository -y universe
-	sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
+	sudo apt-get -o DPkg::Lock::Timeout=60 install -y --upgrade \
 		blueman \
 		build-essential \
 		ca-certificates \
@@ -111,7 +111,7 @@ install_apt_packages() {
 		xz-utils \
 		zlib1g-dev
 
-	sudo apt install -o DPkg::Lock::Timeout=60 -y \
+	sudo apt install -o DPkg::Lock::Timeout=60 -y --upgrade \
 		aptitude \
 		at \
 		bash \
@@ -129,9 +129,11 @@ install_apt_packages() {
 		libnetfilter-queue1 \
 		libpq-dev \
 		libsqlite3-dev \
+		libssl-dev \
 		make \
 		net-tools \
 		nfs-common \
+		openssl \
 		postgresql \
 		postgresql-contrib \
   		redis-tools \
