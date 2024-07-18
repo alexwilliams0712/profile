@@ -112,6 +112,7 @@ install_apt_packages() {
 		zlib1g-dev
 
 	sudo apt install -o DPkg::Lock::Timeout=60 -y --upgrade \
+		apt-transport-https \
 		aptitude \
 		at \
 		bash \
@@ -179,6 +180,7 @@ install_flatpaks() {
 	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	for app in \
 		com.meetfranz.Franz \
+		org.openrgb.OpenRGB \
 		org.mozilla.Thunderbird \
 		org.telegram.desktop \
 		com.github.phase1geo.minder \
@@ -416,6 +418,13 @@ install_burpsuite() {
 	rm burpsuite_installer.sh
 }
 
+install_coolercontrol() {
+	curl -1sLf 'https://dl.cloudsmith.io/public/coolercontrol/coolercontrol/setup.deb.sh' | sudo -E bash
+	sudo apt update
+	sudo apt install -y --upgrade coolercontrold
+	sudo systemctl enable --now coolercontrold
+}
+
 webinstalls() {
 	curl -sS https://webi.sh/awless | sh
 	curl -sS https://webi.sh/k9s | sh
@@ -448,8 +457,9 @@ main() {
 	install_k3s
 	install_helm
 	install_zoom
-	install_burpsuite
+	# install_coolercontrol
 	webinstalls
+	install_burpsuite
 	apt_upgrader
 	exit_script
 }
