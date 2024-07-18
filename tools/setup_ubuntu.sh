@@ -139,12 +139,17 @@ install_apt_packages() {
   		redis-tools \
 		samba \
 		speedtest-cli \
+		systemd-timesyncd \
 		terminator \
 		tree \
 		wget
 
 	sudo systemctl disable postgresql.service
 	# sudo apt-get remove --purge -y libreoffice* shotwell
+	sudo systemctl enable systemd-timesyncd
+	sudo systemctl start systemd-timesyncd
+	sudo timedatectl set-ntp true
+
 	ssh_stuff
 	install_pyenv
 	# pip_installs
