@@ -193,6 +193,8 @@ install_flatpaks() {
 		echo "Looking for $app"
 		flatpak install --user --or-update -y flathub $app
 	done
+
+	wget https://openrgb.org/releases/release_0.9/openrgb-udev-install.sh | sh
 }
 install_chrome() {
 	print_function_name
