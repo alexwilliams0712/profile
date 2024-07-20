@@ -194,7 +194,8 @@ install_flatpaks() {
 		flatpak install --user --or-update -y flathub $app
 	done
 
-	wget https://openrgb.org/releases/release_0.9/openrgb-udev-install.sh | sh
+	wget https://openrgb.org/releases/release_0.9/openrgb-udev-install.sh -O openrgb-udev-install.sh | sh
+	rm openrgb-udev-install.sh
 }
 install_chrome() {
 	print_function_name
@@ -459,7 +460,7 @@ main() {
 	install_k3s
 	install_helm
 	install_zoom
-	# install_coolercontrol
+	install_coolercontrol
 	webinstalls
 	install_burpsuite
 	apt_upgrader
