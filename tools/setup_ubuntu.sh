@@ -280,10 +280,10 @@ install_jetbrains_toolbox() {
 }
 install_espanso() {
 	print_function_name
-	if which espanso >/dev/null 2>&1; then
-		echo "espanso is already installed."
-		return
-	fi
+	# if which espanso >/dev/null 2>&1; then
+	# 	echo "espanso is already installed."
+	# 	return
+	# fi
 	cargo install --force cargo-make --version 0.34.0
 	git clone https://github.com/federico-terzi/espanso
 	cd espanso
