@@ -180,7 +180,7 @@ install_flatpaks() {
 	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	for app in \
 		com.meetfranz.Franz \
-		# org.openrgb.OpenRGB \
+		org.openrgb.OpenRGB \
 		org.mozilla.Thunderbird \
 		org.telegram.desktop \
 		com.github.phase1geo.minder \
@@ -194,8 +194,8 @@ install_flatpaks() {
 		flatpak install --user --or-update -y flathub $app
 	done
 
-	# wget https://openrgb.org/releases/release_0.9/openrgb-udev-install.sh -O openrgb-udev-install.sh | sh
-	# rm openrgb-udev-install.sh
+	wget https://openrgb.org/releases/release_0.9/openrgb-udev-install.sh -O openrgb-udev-install.sh | sh
+	rm openrgb-udev-install.sh
 }
 install_chrome() {
 	print_function_name
