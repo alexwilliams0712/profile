@@ -103,6 +103,8 @@ function apt_upgrader() {
     sudo systemctl start packagekit
 }
 
+alias file_counter="find . -maxdepth 1 -type f | sed -n 's/..*\.//p' | sort | uniq -c"
+
 # Rust
 function clippy() {
     local current_toolchain=$(rustup show active-toolchain | cut -d '-' -f1)
