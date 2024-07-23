@@ -372,6 +372,7 @@ install_terraform() {
 	unzip "terraform_${latest_version}_linux_amd64.zip"
 	sudo mv terraform /usr/local/bin/
 	sudo rm terraform_${latest_version}_linux_amd64.zip
+	rm -f LICENSE.txt
 	terraform version
 }
 install_aws_cli() {
