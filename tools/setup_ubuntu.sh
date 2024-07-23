@@ -459,7 +459,7 @@ main() {
 	install_node
 	install_tailscale
 	install_aws_cli
-	# install_terraform
+	install_terraform
 	install_k3s
 	install_helm
 	install_zoom
