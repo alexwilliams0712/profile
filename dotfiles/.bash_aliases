@@ -588,12 +588,23 @@ function awsperv() {
     watch -n 10 -x bash -ic "ecsclusters $1"
 }
 
-function ssh_aws_dublin() {
-    ssh -i ~/.ssh/aws_key_dublin.pem ec2-user@"$1"
-}
 
-function ssh_aws_tokyo() {
-    ssh -i ~/.ssh/aws_key_tokyo.pem ec2-user@"$1"
+function ssh_aws() {
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Usage: ssh_aws <region> <host>"
+        return 1
+    fi
+    
+    region="$1"
+    host="$2"
+    pem_file="~/.ssh/aws_key_${region}.pem"
+
+    if [ ! -f "${pem_file/#\~/$HOME}" ]; then
+        echo "PEM file for region $region does not exist: $pem_file"
+        return 1
+    fi
+
+    ssh -i "${pem_file}" ec2-user@"$host"
 }
 
 
