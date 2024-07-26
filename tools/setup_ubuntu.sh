@@ -194,8 +194,7 @@ install_flatpaks() {
 		flatpak install --user --or-update -y flathub $app
 	done
 
-	wget https://openrgb.org/releases/release_0.9/openrgb-udev-install.sh -O openrgb-udev-install.sh | sh
-	rm openrgb-udev-install.sh
+	
 }
 install_chrome() {
 	print_function_name
@@ -432,6 +431,13 @@ install_coolercontrol() {
 	sudo systemctl enable --now coolercontrold
 }
 
+install_open_rgb_rules() {
+	wget https://openrgb.org/releases/release_0.9/openrgb-udev-install.sh -O openrgb-udev-install.sh | sh
+	rm openrgb-udev-install.sh
+	wget https://gitlab.com/CalcProgrammer1/OpenRGB/-/jobs/artifacts/master/raw/60-openrgb.rules?job=Linux+64+AppImage&inline=false -O /usr/lib/udev/rules.d/60-openrgb.rules
+	sudo udevadm control --reload-rules && sudo udevadm trigger
+}
+
 webinstalls() {
 	curl -sS https://webi.sh/awless | sh
 	curl -sS https://webi.sh/k9s | sh
@@ -465,6 +471,7 @@ main() {
 	install_helm
 	install_zoom
 	install_coolercontrol
+	install_open_rgb_rules
 	webinstalls
 	install_burpsuite
 	apt_upgrader
