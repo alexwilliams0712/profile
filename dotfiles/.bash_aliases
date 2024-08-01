@@ -172,7 +172,7 @@ function pylint() {
     uv pip install -U black isort ruff
 
     isort --profile black --skip __init__.py --skip .venv .
-    black -t py311 .
+    black .
     ruff check --fix .
 }
 
