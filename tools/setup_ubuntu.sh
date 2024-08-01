@@ -474,7 +474,7 @@ main() {
 	install_helm
 	install_zoom
 	install_coolercontrol
-	install_open_rgb_rules
+	# install_open_rgb_rules
 	webinstalls
 	install_burpsuite
 	apt_upgrader
