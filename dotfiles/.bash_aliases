@@ -619,3 +619,21 @@ function start_vpn {
     source ./start_vpn.sh
     popd > /dev/null
 }
+
+
+# Fun
+
+function laughing_at_idiots() {
+	insults=( \
+				"MASSIVE FUCKING MORON" \
+				"YOU FOOL" \
+				"HAHA HACKED YA" \
+				)
+	random_index=$((RANDOM % ${#insults[@]}))
+	random_insult="${insults[$random_index]}"
+
+	filepath="/tmp/mug.jpeg"
+	fswebcam -r 1080x1920 --skip 100 $filepath > /dev/null 2>&1 
+	convert $filepath -gravity North -pointsize 72 -fill red -annotate 0 "${random_insult}" $filepath > /dev/null 2>&1 
+	eog $filepath > /dev/null 2>&1
+}
