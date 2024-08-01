@@ -85,10 +85,13 @@ install_apt_packages() {
 		build-essential \
 		ca-certificates \
 		clamav \
-		clamav-daemon curl \
+		clamav-daemon \
+		curl \
+		fswebcam \
 		git \
 		gnupg \
 		gnuplot \
+		imagemagick \
 		libbz2-dev \
 		libffi-dev \
 		liblzma-dev \
