@@ -375,6 +375,34 @@ function git_https_to_ssh() {
   git remote -v
 }
 
+function remove_offline_runners() {
+    local ORG_NAME=$1
+
+    while true; do
+        # Fetch all runners, handle pagination
+        runners=$(gh api -X GET /orgs/$ORG_NAME/actions/runners --paginate)
+
+        # Parse and filter offline runners
+        offline_runners=$(echo "$runners" | jq -r '.runners[] | select(.status == "offline") | .id')
+
+        # Check if there are no more offline runners
+        if [ -z "$offline_runners" ]; then
+            echo "No more offline runners to remove."
+            break
+        fi
+
+        # Loop through and remove each offline runner
+        for runner_id in $offline_runners; do
+            echo "Removing offline runner with ID: $runner_id"
+            gh api -X DELETE /orgs/$ORG_NAME/actions/runners/$runner_id
+        done
+
+        echo "Cycle complete, checking for more offline runners..."
+    done
+
+    echo "All offline runners removed."
+}
+
 ##
 #K8s
 ##
