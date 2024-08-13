@@ -114,11 +114,11 @@ WHITE="\[\033[1;37m\]"
 LIGHT_GRAY="\[\033[0;37m\]"
 COLOR_NONE="\[\e[0m\]"
 
-# pyenv
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 export PATH=$PATH:$HOME/.local/share/JetBrains/Toolbox/scripts
 export PATH=$PATH:$HOME/.local/bin
+export PATH="$HOME/go/bin:$PATH"
 if command -v pyenv >/dev/null 2>&1; then 
     alias brew='env PATH="${PATH//$(pyenv root)\/shims:/}" brew'
     eval "$(pyenv init --path)"
