@@ -274,7 +274,7 @@ install_rust() {
 	rustup update stable
 }
 install_go() {
-	sudo add-apt-repository ppa:longsleep/golang-backports
+	sudo add-apt-repository -y ppa:longsleep/golang-backports
 	sudo apt update -y
 	sudo apt install -y golang-go
 }
