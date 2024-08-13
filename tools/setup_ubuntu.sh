@@ -273,6 +273,14 @@ install_rust() {
 	rustup component add rustfmt clippy
 	rustup update stable
 }
+install_go() {
+	sudo add-apt-repository ppa:longsleep/golang-backports
+	sudo apt update -y
+	sudo apt install -y golang-go
+}
+install_scc() {
+	go install github.com/boyter/scc/v3@latest
+}
 install_jetbrains_toolbox() {
 	print_function_name
 	if [ ! -d /opt/jetbrains-toolbox ]; then
@@ -467,6 +475,8 @@ main() {
 	set_git_config
 	install_apt_packages
 	install_node
+	install_go
+	install_scc
 	install_tailscale
 	install_aws_cli
 	install_terraform
