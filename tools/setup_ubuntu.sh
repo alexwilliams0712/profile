@@ -412,6 +412,10 @@ install_tailscale() {
 }
 install_k3s() {
 	curl -sfL https://get.k3s.io | sh -
+	sudo chmod 644 /etc/rancher/k3s/k3s.yaml
+	sudo ufw allow 6443/tcp #apiserver
+	sudo ufw allow from 10.42.0.0/16 to any #pods
+	sudo ufw allow from 10.43.0.0/16 to any #services
 }
 install_helm() {
 	curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
