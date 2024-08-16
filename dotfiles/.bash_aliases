@@ -651,6 +651,7 @@ function start_vpn {
 
 # Fun
 function laughing_at_idiots() {
+    # sudo apt-get install -y fswebcam imagemagick
     ((
         insults=( \
             "MASSIVE FUCKING MORON" \
