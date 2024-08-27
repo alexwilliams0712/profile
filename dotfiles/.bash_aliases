@@ -582,6 +582,28 @@ docker_build_with_netrc() {
     echo "Docker image $image_name built successfully."
 }
 
+
+function copy_to_k3s() {
+    local image_name=$1
+
+  if [ -z "$image_name" ]; then
+    echo "Usage: import_image_to_k3s <image_name:tag>"
+    return 1
+  fi
+
+  echo "Saving Docker image $image_name..."
+  docker save "$image_name" | k3s ctr images import -
+
+  if [ $? -ne 0 ]; then
+    echo "Failed to import the image into k3s."
+    return 1
+  fi
+
+  echo "Image $image_name successfully imported into k3s."
+  echo "Listing the imported image in k3s..."
+  k3s ctr images ls | grep "$image_name"
+}
+
 ##
 # AWS
 ##
