@@ -417,12 +417,14 @@ install_k3s() {
 	sudo ufw allow from 10.42.0.0/16 to any #pods
 	sudo ufw allow from 10.43.0.0/16 to any #services
 
-	#Containerd perms
-	sudo groupadd containerd
-	sudo chgrp containerd /run/k3s/containerd/containerd.sock
-	sudo chmod 660 /run/k3s/containerd/containerd.sock
-	sudo usermod -aG containerd $USER
-	newgrp containerd
+	# Containerd perms
+    if ! id -nG "$USER" | grep -qw "containerd"; then
+		sudo groupadd containerd
+        sudo usermod -aG containerd "$USER"
+        newgrp containerd
+		sudo chgrp containerd /run/k3s/containerd/containerd.sock
+    	sudo chmod 660 /run/k3s/containerd/containerd.sock
+    fi
 }
 install_helm() {
 	curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
