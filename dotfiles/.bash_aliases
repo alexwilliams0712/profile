@@ -596,7 +596,7 @@ function copy_to_k3s() {
   fi
 
   echo "Saving Docker image $image_name..."
-  docker save "$image_name" | k3s ctr images import -
+  docker save "$image_name" | sudo k3s ctr images import -
 
   if [ $? -ne 0 ]; then
     echo "Failed to import the image into k3s."
@@ -605,7 +605,7 @@ function copy_to_k3s() {
 
   echo "Image $image_name successfully imported into k3s."
   echo "Listing the imported image in k3s..."
-  k3s ctr images ls | grep "$image_name"
+  sudo k3s ctr images ls | grep "$image_name"
 }
 
 ##
