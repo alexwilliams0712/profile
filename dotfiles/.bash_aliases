@@ -513,12 +513,13 @@ function dockerbuild() {
     docker image push $NEW_TAG
 }
 
-docker_build_with_netrc() {
+docker_build_with_creds() {
     print_function_name
-    local image_name=""
-    local target=""
+    local image_name="$(basename "$PWD" | tr '-' '_')"
+    local target="runtime"
     local dockerfile="Dockerfile"
     local netrc_file="$HOME/.netrc"
+    local cargo_credentials_file="$HOME/.cargo/credentials.toml"
     local temp_secrets_file=$(mktemp)
 
     # Parse named arguments
@@ -540,6 +541,10 @@ docker_build_with_netrc() {
                 netrc_file="$2"
                 shift 2
                 ;;
+            --cargo_credentials)
+                cargo_credentials_file="$2"
+                shift 2
+                ;;
             *)
                 echo "Unknown option: $1"
                 return 1
@@ -547,19 +552,20 @@ docker_build_with_netrc() {
         esac
     done
 
-    # Check if image_name is provided
-    if [[ -z "$image_name" ]]; then
-        echo "Error: --image-name is required"
-        return 1
-    fi
-
     # Extract username and password from .netrc
     local username=$(awk '/machine api.packagr.app/ {print $4}' "$netrc_file")
     local password=$(awk '/machine api.packagr.app/ {print $6}' "$netrc_file")
 
+    # Extract the SHIPYARD_TOKEN from credentials.toml
+    local shipyard_token=$(grep -A1 '^\[registries\.' "$cargo_credentials_file" | grep 'token' | sed -E 's/token = "(.*)"/\1/')
+
     # Create temporary secrets file
     echo "PACKAGR_USERNAME=$username" > "$temp_secrets_file"
     echo "PACKAGR_PASSWORD=$password" >> "$temp_secrets_file"
+    echo "SHIPYARD_TOKEN=$shipyard_token" >> "$temp_secrets_file"
+    echo "SSH_PRIVATE_KEY=$(cat ~/.ssh/id_ed25519 | base64 | tr -d '\n')" >> "$temp_secrets_file"
+
+    cat "$temp_secrets_file"
 
     # Build Docker image
     local build_command="DOCKER_BUILDKIT=1 docker build \
