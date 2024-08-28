@@ -565,8 +565,6 @@ docker_build_with_creds() {
     echo "SHIPYARD_TOKEN=$shipyard_token" >> "$temp_secrets_file"
     echo "SSH_PRIVATE_KEY=$(cat ~/.ssh/id_ed25519 | base64 | tr -d '\n')" >> "$temp_secrets_file"
 
-    cat "$temp_secrets_file"
-
     # Build Docker image
     local build_command="DOCKER_BUILDKIT=1 docker build \
         --secret id=env,src=\"$temp_secrets_file\" \
