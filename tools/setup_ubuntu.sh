@@ -104,6 +104,7 @@ install_apt_packages() {
 		lsb-release \
 		lzma \
 		make \
+		m4 \
 		moreutils \
 		openssh-server \
 		python3-pip \
