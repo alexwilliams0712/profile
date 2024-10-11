@@ -6,7 +6,7 @@ export PROJECT_ROOT=$HOME/profile
 export PATH="/usr/local/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
-export DEFAULT_PYTHON_VERSION="3.12.4"
+export DEFAULT_PYTHON_VERSION="3.12"
 export PROFILE_DIR=$(pwd)
 exit_code=0
 # Makes it return on any error
