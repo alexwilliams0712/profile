@@ -311,6 +311,15 @@ fi
 ##
 alias gohome="cd $CODE_ROOT"
 
+function mkdir_cd() {
+    if [ -z "$1" ]; then
+        echo "Error: No directory path supplied."
+        return 1
+    fi
+    
+    mkdir -p "$1" && cd "$1"
+}
+
 ##
 #git
 ##
