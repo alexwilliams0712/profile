@@ -129,25 +129,37 @@ install_apt_packages() {
 		flatpak \
 		gcc \
 		jq \
+		libbz2-dev \
+		libffi-dev \
 		libfuse2 \
+		liblzma-dev \
 		libmysqlclient-dev \
+		libncursesw5-dev \
 		libnetfilter-queue1 \
 		libpq-dev \
+		libreadline-dev \
 		libsqlite3-dev \
 		libssl-dev \
+		libxml2-dev \
+		libxmlsec1-dev \
+		llvm \
 		make \
 		net-tools \
 		nfs-common \
 		openssl \
 		postgresql \
 		postgresql-contrib \
-  		redis-tools \
+		redis-tools \
 		samba \
 		speedtest-cli \
 		systemd-timesyncd \
 		terminator \
+		tk-dev \
 		tree \
-		wget
+		wget \
+		xz-utils \
+		zlib1g-dev
+
 
 	sudo systemctl disable postgresql.service
 	# sudo apt-get remove --purge -y libreoffice* shotwell
