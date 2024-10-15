@@ -57,16 +57,18 @@ function murder() {
 
         while IFS= read -r line; do
             pid=$(echo "$line" | awk '{print $2}')
-            cmd=$(echo "$line" | awk '{print $11}')
+            cmd=$(echo "$line" | awk '{for(i=11;i<=NF;++i) printf $i " "; print ""}')
             pid_command_map["$pid"]="$cmd"
-        done < <(ps aux | grep -i "${target_process}" | grep -v "grep")
+        done < <(ps aux | grep -i "${target_process}" | grep -v -e "grep" -e "$0")
+
 
         # Send SIGTERM to the processes
         for pid in "${!pid_command_map[@]}"; do
             cmd="${pid_command_map[$pid]}"
             truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
             echo "Attempting graceful shutdown: $target_process - $pid ($truncated_cmd)"
-            sudo kill -15 "$pid"
+            sudo kill -15 "$pid" 2>/dev/null || echo "Failed to send SIGTERM to process $pid"
+
         done
         # Wait for 2 seconds if there are any processes
         if [ ${#pid_command_map[@]} -gt 0 ]; then
@@ -75,11 +77,11 @@ function murder() {
 
         # Check if the processes are still running, and if so, send SIGKILL
         for pid in "${!pid_command_map[@]}"; do
-            cmd="${pid_command_map[$pid]}"
-            truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
-            if ps -p "$pid" > /dev/null; then
-                echo "Having to kill: $target_process - $pid ($truncated_cmd)"
-                sudo kill -9 "$pid"
+            if ps -p "$pid" > /dev/null 2>&1; then
+                echo "Forcing shutdown (SIGKILL): $target_process - $pid (${pid_command_map[$pid]})"
+                sudo kill -9 "$pid" 2>/dev/null || echo "Failed to kill process $pid"
+            else
+                echo "Process $pid already terminated."
             fi
         done
 
@@ -87,6 +89,25 @@ function murder() {
         unset pid_command_map
         declare -A pid_command_map
     done
+}
+
+kill_on_port() {
+  if [ -z "$1" ]; then
+    echo "Please provide a port number."
+    return 1
+  fi
+
+  PORT=$1
+  # Find the PID of the process using the port
+  PID=$(lsof -t -i:"$PORT")
+
+  if [ -z "$PID" ]; then
+    echo "No process found running on port $PORT."
+  else
+    # Kill the process
+    kill -9 $PID
+    echo "Killed process $PID running on port $PORT."
+  fi
 }
 
 alias youdosser='find . -type f -exec dos2unix {} \;'
