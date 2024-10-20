@@ -153,6 +153,7 @@ install_apt_packages() {
 		samba \
 		speedtest-cli \
 		systemd-timesyncd \
+		steam-devices \
 		terminator \
 		tk-dev \
 		tree \
