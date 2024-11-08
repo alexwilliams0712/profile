@@ -486,7 +486,7 @@ install_open_rgb_rules() {
 
 install_font() {
 	wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/FiraCode.zip -O FiraCode.zip
-	unzip FiraCode.zip -d ~/.local/share/fonts
+	unzip FiraCode.zip -d ~/.local/share/fonts -o
 	fc-cache -fv
 	rm -f FiraCode.zip
 }
