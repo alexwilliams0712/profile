@@ -18,6 +18,11 @@ alias ll='ls -lAh'              # show all as a list sorted alphabetically
 alias llf='ll | grep -vE "^d"'  # ll files only
 alias lt='ls -lArth'            # show all as a list sorted by reversed modification time
 
+##
+# CAT ALIASES
+##
+alias bat='batcat'
+alias cat='bat'
 
 ##
 # CD ALIASES
