@@ -22,7 +22,7 @@ alias lt='ls -lArth'            # show all as a list sorted by reversed modifica
 # CAT ALIASES
 ##
 alias bat='batcat'
-alias cat='bat'
+
 
 ##
 # CD ALIASES
