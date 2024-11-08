@@ -120,6 +120,7 @@ install_apt_packages() {
 		aptitude \
 		at \
 		bash \
+		bat \
 		bpytop \
 		build-essential \
 		curl \
@@ -487,7 +488,7 @@ install_font() {
 	wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/FiraCode.zip -O FiraCode.zip
 	unzip FiraCode.zip -d ~/.local/share/fonts
 	fc-cache -fv
-
+	rm -f FiraCode.zip
 }
 webinstalls() {
 	curl -sS https://webi.sh/awless | sh
