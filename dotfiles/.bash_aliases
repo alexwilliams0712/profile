@@ -11,7 +11,7 @@ alias grep='grep --color=auto -E'
 ##
 # LS ALIASES
 ##
-alias ls='ls -F'
+alias ls='lsd -F'
 alias l='ls -c'                 # show most recent files first
 alias la='ls -A'                # show all (including '.files', exluding ./ and ../)
 alias ll='ls -lAh'              # show all as a list sorted alphabetically
