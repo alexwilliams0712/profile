@@ -143,6 +143,7 @@ install_apt_packages() {
 		libxml2-dev \
 		libxmlsec1-dev \
 		llvm \
+		lsd \
 		make \
 		net-tools \
 		nfs-common \
@@ -287,10 +288,16 @@ install_rust() {
 	rustup component add rustfmt clippy
 	rustup update stable
 }
+
+go_installs() {
+	go install github.com/dim13/otpauth@latest
+}
+
 install_go() {
 	sudo add-apt-repository -y ppa:longsleep/golang-backports
 	sudo apt update -y
 	sudo apt install -y golang-go
+	go_installs
 }
 install_scc() {
 	go install github.com/boyter/scc/v3@latest
@@ -476,6 +483,12 @@ install_open_rgb_rules() {
 	sudo udevadm control --reload-rules && sudo udevadm trigger
 }
 
+install_font() {
+	wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/FiraCode.zip -O FiraCode.zip
+	unzip FiraCode.zip -d ~/.local/share/fonts
+	fc-cache -fv
+
+}
 webinstalls() {
 	curl -sS https://webi.sh/awless | sh
 	curl -sS https://webi.sh/k9s | sh
@@ -513,6 +526,7 @@ main() {
 	install_coolercontrol
 	# install_open_rgb_rules
 	webinstalls
+	install_font
 	install_burpsuite
 	apt_upgrader
 	exit_script
