@@ -435,7 +435,7 @@ function remove_offline_runners() {
         for runner_id in $offline_runners; do
             log "Removing offline runner with ID: $runner_id"
             gh api -X DELETE /orgs/$ORG_NAME/actions/runners/$runner_id
-            sleep 0.5
+            sleep $SLEEP_TIME
         done
 
         log "Cycle complete, checking for more offline runners..."
