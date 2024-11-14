@@ -37,6 +37,10 @@ print_function_name() {
     echo -e "\033[1;36mExecuting function: ${FUNCNAME[1]}\033[0m"
 }
 
+function log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S.%3N') - $1"
+}
+
 # Grep and Tail fix logs easily by placing a separator bewtween fields
 function grepcfix() {
    \grep --color=always $@ | sed 's/\x1/|/g'
@@ -98,7 +102,7 @@ function murder() {
 
 kill_on_port() {
   if [ -z "$1" ]; then
-    echo "Please provide a port number."
+    log "Please provide a port number."
     return 1
   fi
 
@@ -107,11 +111,11 @@ kill_on_port() {
   PID=$(lsof -t -i:"$PORT")
 
   if [ -z "$PID" ]; then
-    echo "No process found running on port $PORT."
+    log "No process found running on port $PORT."
   else
     # Kill the process
     kill -9 $PID
-    echo "Killed process $PID running on port $PORT."
+    log "Killed process $PID running on port $PORT."
   fi
 }
 
@@ -412,7 +416,8 @@ function git_https_to_ssh() {
 
 function remove_offline_runners() {
     local ORG_NAME=$1
-
+    local SLEEP_TIME=${2:-0.5}  # Optional: second argument for sleep time, default is 0.5 seconds
+    
     while true; do
         # Fetch all runners, handle pagination
         runners=$(gh api -X GET /orgs/$ORG_NAME/actions/runners --paginate)
@@ -422,21 +427,21 @@ function remove_offline_runners() {
 
         # Check if there are no more offline runners
         if [ -z "$offline_runners" ]; then
-            echo "No more offline runners to remove."
+            log "No more offline runners to remove."
             break
         fi
 
         # Loop through and remove each offline runner
         for runner_id in $offline_runners; do
-            echo "Removing offline runner with ID: $runner_id"
+            log "Removing offline runner with ID: $runner_id"
             gh api -X DELETE /orgs/$ORG_NAME/actions/runners/$runner_id
             sleep 0.5
         done
 
-        echo "Cycle complete, checking for more offline runners..."
+        log "Cycle complete, checking for more offline runners..."
     done
 
-    echo "All offline runners removed."
+    log "All offline runners removed."
 }
 
 ##
