@@ -174,6 +174,10 @@ if [ -f ~/.personal ]; then
     . ~/.personal
 fi
 
+if [ -f ~/.profile ]; then
+    . ~/.profile
+fi
+
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
 # sources /etc/bash.bashrc).
