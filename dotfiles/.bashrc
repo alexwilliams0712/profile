@@ -159,8 +159,6 @@ function set_bash_prompt () {
 PROMPT_COMMAND=set_bash_prompt
 
 
-
-
 # Alias definitions.
 # You may want to put all your additions into a separate file like
 # ~/.bash_aliases, instead of adding them here directly.
@@ -172,10 +170,6 @@ fi
 
 if [ -f ~/.personal ]; then
     . ~/.personal
-fi
-
-if [ -f ~/.profile ]; then
-    . ~/.profile
 fi
 
 # enable programmable completion features (you don't need to enable
