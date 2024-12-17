@@ -1,45 +1,45 @@
-##
-# Preflight
-##
-
-# Tap homebrew
-tap "hashicorp/tap"
+# Taps
 tap "homebrew/bundle"
 tap "homebrew/cask"
-tap "homebrew/cask-drivers"
-tap "homebrew/cask-fonts"
-tap "homebrew/cask-versions"
 tap "homebrew/core"
 tap "homebrew/services"
 
-
-# Brew
-brew "ansible"
-brew "black"
+# CLI Tools
+brew "bat"
 brew "bpytop"
-brew "cask"
+brew "clamav"
+brew "curl"
 brew "docker"
-brew "dos2unix"
-brew "figlet"
 brew "git"
-brew "isort"
+brew "gh"
+brew "gnupg"
+brew "go"
+brew "imagemagick"
 brew "jq"
+brew "make"
+brew "node"
+brew "openssl"
+brew "postgresql"
 brew "pyenv"
-brew "python"
-brew "pv"
+brew "redis"
+brew "rust"
 brew "speedtest-cli"
 brew "tree"
 brew "wget"
-brew "wifi-password"
-brew "yq"
 
-# Cask
+# Casks (Applications)
+cask "1password"
+cask "discord"
 cask "docker"
-cask "dotnet"
-cask "dropbox"
-cask "franz"
 cask "google-chrome"
 cask "iterm2"
-cask "sublime-text"
+cask "jetbrains-toolbox"
+cask "slack"
+cask "spotify"
+cask "steam"
 cask "visual-studio-code"
-cask "vlc"
+cask "zoom"
+
+# Fonts
+tap "homebrew/cask-fonts"
+cask "font-fira-code-nerd-font"
