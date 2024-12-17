@@ -1,0 +1,26 @@
+{
+  "Profiles": [
+    {
+      "Name": "Default",
+      "Guid": "default",
+      "Normal Font": "FiraCodeNerdFontComplete-Regular 12",
+      "Use Non-ASCII Font": false,
+      "Transparency": 0.25,
+      "Background Color": {
+        "Red Component": 0,
+        "Green Component": 0,
+        "Blue Component": 0
+      },
+      "Foreground Color": {
+        "Red Component": 0,
+        "Green Component": 1,
+        "Blue Component": 0
+      },
+      "Scrollback Lines": 100000,
+      "Copy to Clipboard on Selection": true,
+      "Show Status Bar": false,
+      "Show Profile Name": false,
+      "Use Bold Font": true
+    }
+  ]
+}
