@@ -17,5 +17,5 @@ if [ "$os_name" = "Darwin" ]; then
 elif [ "$os_name" = "Linux" ]; then
     bash tools/setup_ubuntu.sh
 else
-    echo "Running on an unsupported OS."
+    bash tools/setupmacos.sh
 fi
