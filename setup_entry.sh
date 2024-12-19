@@ -17,5 +17,5 @@ if [ "$os_name" = "Darwin" ]; then
 elif [ "$os_name" = "Linux" ]; then
     bash tools/setup_ubuntu.sh
 else
-    bash tools/setupmacos.sh
+    source tools/setup_macos.sh
 fi
