@@ -21,4 +21,19 @@
     [[[child1]]]
       type = Terminal
       parent = window0
+    [[[child2]]]
+      type = Terminal
+      parent = window0
+    [[[child3]]]
+      type = Terminal
+      parent = child1
+    [[[child4]]]
+      type = Terminal
+      parent = child1
+    [[[split1]]]
+      type = Vertical
+      parent = window0
+    [[[split2]]]
+      type = Horizontal
+      parent = split1
 [plugins]
