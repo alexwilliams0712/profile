@@ -184,7 +184,7 @@ function enter_pyenv() {
 
     if [ ! -d ".venv" ]; then
         # If it does not exist, create the virtual environment
-         uv venv
+        uv venv -p $(pyenv global)
     fi
 
     # Activate the virtual environment
