@@ -58,47 +58,25 @@ function murder() {
     fi
 
     for target_process in "$@"; do
-        echo "Killing all $target_process processes"
-        # Declare an associative array for PIDs and commands
-        declare -A pid_command_map
+        echo "Killing all processes matching: $target_process"
 
-        # Send SIGTERM to the processes and wait for 2 seconds
+        # Attempt graceful shutdown first
+        echo "Attempting graceful shutdown (SIGTERM): $target_process"
+        sudo pkill -15 -f "$target_process" 2>/dev/null || echo "No matching processes found for SIGTERM."
 
-        while IFS= read -r line; do
-            pid=$(echo "$line" | awk '{print $2}')
-            cmd=$(echo "$line" | awk '{for(i=11;i<=NF;++i) printf $i " "; print ""}')
-            pid_command_map["$pid"]="$cmd"
-        done < <(ps aux | grep -i "${target_process}" | grep -v -e "grep" -e "$0")
+        # Wait for processes to terminate
+        sleep 2
 
-
-        # Send SIGTERM to the processes
-        for pid in "${!pid_command_map[@]}"; do
-            cmd="${pid_command_map[$pid]}"
-            truncated_cmd=$(echo "$cmd" | awk -F/ '{n=NF; print $(n-2) "/" $(n-1) "/" $n}')
-            echo "Attempting graceful shutdown: $target_process - $pid ($truncated_cmd)"
-            sudo kill -15 "$pid" 2>/dev/null || echo "Failed to send SIGTERM to process $pid"
-
-        done
-        # Wait for 2 seconds if there are any processes
-        if [ ${#pid_command_map[@]} -gt 0 ]; then
-            sleep 2
+        # Check if any processes are still running and forcefully terminate them
+        if pgrep -f "$target_process" > /dev/null 2>&1; then
+            echo "Some processes are still running. Forcing shutdown (SIGKILL): $target_process"
+            sudo pkill -9 -f "$target_process" 2>/dev/null || echo "Failed to kill remaining processes."
+        else
+            echo "All $target_process processes terminated gracefully."
         fi
-
-        # Check if the processes are still running, and if so, send SIGKILL
-        for pid in "${!pid_command_map[@]}"; do
-            if ps -p "$pid" > /dev/null 2>&1; then
-                echo "Forcing shutdown (SIGKILL): $target_process - $pid (${pid_command_map[$pid]})"
-                sudo kill -9 "$pid" 2>/dev/null || echo "Failed to kill process $pid"
-            else
-                echo "Process $pid already terminated."
-            fi
-        done
-
-        # Clear the pid_command_map associative array
-        unset pid_command_map
-        declare -A pid_command_map
     done
 }
+
 
 kill_on_port() {
   if [ -z "$1" ]; then
