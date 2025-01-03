@@ -1,5 +1,6 @@
 #!/bin/bash
 
+sudo -v
 if ! command -v git >/dev/null 2>&1; then
   echo "git is not installed, installing git."
   sudo apt-get update
