@@ -56,7 +56,7 @@ function murder() {
         echo "Error: Please provide at least one process name."
         return 1
     fi
-
+    sudo -v
     for target_process in "$@"; do
         # Attempt graceful shutdown first
         log "$target_process - Attempting to kill"
