@@ -58,10 +58,8 @@ function murder() {
     fi
 
     for target_process in "$@"; do
-        echo "Killing all processes matching: $target_process"
-
         # Attempt graceful shutdown first
-        echo "Attempting graceful shutdown (SIGTERM): $target_process"
+        log "$target_process - Attempting to kill"
         sudo pkill -15 -f "$target_process" 2>/dev/null || echo "No matching processes found for SIGTERM."
 
         # Wait for processes to terminate
@@ -69,10 +67,10 @@ function murder() {
 
         # Check if any processes are still running and forcefully terminate them
         if pgrep -f "$target_process" > /dev/null 2>&1; then
-            echo "Some processes are still running. Forcing shutdown (SIGKILL): $target_process"
+            log "$target_process - Some processes are still running. Forcing shutdown (SIGKILL)"
             sudo pkill -9 -f "$target_process" 2>/dev/null || echo "Failed to kill remaining processes."
         else
-            echo "All $target_process processes terminated gracefully."
+            log "$target_process - Processes terminated gracefully."
         fi
     done
 }
