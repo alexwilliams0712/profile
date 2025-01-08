@@ -337,7 +337,8 @@ install_espanso() {
 	espanso_service_status=$(espanso service status)
 	if [[ "$espanso_service_status" == "espanso is running" ]]; then
 		echo "Espanso service is already running. Restarting..."
-		espanso service restart
+		espanso service stop
+		espanso service start
 	else
 		echo "Espanso service is not running. Starting..."
 		espanso service start
