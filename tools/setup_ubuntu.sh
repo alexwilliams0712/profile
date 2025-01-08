@@ -334,15 +334,10 @@ install_espanso() {
 	fi
 	sudo setcap "cap_dac_override+p" $(which espanso)
 	espanso service register
-	espanso_service_status=$(espanso service status)
-	if [[ "$espanso_service_status" == "espanso is running" ]]; then
-		echo "Espanso service is already running. Restarting..."
-		espanso service stop
-		espanso service start
-	else
-		echo "Espanso service is not running. Starting..."
-		espanso service start
-	fi
+	espanso service status | tee >(grep -q "is running" && \
+		(espanso service stop && espanso service start) || \
+		(espanso service start))
+
 	cp $PROFILE_DIR/dotfiles/espanso_match_file.yml $(espanso path config)/match/base.yml
 	espanso --version
 }
