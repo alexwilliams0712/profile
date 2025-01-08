@@ -69,7 +69,7 @@ matches:
       - name: my_ip
         type: shell
         params:
-          cmd: "curl -s https://ipinfo.io/ip"
+          cmd: "curl -s ifconfig.me"
 
   - trigger: ":ip"
     replace: "{{my_local_ip}}"
