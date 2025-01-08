@@ -265,24 +265,34 @@ function new_pr() {
         echo "Error: Argument required with no spaces."
         return 1
     fi
+
     local branch_name=$1
     if git show-ref --verify --quiet "refs/heads/$branch_name"; then
-        echo "Error: Branch '$branch_name' already exists."
-        return 1
+        echo "Branch '$branch_name' already exists locally."
+        git checkout "$branch_name"
+    else
+        git checkout -b "$branch_name"
     fi
     if [[ -z $(git status --porcelain) ]]; then
-        echo "No changes detected. Creating an empty commit."
-        git checkout -b "$branch_name"
-        git commit --allow-empty -m "$branch_name"
+        echo "No changes detected. Creating an empty commit if nothing is pushed yet."
+        if [[ -z $(git log origin/"$branch_name" 2>/dev/null) ]]; then
+            git commit --allow-empty -m "$branch_name"
+        fi
     else
-        echo "Changes detected. Committing and creating branch."
-        git checkout -b "$branch_name"
+        echo "Changes detected. Adding and committing."
         git add .
         git commit -m "$branch_name"
     fi
     git push --set-upstream origin "$branch_name"
-    gh pr create --base main --head "$branch_name" --title "$branch_name" --body "$branch_name"
+    if gh pr view --head "$branch_name" &>/dev/null; then
+        echo "Pull request for branch '$branch_name' already exists. Opening it."
+        gh pr view --web --head "$branch_name"
+    else
+        echo "Creating a new pull request for branch '$branch_name'."
+        gh pr create --base main --head "$branch_name" --title "$branch_name" --body "$branch_name"
+    fi
 }
+
 
 function version_bumper() {
     print_function_name
