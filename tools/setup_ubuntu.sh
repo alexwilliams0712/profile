@@ -323,6 +323,7 @@ install_espanso() {
 		echo "X11!"
 	else
 		echo "Wayland"
+		sudo apt-get install libwxgtk3.2-dev
 		sudo apt install -y build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev libssl-dev
 		wget https://github.com/espanso/espanso/releases/download/v2.2.1/espanso-debian-wayland-amd64.deb
 		sudo apt install ./espanso-debian-wayland-amd64.deb
