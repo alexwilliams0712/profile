@@ -265,16 +265,21 @@ function new_pr() {
         echo "Error: Argument required with no spaces."
         return 1
     fi
-    if [[ -z $(git status --porcelain) ]]; then
-        echo "No changes to commit"
-        return
-    fi
-
     local branch_name=$1
-    
-    git checkout -b $branch_name
-    git add .
-    git commit -m "$branch_name"
+    if git show-ref --verify --quiet "refs/heads/$branch_name"; then
+        echo "Error: Branch '$branch_name' already exists."
+        return 1
+    fi
+    if [[ -z $(git status --porcelain) ]]; then
+        echo "No changes detected. Creating an empty commit."
+        git checkout -b "$branch_name"
+        git commit --allow-empty -m "$branch_name"
+    else
+        echo "Changes detected. Committing and creating branch."
+        git checkout -b "$branch_name"
+        git add .
+        git commit -m "$branch_name"
+    fi
     git push --set-upstream origin "$branch_name"
     gh pr create --base main --head "$branch_name" --title "$branch_name" --body "$branch_name"
 }
