@@ -314,11 +314,6 @@ install_jetbrains_toolbox() {
 install_espanso() {
 	print_function_name
 	# Waiting on https://github.com/espanso/espanso/issues/1793
-
-	if which espanso >/dev/null 2>&1; then
-		echo "espanso is already installed."
-		return
-	fi
 	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
 		echo "X11!"
 	else
