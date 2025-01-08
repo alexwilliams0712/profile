@@ -101,6 +101,7 @@ install_apt_packages() {
 		libssl-dev \
 		libxml2-dev \
 		libxmlsec1-dev \
+		libwxgtk3.2-dev \
 		lsb-release \
 		lzma \
 		make \
@@ -312,41 +313,40 @@ install_jetbrains_toolbox() {
 }
 install_espanso() {
 	print_function_name
-	return 
 	# Waiting on https://github.com/espanso/espanso/issues/1793
 
-	# if which espanso >/dev/null 2>&1; then
-	# 	echo "espanso is already installed."
-	# 	return
-	# fi
-	# cargo install --force cargo-make --version 0.34.0
-	# git clone https://github.com/federico-terzi/espanso
-	# cd espanso
+	if which espanso >/dev/null 2>&1; then
+		echo "espanso is already installed."
+		return
+	fi
+	cargo install --force cargo-make --version 0.34.0
+	git clone https://github.com/federico-terzi/espanso
+	cd espanso
 
-	# if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
-	# 	echo "X11!"
-	# 	cargo make --profile release build-binary
-	# else
-	# 	echo "Wayland"
-	# 	sudo apt install -y build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev libssl-dev
-	# 	cargo make --profile release --env NO_X11=true build-binary
-	# fi
-	# sudo mv target/release/espanso /usr/local/bin/espanso
-	# sudo setcap "cap_dac_override+p" $(which espanso)
-	# cd ..
-	# rm -rf espanso
-	# espanso service register
-	# espanso_service_status=$(espanso service status)
-	# if [[ "$espanso_service_status" == "espanso is running!" ]]; then
-	# 	echo "Espanso service is already running. Restarting..."
-	# 	espanso service restart
-	# else
-	# 	echo "Espanso service is not running. Starting..."
-	# 	espanso service start
-	# fi
-	# cp $PROFILE_DIR/dotfiles/espanso_match_file.yml $(espanso path config)/base.yaml
-	# espanso install basic-emojis
-	# espanso --version
+	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
+		echo "X11!"
+		cargo make --profile release build-binary
+	else
+		echo "Wayland"
+		sudo apt install -y build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev libssl-dev
+		cargo make --profile release --env NO_X11=true build-binary
+	fi
+	sudo mv target/release/espanso /usr/local/bin/espanso
+	sudo setcap "cap_dac_override+p" $(which espanso)
+	cd ..
+	rm -rf espanso
+	espanso service register
+	espanso_service_status=$(espanso service status)
+	if [[ "$espanso_service_status" == "espanso is running!" ]]; then
+		echo "Espanso service is already running. Restarting..."
+		espanso service restart
+	else
+		echo "Espanso service is not running. Starting..."
+		espanso service start
+	fi
+	cp $PROFILE_DIR/dotfiles/espanso_match_file.yml $(espanso path config)/base.yaml
+	espanso install basic-emojis
+	espanso --version
 }
 
 install_and_setup_docker() {
