@@ -318,10 +318,19 @@ install_espanso() {
 		echo "X11!"
 	else
 		echo "Wayland"
-		sudo apt-get install libwxgtk3.2-dev
-		sudo apt install -y build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev libssl-dev
-		wget https://github.com/espanso/espanso/releases/download/v2.2.1/espanso-debian-wayland-amd64.deb
-		sudo apt install ./espanso-debian-wayland-amd64.deb
+		# sudo apt-get install libwxgtk3.2-dev
+		# sudo apt install -y build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev libssl-dev
+		# wget https://github.com/espanso/espanso/releases/download/v2.2.1/espanso-debian-wayland-amd64.deb
+		# sudo apt install ./espanso-debian-wayland-amd64.deb
+		sudo apt update
+		sudo apt install build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libssl-dev libwxgtk3.*-dev
+		cargo install --force cargo-make --version 0.37.23
+		git clone https://github.com/espanso/espanso
+		cd espanso
+		cargo make --profile release --env NO_X11=true build-binary 
+		sudo mv target/release/espanso /usr/local/bin/espanso
+		cd ..
+		sudo rm -r espanso
 	fi
 	sudo setcap "cap_dac_override+p" $(which espanso)
 	espanso service register
@@ -334,7 +343,6 @@ install_espanso() {
 		espanso service start
 	fi
 	cp $PROFILE_DIR/dotfiles/espanso_match_file.yml $(espanso path config)/match/base.yml
-	espanso install basic-emojis
 	espanso --version
 }
 
