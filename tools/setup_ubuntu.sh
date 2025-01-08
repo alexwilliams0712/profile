@@ -326,7 +326,7 @@ install_espanso() {
 	sudo setcap "cap_dac_override+p" $(which espanso)
 	espanso service register
 	espanso_service_status=$(espanso service status)
-	if [[ "$espanso_service_status" == "espanso is running!" ]]; then
+	if [[ "$espanso_service_status" == "espanso is running" ]]; then
 		echo "Espanso service is already running. Restarting..."
 		espanso service restart
 	else
