@@ -50,6 +50,27 @@ function tailfix() {
    \tail -f  $@ | sed 's/\x1/|/g'
 }
 
+function scp_mirror() {
+    # $ scp_mirror alex-work ~/.aws ~/vpn ~/.netrc ~/.personal ~/.cargo/credentials.toml
+    if [ $# -lt 2 ]; then
+        log "Usage: scp_mirror remote_host dir1 [dir2 ...]"
+        return 1
+    fi
+
+    local host="$1"
+    shift  # Remove the host argument, leaving only the directory list
+
+    for dir in "$@"; do
+        # Expand the ~ to $HOME if present
+        local expanded_dir="${dir/#\~/$HOME}"
+        log "Copying $host:$dir to $expanded_dir"
+        # Create the parent directory if it doesn't exist
+        mkdir -p "$(dirname "$expanded_dir")"
+        scp -r "$host:$dir" "$expanded_dir"
+    done
+}
+
+
 function murder() {
     print_function_name
     if [ "$#" -eq 0 ]; then
