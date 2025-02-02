@@ -3,6 +3,19 @@
 # Configuration
 DEFAULT_VERSION="24.04.1"
 
+# Check if npm is installed
+if ! command -v npm &> /dev/null; then
+    log "npm is not installed. Installing..."
+    sudo apt-get update
+    sudo apt-get install -y nodejs npm
+fi
+
+# Check if Balena CLI is installed
+if ! command -v balena &> /dev/null; then
+    log "Balena CLI is not installed. Installing..."
+    sudo npm install -g balena-cli
+fi
+
 sudo -v
 
 log "Script started at $(date)"
@@ -85,14 +98,12 @@ function flash_usb() {
         sudo umount "${partition}" || log "No mounted partition found on ${partition}"
     done
     
-    log "Flashing Ubuntu to ${usb_device}..."
-    if ! sudo dd if="${iso_path}" of="${usb_device}" bs=4M status=progress conv=fsync; then
+    log "Flashing Ubuntu using Balena CLI..."
+    if ! sudo balena local flash "${iso_path}" --drive "${usb_device}" --yes; then
         log "Flashing failed"
         return 1
     fi
     
-    log "Syncing..."
-    sync
     log "USB flash complete!"
     return 0
 }
