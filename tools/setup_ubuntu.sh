@@ -199,11 +199,11 @@ install_flatpaks() {
 	print_function_name
 	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	for app in \
-		com.meetfranz.Franz \
-		org.openrgb.OpenRGB \
-		org.mozilla.Thunderbird \
+		# com.meetfranz.Franz \
+		# org.openrgb.OpenRGB \
+		# org.mozilla.Thunderbird \
 		org.telegram.desktop \
-		com.github.phase1geo.minder \
+		# com.github.phase1geo.minder \
 		com.spotify.Client \
 		com.github.eneshecan.WhatsAppForLinux \
 		com.slack.Slack \
