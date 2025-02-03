@@ -196,14 +196,14 @@ ssh_stuff() {
 	sudo systemctl reload ssh
 }
 install_flatpaks() {
-	print_function_name
-	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-	for app in \
-		org.telegram.desktop \
   		# com.meetfranz.Franz \
 		# org.openrgb.OpenRGB \
 		# org.mozilla.Thunderbird \
 		# com.github.phase1geo.minder \
+	print_function_name
+	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+	for app in \
+		org.telegram.desktop \
 		com.spotify.Client \
 		com.github.eneshecan.WhatsAppForLinux \
 		com.slack.Slack \
