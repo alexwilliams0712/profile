@@ -328,7 +328,7 @@ install_espanso() {
 		# sudo apt install ./espanso-debian-wayland-amd64.deb
 		sudo apt update
 		sudo apt install build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libssl-dev libwxgtk3.*-dev
-		cargo install --force cargo-make --version 0.37.23 -y
+		cargo install --force cargo-make --version 0.37.23 -- -y
 		git clone https://github.com/espanso/espanso
 		cd espanso
 		cargo make --profile release --env NO_X11=true build-binary 
