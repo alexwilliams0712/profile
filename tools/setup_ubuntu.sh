@@ -174,7 +174,7 @@ install_apt_packages() {
 	ssh_stuff
 	install_pyenv
 	# pip_installs
-	install_chrome
+	# install_chrome
 	install_vscode
 	install_flatpaks
 	install_rust
