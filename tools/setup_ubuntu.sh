@@ -509,24 +509,46 @@ exit_script() {
 	fi
 }
 main() {
-	copy_dotfiles
-	set_git_config
-	install_apt_packages
-	# install_node
-	# install_go
-	# install_scc
-	install_tailscale
-	install_aws_cli
-	install_terraform
-	# install_k3s
-	# install_helm
-	# install_zoom
-	# install_coolercontrol
-	install_open_rgb_rules
-	webinstalls
-	install_font
-	# install_burpsuite
-	apt_upgrader
-	exit_script
+    # Array to store failed functions
+    failed_functions=()
+
+    # Helper function to run and track failures
+    run_function() {
+        local func_name=$1
+        if ! $func_name; then
+            failed_functions+=("$func_name")
+            echo "Warning: $func_name failed, continuing with next function..."
+        fi
+    }
+
+    # Run all functions
+    run_function copy_dotfiles
+    run_function set_git_config
+    run_function install_apt_packages
+    # run_function install_node
+    # run_function install_go
+    # run_function install_scc
+    run_function install_tailscale
+    run_function install_aws_cli
+    run_function install_terraform
+    # run_function install_k3s
+    # run_function install_helm
+    # run_function install_zoom
+    # run_function install_coolercontrol
+    run_function install_open_rgb_rules
+    run_function webinstalls
+    run_function install_font
+    # run_function install_burpsuite
+    run_function apt_upgrader
+
+    # Report failures if any
+    if [ ${#failed_functions[@]} -ne 0 ]; then
+        echo -e "\nThe following functions failed:"
+        printf '%s\n' "${failed_functions[@]}"
+        echo -e "\nPlease check the above functions and try running them individually."
+    fi
+
+    exit_script
 }
+main
 main
