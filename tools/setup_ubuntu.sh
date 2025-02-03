@@ -551,4 +551,3 @@ main() {
     exit_script
 }
 main
-main
