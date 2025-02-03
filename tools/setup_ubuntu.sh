@@ -186,6 +186,7 @@ install_apt_packages() {
 	install_jetbrains_toolbox
 	ensure_directory
 }
+
 ssh_stuff() {
 	print_function_name
 	sudo systemctl enable fail2ban
@@ -195,33 +196,36 @@ ssh_stuff() {
 	sudo systemctl restart ssh
 	sudo systemctl reload ssh
 }
-install_flatpaks() {
-  		# com.meetfranz.Franz \
-		# org.openrgb.OpenRGB \
-		# org.mozilla.Thunderbird \
-		# com.github.phase1geo.minder \
-	print_function_name
-	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-	for app in \
-		org.telegram.desktop \
-		com.spotify.Client \
-		com.github.eneshecan.WhatsAppForLinux \
-		com.slack.Slack \
-		org.remmina.Remmina \
-		com.sublimetext.three \
-		com.valvesoftware.Steam; do
-		echo "Looking for $app"
-		flatpak install --user --or-update -y flathub $app
-	done
 
-	
+install_flatpaks() {
+    print_function_name
+    flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+    for app in \
+        org.telegram.desktop \
+        org.openrgb.OpenRGB \
+        org.mozilla.Thunderbird \
+        com.spotify.Client \
+        com.github.eneshecan.WhatsAppForLinux \
+        com.slack.Slack \
+        org.remmina.Remmina \
+        com.sublimetext.three \
+        com.valvesoftware.Steam; do
+        echo "Looking for $app"
+        if flatpak install --user --or-update -y flathub $app; then
+            echo "Successfully installed $app"
+        else
+            echo "Failed to install $app - continuing with next application"
+        fi
+    done    
 }
+
 install_chrome() {
 	print_function_name
 	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 	sudo apt install -y ./google-chrome-stable_current_amd64.deb
 	rm google-chrome-stable_current_amd64.deb
 }
+
 install_vscode() {
 	print_function_name
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >packages.microsoft.gpg
