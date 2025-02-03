@@ -508,20 +508,20 @@ main() {
 	copy_dotfiles
 	set_git_config
 	install_apt_packages
-	install_node
-	install_go
-	install_scc
-	install_tailscale
-	install_aws_cli
-	install_terraform
-	install_k3s
-	install_helm
-	install_zoom
-	install_coolercontrol
+	# install_node
+	# install_go
+	# install_scc
+	# install_tailscale
+	# install_aws_cli
+	# install_terraform
+	# install_k3s
+	# install_helm
+	# install_zoom
+	# install_coolercontrol
 	# install_open_rgb_rules
-	webinstalls
+	# webinstalls
 	install_font
-	install_burpsuite
+	# install_burpsuite
 	apt_upgrader
 	exit_script
 }
