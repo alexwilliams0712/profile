@@ -220,10 +220,18 @@ install_flatpaks() {
 }
 
 install_chrome() {
-	print_function_name
-	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-	sudo apt install -y ./google-chrome-stable_current_amd64.deb
-	rm google-chrome-stable_current_amd64.deb
+    print_function_name
+    architecture=$(dpkg --print-architecture)
+    
+    if [ "$architecture" = "arm64" ]; then
+        echo "ARM64 detected - installing Chromium as Chrome is not available"
+        sudo apt install -y chromium-browser
+    else
+        echo "x86_64 detected - installing Chrome"
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        sudo apt install -y ./google-chrome-stable_current_amd64.deb
+        rm google-chrome-stable_current_amd64.deb
+    fi
 }
 
 install_vscode() {
@@ -236,21 +244,35 @@ install_vscode() {
 	sudo apt-get install -y code
 	rm -f packages.microsoft.gpg
 }
+
 install_1password() {
-	print_function_name
-	sudo rm -f /usr/share/keyrings/1password-archive-keyring.gpg
-	curl -sS https://downloads.1password.com/linux/keys/1password.asc |
-		sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
-	echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' | sudo tee /etc/apt/sources.list.d/1password.list
-	sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
-	curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol |
-		sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
-	sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
-	sudo rm -f /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
-	curl -sS https://downloads.1password.com/linux/keys/1password.asc |
-		sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
-	apt_upgrader && sudo apt install -y 1password 1password-cli
-	op --version
+    print_function_name
+    architecture=$(dpkg --print-architecture)
+    
+    if [ "$architecture" = "arm64" ]; then
+        echo "Installing 1Password for ARM64"
+        curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
+            sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
+        echo 'deb [arch=arm64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/arm64 stable main' | \
+            sudo tee /etc/apt/sources.list.d/1password.list
+    else
+        echo "Installing 1Password for x86_64"
+        curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
+            sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
+        echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' | \
+            sudo tee /etc/apt/sources.list.d/1password.list
+    fi
+
+    # Common steps for both architectures
+    sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
+    curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol | \
+        sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
+    sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
+    curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
+        sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+    
+    apt_upgrader && sudo apt install -y 1password 1password-cli
+    op --version
 }
 
 install_pyenv() {
