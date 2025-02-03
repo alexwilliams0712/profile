@@ -347,34 +347,34 @@ install_espanso() {
 }
 
 install_and_setup_docker() {
-	print_function_name
-	sudo mkdir -m 0755 -p /etc/apt/keyrings
-	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
-	echo \
-		"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+    print_function_name
+    sudo mkdir -m 0755 -p /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
+    echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
       $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
-	sudo chmod a+r /etc/apt/keyrings/docker.gpg
-	apt_upgrader
-	sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
-		docker-ce \
-		docker-ce-cli \
-		containerd.io \
-		docker-buildx-plugin \
-		docker-compose-plugin
-	sudo systemctl enable --now docker.service
-	if ! grep -q "^docker:" /etc/group; then
-		sudo groupadd docker
-	fi
-	if ! groups $USER | grep -q "\bdocker\b"; then
-		sudo usermod -aG docker $USER
-	fi
-	if ! groups | grep -q "\bdocker\b"; then
-		newgrp docker
-	fi
-	sudo systemctl enable docker.service
-	ensure_directory
-	echo "Docker setup complete"
+    sudo chmod a+r /etc/apt/keyrings/docker.gpg
+    apt_upgrader
+    sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
+        docker-ce \
+        docker-ce-cli \
+        containerd.io \
+        docker-buildx-plugin \
+        docker-compose-plugin
+    sudo systemctl enable --now docker.service
+    if ! grep -q "^docker:" /etc/group; then
+        sudo groupadd docker
+    fi
+    if ! groups $USER | grep -q "\bdocker\b"; then
+        sudo usermod -aG docker $USER
+        # Use sg instead of newgrp - it runs the command in a new group context without starting a new shell
+        sg docker -c "echo 'Docker group permissions applied for this session'"
+    fi
+    sudo systemctl enable docker.service
+    ensure_directory
+    echo "Docker setup complete"
 }
+
 install_github_cli() {
 	print_function_name
 	echo "Running gh-cli setup"
