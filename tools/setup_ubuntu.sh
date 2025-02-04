@@ -174,7 +174,7 @@ install_apt_packages() {
 	ssh_stuff
 	install_pyenv
 	# pip_installs
-	# install_chrome
+	install_browser
 	install_vscode
 	install_flatpaks
 	install_rust
@@ -223,19 +223,25 @@ install_flatpaks() {
     done    
 }
 
-install_chrome() {
+install_browser() {
     print_function_name
     architecture=$(dpkg --print-architecture)
-    
+
     if [ "$architecture" = "arm64" ]; then
-        echo "ARM64 detected - installing Chromium as Chrome is not available"
-        sudo apt install -y chromium-browser
+        echo "Downloading Vivaldi for ARM64"
+        wget https://downloads.vivaldi.com/stable/vivaldi-stable_7.1.3570.42-1_arm64.deb
     else
-        echo "x86_64 detected - installing Chrome"
-        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        sudo apt install -y ./google-chrome-stable_current_amd64.deb
-        rm google-chrome-stable_current_amd64.deb
+        echo "Downloading Vivaldi for x86_64"
+        wget https://downloads.vivaldi.com/stable/vivaldi-stable_7.1.3570.42-1_amd64.deb
     fi
+
+    # Install the package
+    sudo apt install -y ./vivaldi-stable*.deb
+
+    # Clean up downloaded file
+    rm -f vivaldi-stable*.deb
+
+    echo "Vivaldi installation completed"
 }
 
 install_vscode() {
