@@ -2,6 +2,7 @@
 
 set -e
 set -o pipefail
+sudo apt install -y libfuse2 libxi6 libxrender1 libxtst6 mesa-utils libfontconfig libgtk-3-bin tar dbus-user-session
 
 TMP_DIR="/tmp"
 INSTALL_DIR="$HOME/.local/share/JetBrains/Toolbox/bin"
