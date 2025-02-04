@@ -249,39 +249,51 @@ install_1password() {
     print_function_name
     architecture=$(dpkg --print-architecture)
     
+    # Clean up any previous installation
+    sudo rm -rf /opt/1Password 1password-latest.tar.gz 1password-*
+
+    # Download appropriate version based on architecture
     if [ "$architecture" = "arm64" ]; then
-        echo "Installing 1Password for ARM64"
-        curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
-            sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
-        echo 'deb [arch=arm64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/arm64 stable main' | \
-            sudo tee /etc/apt/sources.list.d/1password.list
+        echo "Downloading 1Password for ARM64"
+        curl -sSO https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz
+        curl -sSO https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz.sig
     else
-        echo "Installing 1Password for x86_64"
-        curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
-            sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
-        echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' | \
-            sudo tee /etc/apt/sources.list.d/1password.list
+        echo "Downloading 1Password for x86_64"
+        curl -sSO https://downloads.1password.com/linux/tar/stable/x86_64/1password-latest.tar.gz
+        curl -sSO https://downloads.1password.com/linux/tar/stable/x86_64/1password-latest.tar.gz.sig
     fi
 
-    # Common steps for both architectures
-    sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
-    curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol | \
-        sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
-    sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
-    curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
-        sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
-    
-    apt_upgrader && sudo apt install -y 1password 1password-cli
-    op --version
+    # Verify GPG signature (optional but recommended)
+    curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --import
+    gpg --verify 1password-latest.tar.gz.sig 1password-latest.tar.gz || {
+        echo "GPG verification failed"
+        return 1
+    }
+
+    # Extract and install
+    sudo tar -xf 1password-latest.tar.gz
+    sudo mkdir -p /opt/1Password
+    sudo mv 1password-*/* /opt/1Password/
+    sudo /opt/1Password/after-install.sh
+
+    # Clean up downloaded files
+    rm -f 1password-latest.tar.gz 1password-latest.tar.gz.sig
+    rm -rf 1password-*/
+
+    # Verify installation
+    if command -v 1password >/dev/null 2>&1; then
+        echo "1Password installed successfully"
+        1password --version
+    else
+        echo "1Password installation failed"
+        return 1
+    fi
 }
 
 install_pyenv() {
 	print_function_name
- 	apt_upgrader
-  	sudo apt install -y software-properties-common
-   	# sudo add-apt-repository -y ppa:deadsnakes/ppa
 	apt_upgrader
-	sudo apt install -y python3.12 python3.12-dev
+	sudo apt install -y software-properties-common python3.12 python3.12-dev
 	pyenv_dir="$HOME/.pyenv"
 	if [ -d "$pyenv_dir" ]; then
 		echo "The $pyenv_dir directory already exists. Remove it to reinstall."
@@ -332,10 +344,7 @@ install_scc() {
 }
 install_jetbrains_toolbox() {
 	print_function_name
-	if [ ! -d /opt/jetbrains-toolbox ]; then
-		sudo curl -fsSL \
-			https://raw.githubusercontent.com/nagygergo/jetbrains-toolbox-install/master/jetbrains-toolbox.sh | bash
-	fi
+	bash jetbrains_toolbox_installer.sh
 }
 install_espanso() {
 	print_function_name
@@ -549,10 +558,10 @@ main() {
     run_function install_apt_packages
     run_function install_node
     run_function install_go
-    # run_function install_scc
+    run_function install_scc
     run_function install_tailscale
     run_function install_aws_cli
-    run_function install_terraform
+    # run_function install_terraform
     # run_function install_k3s
     # run_function install_helm
     # run_function install_zoom
