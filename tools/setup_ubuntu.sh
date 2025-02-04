@@ -188,10 +188,9 @@ install_apt_packages() {
 }
 
 install_slack() {
-	wget https://downloads.slack-edge.com/desktop-releases/linux/x64/4.41.96/slack-desktop-4.41.105-amd64.deb
+	wget https://downloads.slack-edge.com/desktop-releases/linux/x64/4.41.96/slack-desktop-4.41.96-amd64.deb
 	sudo apt install ./slack-desktop-*.deb
 }
-
 
 ssh_stuff() {
 	print_function_name
