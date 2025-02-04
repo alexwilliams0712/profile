@@ -187,6 +187,12 @@ install_apt_packages() {
 	ensure_directory
 }
 
+install_slack() {
+	wget https://downloads.slack-edge.com/desktop-releases/linux/x64/4.41.96/slack-desktop-4.41.105-amd64.deb
+	sudo apt install ./slack-desktop-*.deb
+}
+
+
 ssh_stuff() {
 	print_function_name
 	sudo systemctl enable fail2ban
@@ -206,7 +212,6 @@ install_flatpaks() {
         org.mozilla.Thunderbird \
         com.spotify.Client \
         com.github.eneshecan.WhatsAppForLinux \
-        com.slack.Slack \
         org.remmina.Remmina \
         com.sublimetext.three \
         com.valvesoftware.Steam; do
