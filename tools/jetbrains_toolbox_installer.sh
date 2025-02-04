@@ -12,8 +12,7 @@ sudo apt install -y \
     libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 \
     libxcomposite1 \
     libxdamage1 libxfixes3 \
-    libxrandr2 libgbm1 libasound2
-
+    libxrandr2 libgbm1
 
 
 TMP_DIR="/tmp"
