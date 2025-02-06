@@ -566,6 +566,7 @@ main() {
     run_function copy_dotfiles
     run_function set_git_config
     run_function install_apt_packages
+	run_function install_slack
     run_function install_node
     run_function install_go
     run_function install_scc
