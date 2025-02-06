@@ -20,7 +20,6 @@ handle_error() {
 trap 'handle_error $LINENO' ERR
 
 ensure_directory() {
-	print_function_name
 	cd $PROFILE_DIR
 }
 
@@ -77,7 +76,7 @@ set_git_config() {
 install_apt_packages() {
 	print_function_name
 	apt_upgrader
-	echo "Running installs"
+	log "Running installs"
 	sudo apt-get install -y software-properties-common
 	sudo add-apt-repository -y universe
 	sudo apt-get -o DPkg::Lock::Timeout=60 install -y --upgrade \
@@ -218,17 +217,21 @@ install_flatpaks() {
         org.remmina.Remmina \
         com.sublimetext.three \
         com.valvesoftware.Steam; do
-        echo "Looking for $app"
+        log "Looking for $app"
         if flatpak install --user --or-update -y flathub $app; then
-            echo "Successfully installed $app"
+            log "Successfully installed $app"
         else
-            echo "Failed to install $app - continuing with next application"
+            log "Failed to install $app - continuing with next application"
         fi
     done    
 }
 
 install_browser() {
-    print_function_name
+	print_function_name
+	if command -v vivaldi >/dev/null 2>&1; then
+        log "Vivaldi is already installed, skipping installation"
+        return 0
+    fi
     architecture=$(dpkg --print-architecture)
 
     if [ "$architecture" = "arm64" ]; then
@@ -245,6 +248,10 @@ install_browser() {
 
 install_vscode() {
 	print_function_name
+	if command -v code >/dev/null 2>&1; then
+        log "VSCode is already installed, skipping installation"
+        return 0
+    fi
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >packages.microsoft.gpg
 	sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
 	sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] \
@@ -275,7 +282,7 @@ install_1password() {
     # Verify GPG signature (optional but recommended)
     curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --import
     gpg --verify 1password-latest.tar.gz.sig 1password-latest.tar.gz || {
-        echo "GPG verification failed"
+        log "GPG verification failed"
         return 1
     }
 
@@ -291,10 +298,10 @@ install_1password() {
 
     # Verify installation
     if command -v 1password >/dev/null 2>&1; then
-        echo "1Password installed successfully"
+        log "1Password installed successfully"
         1password --version
     else
-        echo "1Password installation failed"
+        log "1Password installation failed"
         return 1
     fi
 }
@@ -305,7 +312,7 @@ install_pyenv() {
 	sudo apt install -y software-properties-common python3.12 python3.12-dev
 	pyenv_dir="$HOME/.pyenv"
 	if [ -d "$pyenv_dir" ]; then
-		echo "The $pyenv_dir directory already exists. Remove it to reinstall."
+		log "The $pyenv_dir directory already exists. Remove it to reinstall."
 	else
 		curl https://pyenv.run | bash
 	fi
@@ -339,20 +346,27 @@ install_rust() {
 }
 
 go_installs() {
+	print_function_name
 	go install github.com/dim13/otpauth@latest
 }
 
 install_go() {
+	print_function_name
 	sudo add-apt-repository -y ppa:longsleep/golang-backports
 	sudo apt update -y
 	sudo apt install -y golang-go
 	go_installs
 }
 install_scc() {
+	print_function_name
 	go install github.com/boyter/scc/v3@latest
 }
 install_jetbrains_toolbox() {
 	print_function_name
+	if command -v jetbrains-toolbox >/dev/null 2>&1; then
+        log "Jetbrains toolbox is already installed, skipping installation"
+        return 0
+    fi
 	bash jetbrains_toolbox_installer.sh
 }
 install_espanso() {
@@ -361,14 +375,14 @@ install_espanso() {
 	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
 		echo "X11!"
 	else
-		echo "Wayland"
+		log "Wayland"
 		# sudo apt-get install libwxgtk3.2-dev
 		# sudo apt install -y build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev libssl-dev
 		# wget https://github.com/espanso/espanso/releases/download/v2.2.1/espanso-debian-wayland-amd64.deb
 		# sudo apt install ./espanso-debian-wayland-amd64.deb
 		sudo apt update
 		sudo apt install build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libssl-dev libwxgtk3.*-dev
-		cargo install --force cargo-make --version 0.37.23 -- -y
+		cargo install --force cargo-make --version 0.37.23
 		git clone https://github.com/espanso/espanso
 		cd espanso
 		cargo make --profile release --env NO_X11=true build-binary 
@@ -412,7 +426,7 @@ install_and_setup_docker() {
     fi
     sudo systemctl enable docker.service
     ensure_directory
-    echo "Docker setup complete"
+    log "Docker setup complete"
 }
 
 install_github_cli() {
@@ -470,6 +484,7 @@ install_tailscale() {
 	sudo ufw deny ssh
 }
 install_k3s() {
+	print_function_name
 	curl -sfL https://get.k3s.io | sh -
 	sudo chmod 644 /etc/rancher/k3s/k3s.yaml
 	sudo ufw allow 6443/tcp #apiserver
@@ -486,6 +501,7 @@ install_k3s() {
     fi
 }
 install_helm() {
+	print_function_name
 	curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 	chmod 700 get_helm.sh
 	./get_helm.sh
@@ -493,12 +509,14 @@ install_helm() {
 }
 
 install_zoom() {
+	print_function_name
 	wget https://zoom.us/client/5.17.11.3835/zoom_amd64.deb
 	sudo apt install -y ./zoom_amd64.deb
 	sudo rm zoom_amd64.deb
 }
 
 install_burpsuite() {
+	print_function_name
 	latest_version="2024.5.5"
 
 	wget "https://portswigger-cdn.net/burp/releases/download?product=community&version=${latest_version}&type=Linux" -O burpsuite_installer.sh
@@ -508,6 +526,7 @@ install_burpsuite() {
 }
 
 install_coolercontrol() {
+	print_function_name
 	curl -1sLf 'https://dl.cloudsmith.io/public/coolercontrol/coolercontrol/setup.deb.sh' | sudo -E bash
 	sudo apt update
 	sudo apt install -y --upgrade coolercontrold
@@ -515,6 +534,7 @@ install_coolercontrol() {
 }
 
 install_open_rgb_rules() {
+	print_function_name
 	wget https://openrgb.org/releases/release_0.9/openrgb-udev-install.sh -O openrgb-udev-install.sh | sh
 	rm openrgb-udev-install.sh
 	wget https://gitlab.com/CalcProgrammer1/OpenRGB/-/jobs/artifacts/master/raw/60-openrgb.rules?job=Linux+64+AppImage&inline=false -O /usr/lib/udev/rules.d/60-openrgb.rules
@@ -522,12 +542,14 @@ install_open_rgb_rules() {
 }
 
 install_font() {
+	print_function_name
 	wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/FiraCode.zip -O FiraCode.zip
 	unzip -o FiraCode.zip -d ~/.local/share/fonts
 	fc-cache -fv
 	rm -f FiraCode.zip
 }
 webinstalls() {
+	print_function_name
 	curl -sS https://webi.sh/awless | sh
 	curl -sS https://webi.sh/k9s | sh
 	curl -sS https://webi.sh/redis-commander | sudo sh
@@ -572,7 +594,7 @@ main() {
     run_function install_tailscale
     run_function install_aws_cli
     # run_function install_terraform
-    run_function install_k3s
+    # run_function install_k3s
     run_function install_helm
     # run_function install_zoom
     run_function install_coolercontrol
