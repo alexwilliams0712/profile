@@ -263,12 +263,11 @@ install_vscode() {
 
 install_1password() {
     print_function_name
+	if command -v 1password >/dev/null 2>&1; then
+        log "1password is already installed, skipping installation"
+        return 0
+    fi
     architecture=$(dpkg --print-architecture)
-    
-    # Clean up any previous installation
-    sudo rm -rf /opt/1Password 1password-latest.tar.gz 1password-*
-
-    # Download appropriate version based on architecture
     if [ "$architecture" = "arm64" ]; then
         log "Downloading 1Password for ARM64"
         curl -sSO https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz
@@ -293,8 +292,8 @@ install_1password() {
     sudo /opt/1Password/after-install.sh
 
     # Clean up downloaded files
-    rm -f 1password-latest.tar.gz 1password-latest.tar.gz.sig
-    rm -rf 1password-*/
+    sudo rm -f 1password-latest.tar.gz 1password-latest.tar.gz.sig
+    sudo rm -rf 1password-*/
 
     # Verify installation
     if command -v 1password >/dev/null 2>&1; then
