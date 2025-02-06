@@ -462,13 +462,22 @@ install_terraform() {
 	terraform version
 }
 install_aws_cli() {
-	print_function_name
-	curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-	unzip -o awscliv2.zip
-	sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
-	which aws
-	aws --version
-	sudo rm -r aws*
+    print_function_name
+    architecture=$(dpkg --print-architecture)
+
+    if [ "$architecture" = "arm64" ]; then
+        log "Downloading AWS CLI for ARM64"
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+    else
+        log "Downloading AWS CLI for x86_64"
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    fi
+
+    unzip -o awscliv2.zip
+    sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+    which aws
+    aws --version
+    sudo rm -r aws*
 }
 install_node() {
 	print_function_name
