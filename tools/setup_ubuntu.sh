@@ -188,8 +188,12 @@ install_apt_packages() {
 }
 
 install_slack() {
-	wget https://downloads.slack-edge.com/desktop-releases/linux/x64/4.41.96/slack-desktop-4.41.96-amd64.deb
-	sudo apt install ./slack-desktop-*.deb
+	architecture=$(dpkg --print-architecture)
+    if [ "$architecture" != "arm64" ]; then
+		wget https://downloads.slack-edge.com/desktop-releases/linux/x64/4.41.96/slack-desktop-4.41.96-amd64.deb
+		sudo apt install ./slack-desktop-*.deb
+		sudo rm -f slack-desktop-*
+	fi
 }
 
 ssh_stuff() {
@@ -228,20 +232,15 @@ install_browser() {
     architecture=$(dpkg --print-architecture)
 
     if [ "$architecture" = "arm64" ]; then
-        echo "Downloading Vivaldi for ARM64"
+        log "Downloading Vivaldi for ARM64"
         wget https://downloads.vivaldi.com/stable/vivaldi-stable_7.1.3570.42-1_arm64.deb
     else
-        echo "Downloading Vivaldi for x86_64"
+        log "Downloading Vivaldi for x86_64"
         wget https://downloads.vivaldi.com/stable/vivaldi-stable_7.1.3570.42-1_amd64.deb
     fi
-
-    # Install the package
     sudo apt install -y ./vivaldi-stable*.deb
-
-    # Clean up downloaded file
     rm -f vivaldi-stable*.deb
-
-    echo "Vivaldi installation completed"
+    log "Vivaldi installation completed"
 }
 
 install_vscode() {
@@ -264,11 +263,11 @@ install_1password() {
 
     # Download appropriate version based on architecture
     if [ "$architecture" = "arm64" ]; then
-        echo "Downloading 1Password for ARM64"
+        log "Downloading 1Password for ARM64"
         curl -sSO https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz
         curl -sSO https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz.sig
     else
-        echo "Downloading 1Password for x86_64"
+        log "Downloading 1Password for x86_64"
         curl -sSO https://downloads.1password.com/linux/tar/stable/x86_64/1password-latest.tar.gz
         curl -sSO https://downloads.1password.com/linux/tar/stable/x86_64/1password-latest.tar.gz.sig
     fi
@@ -418,7 +417,7 @@ install_and_setup_docker() {
 
 install_github_cli() {
 	print_function_name
-	echo "Running gh-cli setup"
+	log "Running gh-cli setup"
 	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg |
 		sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
 	sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -573,22 +572,22 @@ main() {
     run_function install_tailscale
     run_function install_aws_cli
     # run_function install_terraform
-    # run_function install_k3s
-    # run_function install_helm
+    run_function install_k3s
+    run_function install_helm
     # run_function install_zoom
-    # run_function install_coolercontrol
+    run_function install_coolercontrol
     run_function install_open_rgb_rules
     run_function webinstalls
     run_function install_font
-    # run_function install_burpsuite
+    run_function install_burpsuite
     run_function apt_upgrader
 
     # Report failures if any
-    if [ ${#failed_functions[@]} -ne 0 ]; then
-        echo -e "\nThe following functions failed:"
-        printf '%s\n' "${failed_functions[@]}"
-        echo -e "\nPlease check the above functions and try running them individually."
-    fi
+	if [ ${#failed_functions[@]} -ne 0 ]; then
+		echo -e "\n\033[1;91mThe following functions failed:\033[0m"
+		printf '\033[1;91m%s\033[0m\n' "${failed_functions[@]}"
+		echo -e "\n\033[1;91mPlease check the above functions and try running them individually.\033[0m"
+	fi
 
     exit_script
 }
