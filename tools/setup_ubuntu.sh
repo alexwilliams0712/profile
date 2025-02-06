@@ -601,11 +601,11 @@ main() {
     # run_function install_k3s
     run_function install_helm
     # run_function install_zoom
-    run_function install_coolercontrol
+    # run_function install_coolercontrol
     run_function install_open_rgb_rules
     run_function webinstalls
     run_function install_font
-    run_function install_burpsuite
+    # run_function install_burpsuite
     run_function apt_upgrader
 
     # Report failures if any
