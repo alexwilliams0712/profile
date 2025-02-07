@@ -34,11 +34,11 @@ alias bk='cd $OLDPWD'
 alias ppath='IFS=:; for i in $PATH; do echo $i; done; unset IFS'
 
 print_function_name() {
-    echo -e "\033[1;36mExecuting function: ${FUNCNAME[1]}\033[0m"
+    log "\033[1;36mExecuting function: ${FUNCNAME[1]}\033[0m"
 }
 
 function log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S.%3N') - $1"
+    echo -e "$(date '+%Y-%m-%d %H:%M:%S.%3N') - $1"
 }
 
 # Grep and Tail fix logs easily by placing a separator bewtween fields
