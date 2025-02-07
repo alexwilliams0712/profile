@@ -522,13 +522,19 @@ install_helm() {
 
 install_zoom() {
 	print_function_name
-	wget https://zoom.us/client/5.17.11.3835/zoom_amd64.deb
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+        return 0
+    fi
+	wget https://zoom.us/client/6.3.6.6315/zoom_amd64.deb
 	sudo apt install -y ./zoom_amd64.deb
 	sudo rm zoom_amd64.deb
 }
 
 install_burpsuite() {
 	print_function_name
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+        return 0
+    fi
 	latest_version="2024.5.5"
 
 	wget "https://portswigger-cdn.net/burp/releases/download?product=community&version=${latest_version}&type=Linux" -O burpsuite_installer.sh
@@ -605,10 +611,10 @@ main() {
     run_function install_scc
     run_function install_tailscale
     run_function install_aws_cli
-    # run_function install_terraform
+    run_function install_terraform
     # run_function install_k3s
     run_function install_helm
-    # run_function install_zoom
+    run_function install_zoom
     # run_function install_coolercontrol
     run_function install_open_rgb_rules
     run_function webinstalls
