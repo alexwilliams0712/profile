@@ -8,6 +8,7 @@ export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export DEFAULT_PYTHON_VERSION="3.12"
 export PROFILE_DIR=$(pwd)
+export ARCHITECTURE=$(dpkg --print-architecture)
 exit_code=0
 # Makes it return on any error
 set -e
@@ -187,8 +188,7 @@ install_apt_packages() {
 }
 
 install_slack() {
-	architecture=$(dpkg --print-architecture)
-    if [ "$architecture" != "arm64" ]; then
+    if [ "$ARCHITECTURE" != "arm64" ]; then
 		wget https://downloads.slack-edge.com/desktop-releases/linux/x64/4.41.96/slack-desktop-4.41.96-amd64.deb
 		sudo apt install ./slack-desktop-*.deb
 		sudo rm -f slack-desktop-*
@@ -232,9 +232,7 @@ install_browser() {
         log "Vivaldi is already installed, skipping installation"
         return 0
     fi
-    architecture=$(dpkg --print-architecture)
-
-    if [ "$architecture" = "arm64" ]; then
+    if [ "$ARCHITECTURE" = "arm64" ]; then
         log "Downloading Vivaldi for ARM64"
         wget https://downloads.vivaldi.com/stable/vivaldi-stable_7.1.3570.42-1_arm64.deb
     else
@@ -267,8 +265,7 @@ install_1password() {
         log "1password is already installed, skipping installation"
         return 0
     fi
-    architecture=$(dpkg --print-architecture)
-    if [ "$architecture" = "arm64" ]; then
+    if [ "$ARCHITECTURE" = "arm64" ]; then
         log "Downloading 1Password for ARM64"
         curl -sSO https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz
         curl -sSO https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz.sig
@@ -453,8 +450,7 @@ install_clam_av() {
 }
 install_terraform() {
 	print_function_name
-	architecture=$(dpkg --print-architecture)
-    if [ "$architecture" = "arm64" ]; then
+    if [ "$ARCHITECTURE" = "arm64" ]; then
         arch="arm64"
     else
         arch="amd64"
@@ -469,9 +465,7 @@ install_terraform() {
 }
 install_aws_cli() {
     print_function_name
-    architecture=$(dpkg --print-architecture)
-
-    if [ "$architecture" = "arm64" ]; then
+    if [ "$ARCHITECTURE" = "arm64" ]; then
         log "Downloading AWS CLI for ARM64"
         curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
     else
