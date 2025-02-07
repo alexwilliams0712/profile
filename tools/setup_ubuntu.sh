@@ -453,8 +453,14 @@ install_clam_av() {
 }
 install_terraform() {
 	print_function_name
+	architecture=$(dpkg --print-architecture)
+    if [ "$architecture" = "arm64" ]; then
+        arch="arm64"
+    else
+        arch="amd64"
+    fi
 	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '\"tag_name\":.*' | cut -d'v' -f2 | tr -d \",)
-	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_linux_amd64.zip"
+	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_linux_${arch}.zip"
 	unzip "terraform_${latest_version}_linux_amd64.zip"
 	sudo mv terraform /usr/local/bin/
 	sudo rm terraform_${latest_version}_linux_amd64.zip
