@@ -164,7 +164,6 @@ install_apt_packages() {
 		xz-utils \
 		zlib1g-dev
 
-
 	sudo systemctl disable postgresql.service
 	# sudo apt-get remove --purge -y libreoffice* shotwell
 	sudo systemctl enable systemd-timesyncd
@@ -440,6 +439,7 @@ install_github_cli() {
 	apt_upgrader
 	sudo apt -o DPkg::Lock::Timeout=60 install gh -y
 }
+
 install_clam_av() {
 	print_function_name
 	sudo systemctl stop clamav-freshclam.service
@@ -448,6 +448,7 @@ install_clam_av() {
 	sudo systemctl restart clamav-daemon.service
 	sudo /etc/init.d/clamav-daemon start
 }
+
 install_terraform() {
 	print_function_name
     if [ "$ARCHITECTURE" = "arm64" ]; then
@@ -457,12 +458,13 @@ install_terraform() {
     fi
 	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '\"tag_name\":.*' | cut -d'v' -f2 | tr -d \",)
 	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_linux_${arch}.zip"
-	unzip "terraform_${latest_version}_linux_amd64.zip"
+	unzip "terraform_${latest_version}_linux_${arch}.zip"
 	sudo mv terraform /usr/local/bin/
-	sudo rm terraform_${latest_version}_linux_amd64.zip
+	sudo rm terraform_${latest_version}_linux_${arch}.zip
 	rm -f LICENSE.txt
 	terraform version
 }
+
 install_aws_cli() {
     print_function_name
     if [ "$ARCHITECTURE" = "arm64" ]; then
@@ -479,6 +481,7 @@ install_aws_cli() {
     aws --version
     sudo rm -r aws*
 }
+
 install_node() {
 	print_function_name
 	curl -fsSL https://deb.nodesource.com/setup_21.x | sudo -E bash - &&
@@ -489,12 +492,14 @@ install_node() {
 	sudo rm package.json package-lock.json 
 	sudo rm -r node_modules
 }
+
 install_tailscale() {
 	print_function_name
 	curl -fsSL https://tailscale.com/install.sh | sh
 	sudo tailscale up --ssh --stateful-filtering
 	sudo ufw deny ssh
 }
+
 install_k3s() {
 	print_function_name
 	curl -sfL https://get.k3s.io | sh -
@@ -512,6 +517,7 @@ install_k3s() {
     	sudo chmod 660 /run/k3s/containerd/containerd.sock
     fi
 }
+
 install_helm() {
 	print_function_name
 	curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
@@ -566,6 +572,7 @@ install_font() {
 	fc-cache -fv
 	rm -f FiraCode.zip
 }
+
 webinstalls() {
 	print_function_name
 	curl -sS https://webi.sh/awless | sh
@@ -574,10 +581,12 @@ webinstalls() {
 	curl -sS https://webi.sh/shfmt | sh
 	curl -sS https://webi.sh/shellcheck | sh
 }
+
 pip_installs() {
 	print_function_name
 	sudo -u $USER pip install -U pip pip-tools psutil
 }
+
 exit_script() {
 	print_function_name
 	if [[ exit_code -eq 0 ]]; then
@@ -588,11 +597,10 @@ exit_script() {
 		figlet "Failed"
 	fi
 }
+
 main() {
-    # Array to store failed functions
     failed_functions=()
 
-    # Helper function to run and track failures
     run_function() {
         local func_name=$1
         if ! $func_name; then
