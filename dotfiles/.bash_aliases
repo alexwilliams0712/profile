@@ -133,6 +133,69 @@ function apt_upgrader() {
 
 alias file_counter="find . -maxdepth 1 -type f | sed -n 's/..*\.//p' | sort | uniq -c"
 
+filecount_table() {
+    # Default to current directory if no argument provided
+    local search_dir="${1:-.}"
+    
+    # Get all unique file extensions
+    local all_extensions=$(find "$search_dir" -type f | awk -F. '{print $NF}' | tr '[:upper:]' '[:lower:]' | sort -u)
+    
+    # Create arrays to store column widths
+    declare -A max_width
+    max_width["dir"]=9  # "Directory" has 9 characters
+    
+    # Initialize extension widths
+    for ext in $all_extensions; do
+        max_width["$ext"]=${#ext}
+    done
+    
+    # Find the maximum width needed for each directory name
+    while read dir; do
+        dir_name=$(echo "$dir" | sed "s|^$search_dir/||")
+        if [ ${#dir_name} -gt ${max_width["dir"]} ]; then
+            max_width["dir"]=${#dir_name}
+        fi
+    done < <(find "$search_dir" -mindepth 1 -type d | sort)
+    
+    # Find the maximum width needed for each count
+    for ext in $all_extensions; do
+        while read dir; do
+            count=$(find "$dir" -maxdepth 1 -type f -name "*.$ext" -o -name "*.$(echo $ext | tr '[:lower:]' '[:upper:]')" | wc -l)
+            if [ ${#count} -gt ${max_width["$ext"]} ]; then
+                max_width["$ext"]=${#count}
+            fi
+        done < <(find "$search_dir" -mindepth 1 -type d | sort)
+    done
+    
+    # Print table header with proper padding
+    printf "| %-${max_width["dir"]}s " "Directory"
+    for ext in $all_extensions; do
+        printf "| %-${max_width["$ext"]}s " "$ext"
+    done
+    echo "|"
+    
+    # Print header separator with proper width
+    printf "| %s " "$(printf '%0.s-' $(seq 1 ${max_width["dir"]}))"
+    for ext in $all_extensions; do
+        printf "| %s " "$(printf '%0.s-' $(seq 1 ${max_width["$ext"]}))"
+    done
+    echo "|"
+    
+    # For each subdirectory
+    find "$search_dir" -mindepth 1 -type d | sort | while read dir; do
+        # Print directory name without the search_dir prefix
+        dir_name=$(echo "$dir" | sed "s|^$search_dir/||")
+        printf "| %-${max_width["dir"]}s " "$dir_name"
+        
+        # For each extension, count files in this directory
+        for ext in $all_extensions; do
+            count=$(find "$dir" -maxdepth 1 -type f -name "*.$ext" -o -name "*.$(echo $ext | tr '[:lower:]' '[:upper:]')" | wc -l)
+            printf "| %-${max_width["$ext"]}s " "$count"
+        done
+        echo "|"
+    done
+}
+
 # Rust
 function clippy() {
     local current_toolchain=$(rustup show active-toolchain | cut -d '-' -f1)
