@@ -207,6 +207,20 @@ function clippy() {
     git status
 }
 
+function diesel_setup() {
+  # Load .env if it exists
+  [[ -f .env ]] && export $(grep -v '^#' .env | xargs)
+
+  # Check DATABASE_URL
+  if [[ "$DATABASE_URL" == *"localhost"* ]]; then
+    diesel migration redo && diesel database reset && cargo +nightly fmt
+  else
+    echo "🚫 DATABASE_URL does not contain 'localhost'. Aborting."
+    return 1
+  fi
+}
+
+
 
 # Python
 function pypath() {
