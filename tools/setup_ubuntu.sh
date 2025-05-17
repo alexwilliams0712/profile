@@ -30,6 +30,7 @@ copy_dotfiles() {
 	cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
 	cp $PROFILE_DIR/VERSION $HOME/BASH_PROFILE_VERSION
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
+	cp $PROFILE_DIR/dotfiles/.prettierrc $HOME/.prettierrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
 	sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
 	source $HOME/.bash_aliases

@@ -819,6 +819,40 @@ function start_vpn {
     popd > /dev/null
 }
 
+# Formatters
+formatter_json() {
+  find . -type f \( -iname "*.json" -o -iname "*.json5" \) | while read -r file; do
+    echo "Processing $file"
+    json5 "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    prettier --config ~/.prettierrc --write "$file"
+  done
+}
+
+formatter() {
+  formatter_json
+
+  # Check for Python project
+  if [ -f pyproject.toml ] || ls *.py &>/dev/null; then
+    if [ -n "$VIRTUAL_ENV" ] && [[ "$VIRTUAL_ENV" == *"uv"* ]]; then
+      echo "Running pylint..."
+      pylint $(find . -type f -name "*.py")
+    else
+      echo "Python project detected, but not in a uv environment. Skipping pylint."
+    fi
+  fi
+
+  # Check for Rust project
+  if [ -f Cargo.toml ]; then
+    if command -v cargo &>/dev/null; then
+      echo "Running cargo +nightly fmt..."
+      cargo +nightly fmt
+    else
+      echo "cargo not found. Skipping Rust formatting."
+    fi
+  fi
+}
+
+
 
 # Fun
 function laughing_at_idiots() {
