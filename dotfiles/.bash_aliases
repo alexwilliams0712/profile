@@ -821,12 +821,14 @@ function start_vpn {
 
 # Formatters
 formatter_json() {
-  find . -type f \( -iname "*.json" -o -iname "*.json5" \) | while read -r file; do
+  find . -type f \( -iname "*.json" -o -iname "*.json5" \) \
+    -not -path "./.venv/*" -not -path "./target/*" | while read -r file; do
     echo "Processing $file"
     json5 "$file" > "$file.tmp" && mv "$file.tmp" "$file"
     prettier --config ~/.prettierrc --write "$file"
   done
 }
+
 
 formatter() {
   formatter_json
