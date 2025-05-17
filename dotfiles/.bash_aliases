@@ -850,6 +850,16 @@ formatter() {
       echo "cargo not found. Skipping Rust formatting."
     fi
   fi
+
+# Terraform (terraform fmt)
+  if find . -name "*.tf" | grep -q .; then
+    if command -v terraform &>/dev/null; then
+      echo "Running terraform fmt --recursive..."
+      terraform fmt --recursive
+    else
+      echo "terraform not found. Skipping Terraform formatting."
+    fi
+  fi
 }
 
 
