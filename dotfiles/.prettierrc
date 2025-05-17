@@ -4,5 +4,6 @@
   "useTabs": false,
   "trailingComma": "none",
   "bracketSpacing": true,
-  "proseWrap": "never"
+  "proseWrap": "never",
+  "quoteProps": "preserve"
 }

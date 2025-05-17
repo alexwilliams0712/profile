@@ -823,11 +823,18 @@ function start_vpn {
 formatter_json() {
   find . -type f \( -iname "*.json" -o -iname "*.json5" \) \
     -not -path "./.venv/*" -not -path "./target/*" | while read -r file; do
-    echo "Processing $file"
-    json5 "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    log "Processing $file"
+    
+    ext="${file##*.}"
+
+    if [[ "$ext" == "json" ]]; then
+      json5 "$file" --out-file "$file"
+    fi
+
     prettier --config ~/.prettierrc --write "$file"
   done
 }
+
 
 
 formatter() {
@@ -836,30 +843,30 @@ formatter() {
   # Check for Python project
   if [ -f pyproject.toml ] || ls *.py &>/dev/null; then
     if [ -n "$VIRTUAL_ENV" ] && [[ "$VIRTUAL_ENV" == *"uv"* ]]; then
-      echo "Running pylint..."
+      log "Running pylint..."
       pylint $(find . -type f -name "*.py")
     else
-      echo "Python project detected, but not in a uv environment. Skipping pylint."
+      log "Python project detected, but not in a uv environment. Skipping pylint."
     fi
   fi
 
   # Check for Rust project
   if [ -f Cargo.toml ]; then
     if command -v cargo &>/dev/null; then
-      echo "Running cargo +nightly fmt..."
+      log "Running cargo +nightly fmt..."
       cargo +nightly fmt
     else
-      echo "cargo not found. Skipping Rust formatting."
+      log "cargo not found. Skipping Rust formatting."
     fi
   fi
 
 # Terraform (terraform fmt)
   if find . -name "*.tf" | grep -q .; then
     if command -v terraform &>/dev/null; then
-      echo "Running terraform fmt --recursive..."
+      log "Running terraform fmt --recursive..."
       terraform fmt --recursive
     else
-      echo "terraform not found. Skipping Terraform formatting."
+      log "terraform not found. Skipping Terraform formatting."
     fi
   fi
 }
