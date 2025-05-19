@@ -489,7 +489,7 @@ install_node() {
 		sudo apt-get install -y nodejs
 	node -v
 	npm -v
-	sudo npm install wscat
+	sudo npm install -g wscat prettier json5
 	sudo rm package.json package-lock.json 
 	sudo rm -r node_modules
 }
