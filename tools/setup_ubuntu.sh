@@ -490,8 +490,8 @@ install_node() {
 	node -v
 	npm -v
 	sudo npm install -g wscat prettier json5
-	sudo rm package.json package-lock.json 
-	sudo rm -r node_modules
+	sudo rm -f package.json package-lock.json 
+	sudo rm -rf node_modules
 }
 
 install_tailscale() {
