@@ -51,25 +51,33 @@ function tailfix() {
 }
 
 function scp_mirror() {
-    # $ scp_mirror alex-work ~/.aws ~/vpn ~/.netrc ~/.personal ~/.cargo/credentials.toml
     if [ $# -lt 2 ]; then
-        log "Usage: scp_mirror remote_host dir1 [dir2 ...]"
+        echo "Usage: scp_mirror remote_host path1 [path2 ...]"
         return 1
     fi
 
     local host="$1"
-    shift  # Remove the host argument, leaving only the directory list
+    shift
 
-    for dir in "$@"; do
-        # Expand the ~ to $HOME if present
-        local expanded_dir="${dir/#\~/$HOME}"
-        log "Copying $host:$dir to $expanded_dir"
-        # Create the parent directory if it doesn't exist
-        mkdir -p "$(dirname "$expanded_dir")"
-        scp -r "$host:$dir" "$expanded_dir"
+    for path in "$@"; do
+        # Expand tilde for local destination
+        local local_path="${path/#\~/$HOME}"
+        # Normalize remote path (leave ~ intact for remote shell)
+        local remote_path="${path}"
+
+        # Ensure local parent exists
+        mkdir -p "$(dirname "$local_path")"
+
+        # If path ends with a slash, treat it as directory: copy contents only
+        if [[ "$path" == */ ]]; then
+            echo "Copying contents of $host:$remote_path to $local_path"
+            scp -r "$host:${remote_path%/}/"* "$local_path"
+        else
+            echo "Copying $host:$remote_path to $local_path"
+            scp -r "$host:$remote_path" "$local_path"
+        fi
     done
 }
-
 
 function murder() {
     print_function_name
