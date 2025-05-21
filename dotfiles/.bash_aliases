@@ -71,10 +71,10 @@ function scp_mirror() {
         # If path ends with a slash, treat it as directory: copy contents only
         if [[ "$path" == */ ]]; then
             echo "Copying contents of $host:$remote_path to $local_path"
-            scp -r $host:${remote_path%/}/* $local_path
+            sudo scp -r $host:${remote_path%/}/* $local_path
         else
             echo "Copying $host:$remote_path to $local_path"
-            scp -r $host:$remote_path $local_path
+            sudo scp -r $host:$remote_path $local_path
         fi
     done
 }
@@ -849,8 +849,8 @@ formatter() {
   formatter_json
 
   # Check for Python project
-  if [ -f pyproject.toml ] || ls *.py &>/dev/null; then
-    if [ -n "$VIRTUAL_ENV" ] && [[ "$VIRTUAL_ENV" == *"uv"* ]]; then
+  if [ -f pyproject.toml ] || ls *.py &>/dev/null || [ -d .venv/ ]; then
+    if [ -n "$VIRTUAL_ENV" ]; then
       log "Running pylint..."
       pylint $(find . -type f -name "*.py")
     else
