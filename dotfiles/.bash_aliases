@@ -51,6 +51,8 @@ function tailfix() {
 }
 
 function scp_mirror() {
+    # Usage
+    # $ scp_mirror alex-home ~/.netrc ~/vpn/ ~/.aws ~/.personal ~/.packagr_details
     if [ $# -lt 2 ]; then
         echo "Usage: scp_mirror remote_host path1 [path2 ...]"
         return 1
