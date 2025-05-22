@@ -364,7 +364,7 @@ install_jetbrains_toolbox() {
         return 0
     fi
 
-	local version=jetbrains-toolbox-1.27.3.14493
+	local version=jetbrains-toolbox-2.6.2.41321
 	sudo apt-get install -y libfuse2
 	wget -c https://download.jetbrains.com/toolbox/${version}.tar.gz
 	sudo tar -xzf ${version}.tar.gz -C /opt
