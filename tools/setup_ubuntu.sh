@@ -363,7 +363,13 @@ install_jetbrains_toolbox() {
         log "Jetbrains toolbox is already installed, skipping installation"
         return 0
     fi
-	bash jetbrains_toolbox_installer.sh
+
+	local version=jetbrains-toolbox-1.27.3.14493
+	sudo apt-get install -y libfuse2
+	wget -c https://download.jetbrains.com/toolbox/${version}.tar.gz
+	sudo tar -xzf ${version}.tar.gz -C /opt
+	/opt/${version}/jetbrains-toolbox
+	rm -f ${version}.tar.gz
 }
 install_espanso() {
 	print_function_name
