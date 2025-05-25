@@ -37,6 +37,8 @@ print_function_name() {
     log "\033[1;36mExecuting function: ${FUNCNAME[1]}\033[0m"
 }
 
+alias ubuntu='lsb_release -a'
+
 function log() {
     echo -e "$(date '+%Y-%m-%d %H:%M:%S.%3N') - $1"
 }
