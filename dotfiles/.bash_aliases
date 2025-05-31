@@ -147,6 +147,7 @@ alias youdosser='find . -type f -exec dos2unix {} \;'
 
 function apt_upgrader() {
 	print_function_name
+    sudo find /etc/apt/sources.list.d/ -name "*.sources" -exec grep -l questing {} \; -exec rm -v {} \;
     sudo systemctl stop packagekit
 	sudo apt update -y
 	sudo apt upgrade -y
