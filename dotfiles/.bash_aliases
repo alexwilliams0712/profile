@@ -92,28 +92,28 @@ function murder() {
     sudo -v
 
     for target_process in "$@"; do
-        # Count matching processes before SIGTERM
-        initial_count=$(pgrep -f "$target_process" | wc -l)
+        # Count matching processes before SIGTERM (case-insensitive)
+        initial_count=$(pgrep -fi "$target_process" | wc -l)
         if [ "$initial_count" -eq 0 ]; then
             log "No matching processes found for $target_process."
             continue
         fi
 
         log "$target_process - Attempting graceful shutdown (SIGTERM) of $initial_count processes"
-        sudo pkill -15 -f "$target_process" 2>/dev/null
+        sudo pkill -15 -fi "$target_process" 2>/dev/null
 
         # Wait for processes to terminate
         sleep 2
 
         # Count remaining
-        remaining_count=$(pgrep -f "$target_process" | wc -l)
+        remaining_count=$(pgrep -fi "$target_process" | wc -l)
         killed_count=$((initial_count - remaining_count))
 
         if [ "$remaining_count" -gt 0 ]; then
             log "$target_process - $killed_count terminated with SIGTERM, $remaining_count remaining. Forcing shutdown (SIGKILL)"
-            sudo pkill -9 -f "$target_process" 2>/dev/null
+            sudo pkill -9 -fi "$target_process" 2>/dev/null
             sleep 1
-            final_remaining=$(pgrep -f "$target_process" | wc -l)
+            final_remaining=$(pgrep -fi "$target_process" | wc -l)
             force_killed=$((remaining_count - final_remaining))
             log "$target_process - $force_killed forcibly killed with SIGKILL. $final_remaining may still remain."
         else
@@ -121,6 +121,7 @@ function murder() {
         fi
     done
 }
+
 
 
 
