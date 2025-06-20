@@ -232,30 +232,58 @@ install_browser() {
         log "Vivaldi is already installed, skipping installation"
         return 0
     fi
-    if [ "$ARCHITECTURE" = "arm64" ]; then
-        log "Downloading Vivaldi for ARM64"
-        wget https://downloads.vivaldi.com/stable/vivaldi-stable_7.1.3570.42-1_arm64.deb
+	
+	# Update package lists first
+	log "Updating package lists"
+	sudo apt update
+	
+	# Try to get the latest version from Vivaldi's download page
+	log "Fetching latest Vivaldi version information"
+	latest_version=$(curl -s "https://vivaldi.com/download/" | grep -o 'vivaldi-stable_[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-[0-9]*' | head -1 | sed 's/vivaldi-stable_//')
+	
+	# Fallback to your specified version if we can't fetch the latest
+	if [ -z "$latest_version" ]; then
+		log "Could not fetch latest version, using fallback version"
+		version="7.4.3684.52-1"
+	else
+		version="$latest_version"
+		log "Latest version found: $version"
+	fi
+	
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+        arch="arm64"
     else
-        log "Downloading Vivaldi for x86_64"
-        wget https://downloads.vivaldi.com/stable/vivaldi-stable_7.1.3570.42-1_amd64.deb
+        arch="amd64"
     fi
-    sudo apt install -y ./vivaldi-stable*.deb
-    rm -f vivaldi-stable*.deb
+    
+    log "Downloading Vivaldi $version for $arch"
+	wget "https://downloads.vivaldi.com/stable/vivaldi-stable_${version}_${arch}.deb"
+
+	# Use dpkg to force installation of the local .deb file
+    log "Installing Vivaldi from local .deb file"
+    sudo dpkg -i ./vivaldi-stable_${version}_${arch}.deb
+    
+    # Fix any dependency issues that dpkg couldn't resolve
+    sudo apt install -f -y
+    
+    rm -f vivaldi-stable_${version}_${arch}.deb
     log "Vivaldi installation completed"
 }
 
 install_vscode() {
 	print_function_name
-	if command -v code >/dev/null 2>&1; then
-        log "VSCode is already installed, skipping installation"
-        return 0
-    fi
+    
+	# Set up Microsoft repository (safe to run even if already configured)
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >packages.microsoft.gpg
 	sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
 	sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] \
 		https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+	
+	# Update package lists and install/upgrade VS Code
 	apt_upgrader
 	sudo apt-get install -y code
+	
+	# Clean up
 	rm -f packages.microsoft.gpg
 }
 
