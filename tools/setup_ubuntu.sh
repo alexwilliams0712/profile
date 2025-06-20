@@ -148,6 +148,7 @@ install_apt_packages() {
 		llvm \
 		lsd \
 		make \
+		mold \
 		net-tools \
 		nfs-common \
 		openssl \
@@ -273,6 +274,9 @@ install_browser() {
 install_vscode() {
 	print_function_name
     
+	# Clean up any existing Microsoft repository configurations to prevent conflicts
+	sudo rm -f /etc/apt/sources.list.d/*microsoft* /etc/apt/sources.list.d/*vscode*
+	
 	# Set up Microsoft repository (safe to run even if already configured)
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >packages.microsoft.gpg
 	sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
