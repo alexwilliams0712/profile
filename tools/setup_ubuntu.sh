@@ -621,6 +621,19 @@ webinstalls() {
 	curl -sS https://webi.sh/shellcheck | sh
 }
 
+btop_install() {
+	# Clone into /tmp (ephemeral and suitable for setup scripts)
+	git clone https://github.com/aristocratos/btop.git /tmp/btop
+
+	# Build and install
+	cd /tmp/btop
+	make
+	sudo make install
+
+	# Optional: Clean up
+	rm -rf /tmp/btop
+}
+
 pip_installs() {
 	print_function_name
 	sudo -u $USER pip install -U pip pip-tools psutil
@@ -652,6 +665,7 @@ main() {
     run_function copy_dotfiles
     run_function set_git_config
     run_function install_apt_packages
+	run_function btop_install
 	run_function install_slack
     run_function install_node
     run_function install_go
