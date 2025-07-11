@@ -677,6 +677,7 @@ docker_build_with_creds() {
     local image_name="$(basename "$PWD" | tr '-' '_')"
     local target="runtime"
     local dockerfile="Dockerfile"
+    local netrc_file="$HOME/.netrc"
     local cargo_credentials_file="$HOME/.cargo/credentials.toml"
     local temp_secrets_file=$(mktemp)
 
@@ -710,11 +711,16 @@ docker_build_with_creds() {
         esac
     done
 
+    # Extract username and password from .netrc
+    local username=$(awk '/machine api.packagr.app/ {print $4}' "$netrc_file")
+    local password=$(awk '/machine api.packagr.app/ {print $6}' "$netrc_file")
 
     # Extract the SHIPYARD_TOKEN from credentials.toml
     local shipyard_token=$(grep -A1 '^\[registries\.' "$cargo_credentials_file" | grep 'token' | sed -E 's/token = "(.*)"/\1/')
 
     # Create temporary secrets file
+    echo "PACKAGR_USERNAME=$username" > "$temp_secrets_file"
+    echo "PACKAGR_PASSWORD=$password" >> "$temp_secrets_file"
     echo "SHIPYARD_TOKEN=$shipyard_token" >> "$temp_secrets_file"
     echo "SSH_PRIVATE_KEY=$(cat ~/.ssh/id_ed25519 | base64 | tr -d '\n')" >> "$temp_secrets_file"
 
