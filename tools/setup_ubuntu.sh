@@ -152,7 +152,7 @@ install_apt_packages() {
 		net-tools \
 		nfs-common \
 		openssl \
-		pg_format \
+		pgformatter \
 		postgresql \
 		postgresql-contrib \
 		redis-tools \
