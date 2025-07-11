@@ -849,11 +849,19 @@ formatter_json() {
   done
 }
 
+formatter_sql() {
+  find . -type f -iname "*.sql" \
+    -not -path "./.venv/*" -not -path "./target/*" | while read -r file; do
+    log "Processing $file"
+    
+    pg_format --keyword-case=2 --type-case=2 --comma-break --no-extra-line --inplace "$file"
+  done
+}
 
 
 formatter() {
   formatter_json
-
+  formatter_sql
   # Check for Python project
   if [ -f pyproject.toml ] || ls *.py &>/dev/null || [ -d .venv/ ]; then
     if [ -n "$VIRTUAL_ENV" ]; then
