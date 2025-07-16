@@ -387,6 +387,19 @@ function pyspy_profile() {
     echo "Profile saved to $output_file"
 }
 
+function empty_commit() {
+  git commit --allow-empty -m "chore: trigger CI" && git push  
+}
+
+function merge_main() {
+    git pull
+    git fetch origin
+    git checkout main
+    git pull origin main
+    git checkout -
+    git merge main
+}
+
 function new_pr() {
     if [[ $# -eq 0 ]] || [[ $1 =~ [[:space:]] ]]; then
         echo "Error: Argument required with no spaces."
