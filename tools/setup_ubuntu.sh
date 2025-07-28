@@ -176,6 +176,7 @@ install_apt_packages() {
 	ssh_stuff
 	install_pyenv
 	# pip_installs
+	install_pg_formatter
 	install_browser
 	install_vscode
 	install_flatpaks
@@ -205,6 +206,37 @@ ssh_stuff() {
 	sudo sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
 	sudo systemctl restart ssh
 	sudo systemctl reload ssh
+}
+
+install_pg_formatter() {
+    echo "Installing pg_formatter..."
+    
+    # Install dependencies
+    sudo apt update
+    sudo apt install -y git perl make
+    
+    # Create temporary directory
+    TEMP_DIR=$(mktemp -d)
+    cd "$TEMP_DIR"
+    
+    # Clone and install
+    git clone https://github.com/darold/pgFormatter.git
+    cd pgFormatter
+    perl Makefile.PL
+    make
+    sudo make install
+    
+    # Clean up
+    cd ~
+    rm -rf "$TEMP_DIR"
+    
+    # Verify installation
+    if pg_format --version >/dev/null 2>&1; then
+        echo "pg_formatter installed successfully!"
+    else
+        echo "pg_formatter installation may have failed. Please check manually."
+        return 1
+    fi
 }
 
 install_flatpaks() {
