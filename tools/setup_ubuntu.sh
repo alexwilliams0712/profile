@@ -370,7 +370,7 @@ install_1password() {
 install_pyenv() {
 	print_function_name
 	apt_upgrader
-	sudo apt install -y software-properties-common python3.12 python3.12-dev
+	sudo apt install -y software-properties-common
 	pyenv_dir="$HOME/.pyenv"
 	if [ -d "$pyenv_dir" ]; then
 		log "The $pyenv_dir directory already exists. Remove it to reinstall."
