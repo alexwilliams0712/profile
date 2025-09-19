@@ -146,10 +146,63 @@ kill_on_port() {
 
 alias youdosser='find . -type f -exec dos2unix {} \;'
 
+clean_broken_repos() {
+    local update_output
+    local repo_urls=()
+    
+    # Capture apt update output
+    update_output=$(sudo apt update 2>&1)
+    echo "$update_output"
+    
+    # Extract repository URLs that have missing Release files
+    while IFS= read -r line; do
+        if [[ $line =~ "does not have a Release file" ]]; then
+            # Extract the repository URL from the previous error line
+            local prev_line=$(echo "$update_output" | grep -B1 "does not have a Release file" | grep "Error:" | tail -1)
+            if [[ $prev_line =~ https?://[^[:space:]]+ ]]; then
+                local repo_url="${BASH_REMATCH[0]}"
+                repo_urls+=("$repo_url")
+            fi
+        fi
+    done <<< "$update_output"
+    
+    # Auto-remove .list files for broken repositories
+    if [ ${#repo_urls[@]} -gt 0 ]; then
+        echo -e "\n🔍 Found ${#repo_urls[@]} broken repository(ies). Auto-removing corresponding .list files..."
+        
+        for repo_url in "${repo_urls[@]}"; do
+            echo "Processing: $repo_url"
+            
+            # Extract domain/path components for matching
+            local domain=$(echo "$repo_url" | sed 's|https\?://||' | cut -d'/' -f1)
+            
+            # Find matching .list files
+            local list_files=$(find /etc/apt/sources.list.d/ -name "*.list" -exec grep -l "$domain" {} \; 2>/dev/null)
+            
+            if [ -n "$list_files" ]; then
+                echo "Found and removing matching .list file(s):"
+                echo "$list_files" | while read -r file; do
+                    echo "  📁 $file"
+                    sudo rm "$file"
+                    echo "  ✅ Removed: $file"
+                done
+            else
+                echo "  ❌ No matching .list file found for $domain"
+            fi
+        done
+        
+        echo -e "\n🔄 Running apt update again..."
+        sudo apt update
+    else
+        echo -e "\n✅ No broken repositories found."
+    fi
+}
+
 function apt_upgrader() {
 	print_function_name
     sudo find /etc/apt/sources.list.d/ -name "*.sources" -exec grep -l questing {} \; -exec rm -v {} \;
     sudo systemctl stop packagekit
+	clean_broken_repos
 	sudo apt update -y
 	sudo apt upgrade -y
 	sudo apt full-upgrade -y
