@@ -1,55 +1,69 @@
 #!/bin/bash
 
-set -e
-set -o pipefail
-sudo apt install -y \
-    libfuse2 \
-    libxi6 \
-    libxrender1 libxtst6 \
-    mesa-utils libfontconfig \
-    libgtk-3-bin tar dbus-user-session \
-    openjdk-17-jdk libnss3 libatk1.0-0 \
-    libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 libxfixes3 \
-    libxrandr2 libgbm1
+API_URL='https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release'
+INSTALL_ROOT="${HOME}/.local/share/JetBrains/Toolbox"
+BIN_DIR="${HOME}/.local/bin"
 
-
-TMP_DIR="/tmp"
-INSTALL_DIR="$HOME/.local/share/JetBrains/Toolbox/bin"
-SYMLINK_DIR="$HOME/.local/bin"
-
-echo "### INSTALL JETBRAINS TOOLBOX ###"
-
-echo -e "\e[94mFetching the URL of the latest version...\e[39m"
-if [ "$(dpkg --print-architecture)" = "arm64" ]; then
-    export LIBGL_ALWAYS_SOFTWARE=1
-    ARCHIVE_URL=$(curl -s 'https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release' | grep -Po '"linuxARM64":.*?[^\\]",' | awk -F ':' '{print $3,":"$4}'| sed 's/[", ]//g')
-else
-    ARCHIVE_URL=$(curl -s 'https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release' | grep -Po '"linux":.*?[^\\]",' | awk -F ':' '{print $3,":"$4}'| sed 's/[", ]//g')
+# Ensure jq & curl (only if apt is available)
+if ! command -v jq >/dev/null 2>&1 || ! command -v curl >/dev/null 2>&1; then
+  if command -v apt-get >/dev/null 2>&1; then
+    export DEBIAN_FRONTEND=noninteractive
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq jq curl ca-certificates tar coreutils >/dev/null
+  else
+    log "Missing jq/curl; install them and re-run." >&2
+    exit 1
+  fi
 fi
-ARCHIVE_FILENAME=$(basename "$ARCHIVE_URL")
 
-echo -e "\e[94mDownloading $ARCHIVE_FILENAME...\e[39m"
-rm "$TMP_DIR/$ARCHIVE_FILENAME" 2>/dev/null || true
-wget -q --show-progress -cO "$TMP_DIR/$ARCHIVE_FILENAME" "$ARCHIVE_URL"
+tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 
-echo -e "\e[94mExtracting to $INSTALL_DIR...\e[39m"
-mkdir -p "$INSTALL_DIR"
-rm "$INSTALL_DIR/jetbrains-toolbox" 2>/dev/null || true
-tar -xzf "$TMP_DIR/$ARCHIVE_FILENAME" -C "$INSTALL_DIR" --strip-components=1
-rm "$TMP_DIR/$ARCHIVE_FILENAME"
-chmod +x "$INSTALL_DIR/jetbrains-toolbox"
+arch="$(dpkg --print-architecture || true)"
+dl_key="linux"; [[ "$arch" == "arm64" ]] && { dl_key="linuxARM64"; export LIBGL_ALWAYS_SOFTWARE=1; }
 
-echo -e "\e[94mSymlinking to $SYMLINK_DIR/jetbrains-toolbox...\e[39m"
-mkdir -p $SYMLINK_DIR
-rm "$SYMLINK_DIR/jetbrains-toolbox" 2>/dev/null || true
-ln -s "$INSTALL_DIR/jetbrains-toolbox" "$SYMLINK_DIR/jetbrains-toolbox"
+json="$(curl -fsSL --retry 5 --retry-connrefused "$API_URL")"
+url="$(jq -r ".TBA[0].downloads.${dl_key}.link" <<<"$json")"
+sum_url="$(jq -r ".TBA[0].downloads.${dl_key}.checksumLink" <<<"$json")"
+version="$(jq -r '.TBA[0].build' <<<"$json")"
 
-if [ -z "$CI" ]; then
-	echo -e "\e[94mRunning for the first time to set-up...\e[39m"
-	( "$INSTALL_DIR/jetbrains-toolbox" & )
-	echo -e "\n\e[32mDone! JetBrains Toolbox should now be running, in your application list, and you can run it in terminal as jetbrains-toolbox (ensure that $SYMLINK_DIR is on your PATH)\e[39m\n"
-else
-	echo -e "\n\e[32mDone! Running in a CI -- skipped launching the AppImage.\e[39m\n"
+[[ -n "$url" && "$url" != "null" ]] || { log "No Linux download found." >&2; exit 1; }
+
+file="$tmp/$(basename "$url")"
+dest="${INSTALL_ROOT}/${version}"
+
+log "Downloading JetBrains Toolbox ${version}..."
+curl -fL --retry 5 --retry-connrefused -o "$file" "$url"
+
+# Verify checksum when provided
+if [[ -n "$sum_url" && "$sum_url" != "null" ]]; then
+  log "Verifying checksum..."
+  curl -fL --retry 5 --retry-connrefused -o "${file}.sha256" "$sum_url"
+  if ! grep -q "${file##*/}$" "${file}.sha256"; then
+    sum="$(sed 's/[[:space:]].*$//' "${file}.sha256")"
+    printf "%s  %s\n" "$sum" "${file##*/}" > "${file}.sha256"
+  fi
+  (cd "$tmp" && sha256sum -c "${file}.sha256")
 fi
+
+log "Installing to ${dest}..."
+work="$tmp/extract"; mkdir -p "$work"
+tar -xzf "$file" -C "$work"
+
+# Find the actual binary regardless of archive nesting
+bin_path="$(find "$work" -type f -name jetbrains-toolbox -print -quit || true)"
+[[ -n "$bin_path" ]] || { log "Binary not found after extraction."; find "$work" -maxdepth 2 -print; exit 1; }
+
+src_dir="$(dirname "$bin_path")"     # the folder that contains the binary
+
+rm -rf "$dest"; mkdir -p "$dest"
+# Copy that folder’s contents into the install dir
+tar -C "$src_dir" -cf - . | tar -C "$dest" -xf -
+
+chmod +x "${dest}/jetbrains-toolbox"
+ln -sfn "$dest" "${INSTALL_ROOT}/current"
+
+mkdir -p "$BIN_DIR"
+ln -sfn "${INSTALL_ROOT}/current/jetbrains-toolbox" "${BIN_DIR}/jetbrains-toolbox"
+
+log "Done. jetbrains-toolbox → ${BIN_DIR}/jetbrains-toolbox"
+case ":$PATH:" in *":${BIN_DIR}:"*) ;; *) log "Hint: add to PATH → export PATH=\"${BIN_DIR}:\$PATH\"";; esac

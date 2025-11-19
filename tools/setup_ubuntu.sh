@@ -433,32 +433,54 @@ install_rust() {
 go_installs() {
 	print_function_name
 	go install github.com/dim13/otpauth@latest
+	go install github.com/boyter/scc/v3@latest
 }
 
 install_go() {
 	print_function_name
-	sudo add-apt-repository -y ppa:longsleep/golang-backports
-	sudo apt update -y
-	sudo apt install -y golang-go
+	local a s v t u d exp act
+	a="$(dpkg --print-architecture 2>/dev/null || uname -m)"
+	case "$a" in
+		amd64|x86_64) s=linux-amd64 ;;
+		arm64|aarch64) s=linux-arm64 ;;
+		*) echo "unsupported arch: $a"; return 1 ;;
+	esac
+
+	v="$(curl -fsSL https://go.dev/VERSION?m=text | head -n1)" || { echo "failed to get version"; return 1; }
+	t="${v}.${s}.tar.gz"
+	u="https://go.dev/dl/${t}"
+
+	d="$(mktemp -d)" || { echo "mktemp failed"; return 1; }
+	# cleanup on normal return
+	_go_cleanup() { rm -rf "$d"; }
+	# ensure cleanup even if a command below fails (without killing your shell)
+	trap _go_cleanup RETURN
+
+	echo "Downloading ${t}..."
+	curl -fL -o "$d/$t" "$u" || { echo "download failed"; return 1; }
+
+	echo "Verifying checksum..."
+	exp="$(curl -fsSL "$u.sha256" | awk '{print $1}')" || { echo "checksum fetch failed"; return 1; }
+	act="$(sha256sum "$d/$t" | awk '{print $1}')" || { echo "sha256sum failed"; return 1; }
+	[ "$exp" = "$act" ] || { echo "checksum mismatch"; return 1; }
+
+	echo "Installing to /usr/local/go..."
+	sudo rm -rf /usr/local/go || { echo "remove old go failed"; return 1; }
+	sudo tar -C /usr/local -xzf "$d/$t" || { echo "extract failed"; return 1; }
+
+	# Make it available now (persist manually if you want)
+	case ":$PATH:" in *":/usr/local/go/bin:"*) ;; *) export PATH="/usr/local/go/bin:$PATH";; esac
+	go version || { echo "go not on PATH?"; return 1; }
+
+	echo 'To persist, add to ~/.profile (per docs):'
+	echo '  export PATH=$PATH:/usr/local/go/bin'#
 	go_installs
+	return 0
 }
-install_scc() {
-	print_function_name
-	go install github.com/boyter/scc/v3@latest
-}
+
 install_jetbrains_toolbox() {
 	print_function_name
-	if command -v jetbrains-toolbox >/dev/null 2>&1; then
-        log "Jetbrains toolbox is already installed, skipping installation"
-        return 0
-    fi
-
-	local version=jetbrains-toolbox-2.6.2.41321
-	sudo apt-get install -y libfuse2
-	wget -c https://download.jetbrains.com/toolbox/${version}.tar.gz
-	sudo tar -xzf ${version}.tar.gz -C /opt
-	/opt/${version}/jetbrains-toolbox
-	rm -f ${version}.tar.gz
+	source tools/jetbrains_toolbox_installer.sh
 }
 install_espanso() {
 	print_function_name
