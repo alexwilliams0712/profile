@@ -753,7 +753,6 @@ main() {
     run_function install_terraform
     # run_function install_k3s
     # run_function install_helm
-	run_function install_scc
     run_function install_zoom
     # run_function install_coolercontrol
     # run_function install_open_rgb_rules
