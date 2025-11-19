@@ -6,7 +6,7 @@ export PROJECT_ROOT=$HOME/profile
 export PATH="/usr/local/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
-export DEFAULT_PYTHON_VERSION="3.12"
+export DEFAULT_PYTHON_VERSION="3.14"
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(dpkg --print-architecture)
 exit_code=0
@@ -191,12 +191,37 @@ install_apt_packages() {
 }
 
 install_slack() {
-    if [ "$ARCHITECTURE" != "arm64" ]; then
-		wget https://downloads.slack-edge.com/desktop-releases/linux/x64/4.41.96/slack-desktop-4.41.96-amd64.deb
-		sudo apt install ./slack-desktop-*.deb
-		sudo rm -f slack-desktop-*
-	fi
+    # Only handle x86_64 / amd64
+    if [ "$ARCHITECTURE" = "arm64" ]; then
+        echo "Skipping Slack install on arm64."
+        return 0
+    fi
+    set -e
+    local DOWNLOAD_PAGE="https://slack.com/downloads/instructions/linux?ddl=1&build=deb"
+    log "Fetching Slack download page..."
+    local SLACK_DEB_URL
+    SLACK_DEB_URL="$(
+        curl -fsSL "$DOWNLOAD_PAGE" \
+        | grep -oE 'https://downloads\.slack-edge\.com/desktop-releases/linux/x64/[^"]+\.deb' \
+        | head -n1
+    )"
+    if [ -z "$SLACK_DEB_URL" ]; then
+        log "ERROR: Could not find Slack .deb URL on $DOWNLOAD_PAGE" >&2
+        return 1
+    fi
+    log "Detected Slack package: $SLACK_DEB_URL"
+    # Download to a temp file
+    local TMP_DEB
+    TMP_DEB="$(mktemp /tmp/slack-desktop-XXXXXX.deb)"
+    log "Downloading Slack to $TMP_DEB..."
+    wget -q -O "$TMP_DEB" "$SLACK_DEB_URL"
+    log "Installing / upgrading Slack..."
+    sudo apt install -y "$TMP_DEB"
+    log "Cleaning up..."
+    rm -f "$TMP_DEB"
+    log "Slack install/upgrade complete."
 }
+
 
 ssh_stuff() {
 	print_function_name
@@ -532,8 +557,7 @@ install_terraform() {
 	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_linux_${arch}.zip"
 	unzip "terraform_${latest_version}_linux_${arch}.zip"
 	sudo mv terraform /usr/local/bin/
-	sudo rm terraform_${latest_version}_linux_${arch}.zip
-	rm -f LICENSE.txt
+	sudo rm -rf terraform_${latest_version}_linux_${arch}.zip LICENSE.txt
 	terraform version
 }
 
@@ -698,21 +722,21 @@ main() {
     run_function copy_dotfiles
     run_function set_git_config
     run_function install_apt_packages
+	run_function install_font
 	run_function btop_install
 	run_function install_slack
     run_function install_node
     run_function install_go
-    run_function install_scc
     run_function install_tailscale
     run_function install_aws_cli
     run_function install_terraform
     # run_function install_k3s
-    run_function install_helm
+    # run_function install_helm
+	run_function install_scc
     run_function install_zoom
     # run_function install_coolercontrol
     # run_function install_open_rgb_rules
     run_function webinstalls
-    run_function install_font
     # run_function install_burpsuite
     run_function apt_upgrader
 
