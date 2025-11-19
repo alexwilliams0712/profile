@@ -924,10 +924,22 @@ formatter_sql() {
   done
 }
 
+formatter_shell() {
+  find . \
+    -type f \
+    \( -iname "*.sh" -o -name ".bashrc" -o -name ".bash_aliases" \) \
+    -not -path "./.venv/*" \
+    -not -path "./target/*" \
+  | while read -r file; do
+    log "Processing $file"
+    shfmt -l -w "$file"
+  done
+}
 
 formatter() {
   formatter_json
   formatter_sql
+  formatter_shell
   # Check for Python project
   if [ -f pyproject.toml ] || ls *.py &>/dev/null || [ -d .venv/ ]; then
     if [ -n "$VIRTUAL_ENV" ]; then
