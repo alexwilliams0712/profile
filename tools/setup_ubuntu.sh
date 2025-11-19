@@ -437,32 +437,33 @@ go_installs() {
 }
 
 install_go() {
-	print_function_name
-	case "$ARCHITECTURE" in
-		amd64) a=linux-amd64 ;;
-		arm64) a=linux-arm64 ;;
-		*) echo "unsupported arch: $ARCHITECTURE"; return 1 ;;
-	esac
+  print_function_name
 
-	t=$(curl -fsSL https://go.dev/dl/ | grep -oE "go[0-9.]+\.${a}\.tar\.gz" | head -n1) || return 1
-	[ -n "$t" ] || return 1
+  case "$ARCHITECTURE" in
+    amd64) a=linux-amd64 ;;
+    arm64) a=linux-arm64 ;;
+    *) echo "unsupported arch: $ARCHITECTURE"; return 1 ;;
+  esac
 
-	d=$(mktemp -d) || return 1
-	curl -fL -o "$d/$t" "https://go.dev/dl/$t" || return 1
+  t=$(curl -fsSL https://go.dev/dl/ | grep -oE "go[0-9.]+\.${a}\.tar\.gz" | head -n1) || return 1
+  [ -n "$t" ] || { echo "could not determine latest Go version"; return 1; }
 
-	sudo rm -rf /usr/local/go
-	sudo tar -C /usr/local -xzf "$d/$t" || return 1
-	rm -rf "$d"
+  url="https://go.dev/dl/$t"
 
-	export PATH="/usr/local/go/bin:$PATH"
-	go version
-	go_installs
+  # nuke old Go and extract new one in a single stream
+  sudo rm -rf /usr/local/go || return 1
+  curl -fsSL "$url" | sudo tar -C /usr/local -xzf - || return 1
+
+  export PATH="/usr/local/go/bin:$PATH"
+  go version || return 1
+  go_installs
 }
 
 install_jetbrains_toolbox() {
 	print_function_name
 	source tools/jetbrains_toolbox_installer.sh
 }
+
 install_espanso() {
 	print_function_name
 	if command -v espanso >/dev/null 2>&1; then
