@@ -196,7 +196,6 @@ install_slack() {
         echo "Skipping Slack install on arm64."
         return 0
     fi
-    set -e
     local DOWNLOAD_PAGE="https://slack.com/downloads/instructions/linux?ddl=1&build=deb"
     log "Fetching Slack download page..."
     local SLACK_DEB_URL
