@@ -438,44 +438,25 @@ go_installs() {
 
 install_go() {
 	print_function_name
-	local a s v t u d exp act
-	a="$(dpkg --print-architecture 2>/dev/null || uname -m)"
-	case "$a" in
-		amd64|x86_64) s=linux-amd64 ;;
-		arm64|aarch64) s=linux-arm64 ;;
-		*) echo "unsupported arch: $a"; return 1 ;;
+	case "$ARCHITECTURE" in
+		amd64) a=linux-amd64 ;;
+		arm64) a=linux-arm64 ;;
+		*) echo "unsupported arch: $ARCHITECTURE"; return 1 ;;
 	esac
 
-	v="$(curl -fsSL https://go.dev/VERSION?m=text | head -n1)" || { echo "failed to get version"; return 1; }
-	t="${v}.${s}.tar.gz"
-	u="https://go.dev/dl/${t}"
+	t=$(curl -fsSL https://go.dev/dl/ | grep -oE "go[0-9.]+\.${a}\.tar\.gz" | head -n1) || return 1
+	[ -n "$t" ] || return 1
 
-	d="$(mktemp -d)" || { echo "mktemp failed"; return 1; }
-	# cleanup on normal return
-	_go_cleanup() { rm -rf "$d"; }
-	# ensure cleanup even if a command below fails (without killing your shell)
-	trap _go_cleanup RETURN
+	d=$(mktemp -d) || return 1
+	curl -fL -o "$d/$t" "https://go.dev/dl/$t" || return 1
 
-	echo "Downloading ${t}..."
-	curl -fL -o "$d/$t" "$u" || { echo "download failed"; return 1; }
+	sudo rm -rf /usr/local/go
+	sudo tar -C /usr/local -xzf "$d/$t" || return 1
+	rm -rf "$d"
 
-	echo "Verifying checksum..."
-	exp="$(curl -fsSL "$u.sha256" | awk '{print $1}')" || { echo "checksum fetch failed"; return 1; }
-	act="$(sha256sum "$d/$t" | awk '{print $1}')" || { echo "sha256sum failed"; return 1; }
-	[ "$exp" = "$act" ] || { echo "checksum mismatch"; return 1; }
-
-	echo "Installing to /usr/local/go..."
-	sudo rm -rf /usr/local/go || { echo "remove old go failed"; return 1; }
-	sudo tar -C /usr/local -xzf "$d/$t" || { echo "extract failed"; return 1; }
-
-	# Make it available now (persist manually if you want)
-	case ":$PATH:" in *":/usr/local/go/bin:"*) ;; *) export PATH="/usr/local/go/bin:$PATH";; esac
-	go version || { echo "go not on PATH?"; return 1; }
-
-	echo 'To persist, add to ~/.profile (per docs):'
-	echo '  export PATH=$PATH:/usr/local/go/bin'#
+	export PATH="/usr/local/go/bin:$PATH"
+	go version
 	go_installs
-	return 0
 }
 
 install_jetbrains_toolbox() {
@@ -596,7 +577,7 @@ install_aws_cli() {
     sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
     which aws
     aws --version
-    sudo rm -r aws*
+    sudo rm -rf aws*
 }
 
 install_node() {
