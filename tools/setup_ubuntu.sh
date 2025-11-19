@@ -559,7 +559,7 @@ install_terraform() {
 	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_linux_${arch}.zip"
 	unzip "terraform_${latest_version}_linux_${arch}.zip"
 	sudo mv terraform /usr/local/bin/
-	sudo rm -rf terraform_${latest_version}_linux_${arch}.zip LICENSE.txt
+	sudo rm -rf terraform_* LICENSE.txt
 	terraform version
 }
 
@@ -691,6 +691,7 @@ btop_install() {
 
 	# Optional: Clean up
 	rm -rf /tmp/btop
+	ensure_directory
 }
 
 pip_installs() {
