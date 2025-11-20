@@ -168,7 +168,7 @@ install_apt_packages() {
 
 	sudo systemctl disable postgresql.service
 	sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
-	sudo apt install postgresql-18
+	sudo apt install -y postgresql-18
 	sudo systemctl enable systemd-timesyncd
 	sudo systemctl start systemd-timesyncd
 	sudo timedatectl set-ntp true
