@@ -153,8 +153,7 @@ install_apt_packages() {
 		nfs-common \
 		openssl \
 		pgformatter \
-		postgresql \
-		postgresql-contrib \
+		postgresql-common \
 		redis-tools \
 		samba \
 		speedtest-cli \
@@ -168,7 +167,8 @@ install_apt_packages() {
 		zlib1g-dev
 
 	sudo systemctl disable postgresql.service
-	# sudo apt-get remove --purge -y libreoffice* shotwell
+	sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+	sudo apt install postgresql-18
 	sudo systemctl enable systemd-timesyncd
 	sudo systemctl start systemd-timesyncd
 	sudo timedatectl set-ntp true
