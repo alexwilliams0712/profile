@@ -61,6 +61,7 @@ function scp_mirror() {
 
 	local host="$1"
 	shift
+	local owner="${SUDO_USER:-$USER}"
 
 	for path in "$@"; do
 		# Expand tilde for local destination
@@ -79,6 +80,8 @@ function scp_mirror() {
 			echo "Copying $host:$remote_path to $local_path"
 			sudo scp -r $host:$remote_path $local_path
 		fi
+		sudo chown -R "$owner":"$owner" "$local_path"
+		sudo chmod -R u+rwX "$local_path"
 	done
 }
 
