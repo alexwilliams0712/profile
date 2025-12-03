@@ -10,9 +10,7 @@ export DEFAULT_PYTHON_VERSION="3.14"
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(dpkg --print-architecture)
 exit_code=0
-# Makes it return on any error
 set -e
-set -o pipefail
 
 # Define an error handler function
 handle_error() {
