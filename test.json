@@ -1,0 +1,130 @@
+{
+  "$schema": "./config.schema.json",
+  "dry-run": true,
+  "warn": "1min",
+  "rustic": {
+    "backoff": { "exp": 1.5, "min": "1secs", "max": "10mins" },
+    "lag": "1min",
+    "trade-info": { "purpose": "reckon", "run-id": "" },
+    "v1-url": "http://rustic-storage.lo.tech.dublin.prod:8081/api/v1/"
+  },
+  "exchanges": {
+    "gate_io": {
+      "accounts": {
+        "layer3": { "algo": "Layer3", "config": { "account": "unified", "credentials": "mmaas/layer3/gateio/komodo" }, "hardcode-instruments": ["L3-USDT:SPOT"] },
+        "syndicate": { "algo": "Syndicate", "config": { "account": "unified", "credentials": "mmaas/syndicate/gateio/komodo" }, "hardcode-instruments": ["SYND-USDT:SPOT"] }
+      },
+      "config": { "lag": "1m", "retention": "7d", "window-size": "10mins" },
+      "market": {
+        "api_configs": {
+          "btcmperp": { "rest_url": "https://api.gateio.ws/api/v4/", "ws_url": "wss://fx-ws.gateio.ws/v4/ws/btc" },
+          "spot": { "rest_url": "https://api.gateio.ws/api/v4/", "ws_url": "wss://api.gateio.ws/ws/v4/" },
+          "usdtmdelivery": { "rest_url": "https://api.gateio.ws/api/v4/", "ws_url": "wss://fx-ws.gateio.ws/v4/ws/delivery/usdt" },
+          "usdtmperp": { "rest_url": "https://api.gateio.ws/api/v4/", "ws_url": "wss://fx-ws.gateio.ws/v4/ws/usdt" }
+        },
+        "instr_static_refresh_period": 600,
+        "n_streams": 2,
+        "n_streams_per_alloc": 100,
+        "rest_retry_period": 5
+      }
+    },
+    "kraken": {
+      "accounts": {
+        "syndicate": {
+          "algo": "Syndicate",
+          "config": {
+            "account": "spot",
+            "ws_url": "wss://ws-auth.kraken.com/v2",
+            "credentials": "mmaas/syndicate/kraken/komodo",
+            "place_order_rate_limit": { "weight": 30, "period_millis": 60000, "granularity_millis": 100 },
+            "amend_order_rate_limit": { "weight": 30, "period_millis": 60000, "granularity_millis": 100 },
+            "cancel_order_rate_limit": { "weight": 40, "period_millis": 60000, "granularity_millis": 100 }
+          },
+          "hardcode-instruments": ["SYND-USD:SPOT", "SYND-EUR:SPOT"]
+        },
+        "tgbp": {
+          "algo": "Tgbp",
+          "config": {
+            "account": "spot",
+            "ws_url": "wss://ws-auth.kraken.com/v2",
+            "credentials": "mmaas/tgbp/kraken/komodo",
+            "place_order_rate_limit": { "weight": 30, "period_millis": 60000, "granularity_millis": 100 },
+            "amend_order_rate_limit": { "weight": 30, "period_millis": 60000, "granularity_millis": 100 },
+            "cancel_order_rate_limit": { "weight": 40, "period_millis": 60000, "granularity_millis": 100 }
+          },
+          "hardcode-instruments": ["TGBP-GBP:SPOT"]
+        }
+      },
+      "config": { "lag": "1m", "retention": "7d", "window-size": "10mins" },
+      "market": {
+        "api_configs": {
+          "futures": { "rest_url": "https://futures.kraken.com/derivatives/api/", "ws_url": "wss://futures.kraken.com/ws/v1" },
+          "spot": { "rest_url": "https://api.kraken.com/", "ws_url": "wss://ws.kraken.com/v2" }
+        },
+        "instr_static_refresh_period": 600,
+        "n_streams": 1,
+        "n_streams_per_alloc": 64,
+        "rest_retry_period": 5,
+        "spot_ob_depth": 1000
+      }
+    },
+    "kucoin": {
+      "accounts": {
+        "syndicate": {
+          "algo": "syndicate",
+          "config": { "account": "spot", "vip_level": "VIP5", "credentials": "mmaas/syndicate/kucoin/komodo" },
+          "hardcode-instruments": ["SYND-USDT:SPOT"]
+        }
+      },
+      "config": { "lag": "1m", "retention": "7d", "window-size": "10mins" },
+      "market": {
+        "api_configs": {
+          "futures": { "rest_url": "https://futures.kraken.com/derivatives/api/", "ws_url": "wss://futures.kraken.com/ws/v1" },
+          "spot": { "rest_url": "https://api.kraken.com/", "ws_url": "wss://ws.kraken.com/v2" }
+        },
+        "instr_static_refresh_period": 600,
+        "n_streams": 1,
+        "n_streams_per_alloc": 64,
+        "rest_retry_period": 5,
+        "spot_ob_depth": 1000
+      }
+    },
+    "mexc": {
+      "accounts": {
+        "layer3": {
+          "algo": "Layer3",
+          "config": { "account": "spot", "ws_url": "https://wbs-api.mexc.com/ws", "credentials": "mmaas/layer3/mexc/komodo" },
+          "hardcode-instruments": ["L3-USDT:SPOT"]
+        },
+        "syndicate": {
+          "algo": "Syndicate",
+          "config": { "account": "spot", "ws_url": "https://wbs-api.mexc.com/ws", "credentials": "mmaas/syndicate/mexc/komodo" },
+          "hardcode-instruments": ["SYND-USDT:SPOT"]
+        }
+      },
+      "config": { "lag": "1m", "retention": "7d", "window-size": "10mins" },
+      "market": {
+        "api_configs": {
+          "spot": { "ws_url": "wss://wbs-api.mexc.com/ws", "rest_url": "https://api.mexc.com/api/v3/" },
+          "futures": { "ws_url": "https://contract.mexc.com/edge", "rest_url": "https://contract.mexc.com/api/v1/" }
+        },
+        "spot_rate_limit": { "weight": 20, "period_millis": 1000, "granularity_millis": 20 },
+        "credentials": "rocketsled/directors/mexc/marketdata",
+        "n_streams": 1,
+        "n_streams_per_alloc": 30,
+        "instr_static_refresh_period": 600,
+        "rest_retry_period": 5,
+        "high_priority_fraction": 0.5
+      }
+    }
+  },
+  "log": {
+    "layers": [
+      { "filter": { "directives": ["hermes=trace"] }, "format": { "formatter": { "json": {} } }, "writer": { "file": { "mode": "truncate", "path": "hermes.log.json" } } },
+      { "filter": { "directives": ["reckon=trace"] }, "format": { "formatter": { "json": {} } }, "writer": { "file": { "mode": "truncate", "path": "reckon.log.json" } } },
+      { "filter": { "directives": ["reckon=info"] }, "writer": "stdout" }
+    ]
+  },
+  "since": "-1 week",
+  "until": "-1 day"
+}
