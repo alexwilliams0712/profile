@@ -438,25 +438,40 @@ install_go() {
 
 	arch=$(uname -m)
 	case "$arch" in
-		x86_64|amd64) go_arch=linux-amd64 ;;
-		aarch64|arm64) go_arch=linux-arm64 ;;
-		*) echo "unsupported arch: $arch" >&2; return 1 ;;
+	x86_64 | amd64) go_arch=linux-amd64 ;;
+	aarch64 | arm64) go_arch=linux-arm64 ;;
+	*)
+		echo "unsupported arch: $arch" >&2
+		return 1
+		;;
 	esac
 
 	# get downloads page without piping curl
 	page=$(curl -fsSL https://go.dev/dl/) || return 1
 
-	t=$(printf '%s\n' "$page" \
-		| grep -oE "go[0-9.]+\.${go_arch}\.tar\.gz" \
-		| head -n1) || return 1
+	t=$(printf '%s\n' "$page" |
+		grep -oE "go[0-9.]+\.${go_arch}\.tar\.gz" |
+		head -n1) || return 1
 
-	[ -n "$t" ] || { echo "could not determine latest Go version" >&2; return 1; }
+	[ -n "$t" ] || {
+		echo "could not determine latest Go version" >&2
+		return 1
+	}
 
 	tmp=$(mktemp /tmp/go.tar.gz.XXXXXX) || return 1
-	curl -fsSL "https://go.dev/dl/$t" -o "$tmp" || { rm -f "$tmp"; return 1; }
+	curl -fsSL "https://go.dev/dl/$t" -o "$tmp" || {
+		rm -f "$tmp"
+		return 1
+	}
 
-	sudo rm -rf /usr/local/go || { rm -f "$tmp"; return 1; }
-	sudo tar -C /usr/local -xzf "$tmp" || { rm -f "$tmp"; return 1; }
+	sudo rm -rf /usr/local/go || {
+		rm -f "$tmp"
+		return 1
+	}
+	sudo tar -C /usr/local -xzf "$tmp" || {
+		rm -f "$tmp"
+		return 1
+	}
 	rm -f "$tmp"
 
 	export PATH="/usr/local/go/bin:$PATH"
@@ -593,7 +608,7 @@ install_node() {
 		sudo apt-get install -y nodejs
 	node -v
 	npm -v
-	sudo npm install -g wscat prettier json5
+	sudo npm install -g wscat prettier json5 fracturedjsonjs
 	sudo rm -f package.json package-lock.json
 	sudo rm -rf node_modules
 }
