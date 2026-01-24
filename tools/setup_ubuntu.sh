@@ -491,32 +491,50 @@ install_espanso() {
 		log "espanso is already installed, skipping installation"
 		return 0
 	fi
-	# Waiting on https://github.com/espanso/espanso/issues/1793
-	if [ "$(echo $XDG_SESSION_TYPE | tr '[:upper:]' '[:lower:]')" = "x11" ]; then
-		echo "X11!"
-	else
-		log "Wayland"
-		# sudo apt-get install libwxgtk3.2-dev
-		# sudo apt install -y build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev libssl-dev
-		# wget https://github.com/espanso/espanso/releases/download/v2.2.1/espanso-debian-wayland-amd64.deb
-		# sudo apt install ./espanso-debian-wayland-amd64.deb
-		sudo apt update
-		sudo apt install build-essential git wl-clipboard libxkbcommon-dev libdbus-1-dev libssl-dev libwxgtk3.*-dev
-		cargo install --force cargo-make --version 0.37.23
-		git clone https://github.com/espanso/espanso
-		cd espanso
-		cargo make --profile release --env NO_X11=true build-binary
-		sudo mv target/release/espanso /usr/local/bin/espanso
-		cd ..
-		sudo rm -r espanso
-	fi
-	sudo setcap "cap_dac_override+p" $(which espanso)
-	espanso service register
-	espanso service status | tee >(grep -q "is running" &&
-		(espanso service stop && espanso service start) ||
-		(espanso service start))
 
-	cp $PROFILE_DIR/dotfiles/espanso_match_file.yml $(espanso path config)/match/base.yml
+	# Install wl-clipboard dependency for Wayland
+	sudo apt update
+	sudo apt install -y wl-clipboard
+
+	# Fetch latest version from GitHub API
+	local latest_version
+	latest_version=$(curl -fsSL https://api.github.com/repos/espanso/espanso/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+	if [ -z "$latest_version" ]; then
+		log "Could not fetch latest espanso version, using fallback"
+		latest_version="v2.2.2"
+	fi
+	log "Installing espanso $latest_version for Wayland"
+
+	# Determine architecture
+	local deb_arch
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		deb_arch="arm64"
+	else
+		deb_arch="amd64"
+	fi
+
+	# Download and install the Wayland .deb
+	local deb_file="espanso-debian-wayland-${deb_arch}.deb"
+	local deb_url="https://github.com/espanso/espanso/releases/download/${latest_version}/${deb_file}"
+	log "Downloading from $deb_url"
+	wget -q "$deb_url" -O "/tmp/${deb_file}" || {
+		log "Failed to download espanso"
+		return 1
+	}
+	sudo apt install -y "/tmp/${deb_file}"
+	rm -f "/tmp/${deb_file}"
+
+	# Setup espanso service
+	sudo setcap "cap_dac_override+p" "$(which espanso)"
+	espanso service register
+	if espanso service status | grep -q "is running"; then
+		espanso service stop
+	fi
+	espanso service start
+
+	# Copy config
+	mkdir -p "$(espanso path config)/match"
+	cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$(espanso path config)/match/base.yml"
 	espanso --version
 }
 
@@ -568,6 +586,30 @@ install_clam_av() {
 	sudo systemctl --system daemon-reload
 	sudo systemctl restart clamav-daemon.service
 	sudo /etc/init.d/clamav-daemon start
+}
+
+install_ai() {
+	print_function_name
+
+	# Install Claude Code CLI
+	log "Installing Claude Code CLI..."
+	curl -fsSL https://claude.ai/install.sh | bash
+
+	# Install Gemini CLI
+	log "Installing Gemini CLI..."
+	if command -v gemini >/dev/null 2>&1; then
+		log "Gemini CLI already installed, upgrading..."
+	fi
+	sudo npm install -g @google/gemini-cli
+
+	# Install ChatGPT CLI (shell-gpt)
+	log "Installing ChatGPT CLI (shell-gpt)..."
+	if command -v sgpt >/dev/null 2>&1; then
+		log "shell-gpt already installed, upgrading..."
+	fi
+	pip install -U shell-gpt
+
+	log "AI CLI tools installation complete"
 }
 
 install_terraform() {
@@ -763,6 +805,7 @@ main() {
 	# run_function install_open_rgb_rules
 	run_function webinstalls
 	# run_function install_burpsuite
+	run_function install_ai
 	run_function apt_upgrader
 
 	# Report failures if any
