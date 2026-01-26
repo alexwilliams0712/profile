@@ -322,27 +322,83 @@ function pypath() {
 	unset IFS
 }
 
+function _select_option() {
+	local prompt="$1"
+	shift
+	local options=("$@")
+	local selected=0
+	local count=${#options[@]}
+	local esc=$(printf '\033')
+
+	echo "$prompt"
+	echo "Use ↑/↓ arrows, Enter to select"
+	echo ""
+
+	# Hide cursor and save position
+	printf '\033[?25l'
+
+	while true; do
+		# Print menu
+		for i in "${!options[@]}"; do
+			if [ $i -eq $selected ]; then
+				printf '\033[1;32m> %s\033[0m\n' "${options[$i]}"
+			else
+				printf '  %s\n' "${options[$i]}"
+			fi
+		done
+
+		# Read single keypress
+		IFS= read -rsn1 key
+
+		# Check for escape sequence (arrow keys)
+		if [[ $key == "$esc" ]]; then
+			read -rsn2 -t 0.1 rest
+			key+="$rest"
+		fi
+
+		# Handle key
+		case "$key" in
+		"${esc}[A") # Up
+			((selected--))
+			((selected < 0)) && selected=$((count - 1))
+			;;
+		"${esc}[B") # Down
+			((selected++))
+			((selected >= count)) && selected=0
+			;;
+		"") # Enter
+			break
+			;;
+		esac
+
+		# Move cursor back up to redraw
+		printf '\033[%dA' "$count"
+	done
+
+	# Show cursor
+	printf '\033[?25h'
+	echo ""
+
+	SELECTED_OPTION="${options[$selected]}"
+}
+
 function enter_pyenv() {
 	print_function_name
-	# if [ -z "$1" ]; then
-	#     expected_env_name="$(basename $(pwd))"
-	# else
-	#     expected_env_name="$1"
-	# fi
-	# echo "Activating: $expected_env_name"
-	# # Check if the virtual environment exists
-	# if [[ "$(pyenv versions --bare | grep -x $expected_env_name)" != "" ]]; then
-	#   echo "Virtual environment '$expected_env_name' exists, activating it..."
-	#   pyenv activate $expected_env_name
-	# else
-	#   echo "Virtual environment '$expected_env_name' does not exist, creating it..."
-	#   pyenv virtualenv $expected_env_name
-	#   pyenv activate $expected_env_name
-	# fi
 
 	if [ ! -d ".venv" ]; then
-		# If it does not exist, create the virtual environment
-		uv venv -p $(pyenv global)
+		# Get available Python versions from pyenv (filter to version numbers only)
+		local versions=($(pyenv versions --bare 2>/dev/null | grep -E '^[0-9]+\.[0-9]+' | sort -V -r))
+
+		if [ ${#versions[@]} -eq 0 ]; then
+			echo "No Python versions found in pyenv. Using system Python."
+			uv venv
+		else
+			_select_option "Select Python version for new .venv:" "${versions[@]}"
+			local selected_version="$SELECTED_OPTION"
+
+			echo "Creating .venv with Python ${selected_version}..."
+			uv venv -p "$selected_version"
+		fi
 	fi
 
 	# Activate the virtual environment
@@ -381,36 +437,74 @@ function pipcompiler() {
 	echo "Running pip compiler"
 	uv pip install -U pip pip-tools
 
-	# Find .in files in the current directory or in requirements/ directory
-	if ls requirements*.in &>/dev/null; then
-		files=$(ls *.in | grep '^requirements.*in' | sort -V)
+	# Check if pyproject.toml exists and has a dependencies section
+	if [ -f "pyproject.toml" ] && grep -q '^dependencies\s*=' pyproject.toml; then
+		echo "Found pyproject.toml with dependencies, compiling from it..."
+
+		# Compile main dependencies with upgrade flag
+		echo "Compiling main dependencies..."
+		rm -f requirements.txt
+		uv pip compile pyproject.toml -U -o requirements.txt
+
+		# Check for optional dependency groups and compile each
+		local extras=$(grep -oP '^\[project\.optional-dependencies\]\s*$|^\[tool\.uv\.dev-dependencies\]\s*$' pyproject.toml 2>/dev/null || true)
+		local extra_names=$(grep -oP '(?<=^\[project\.optional-dependencies\.)[^\]]+' pyproject.toml 2>/dev/null || true)
+
+		txt_files="requirements.txt"
+
+		for extra in ${extra_names}; do
+			echo "Compiling optional dependency group: ${extra}"
+			rm -f "requirements-${extra}.txt"
+			uv pip compile pyproject.toml -U --extra "${extra}" -o "requirements-${extra}.txt"
+			txt_files+=" requirements-${extra}.txt"
+		done
+
+		# Check for dev dependencies (uv style)
+		if grep -q '^\[tool\.uv\]' pyproject.toml && grep -q 'dev-dependencies' pyproject.toml; then
+			echo "Compiling dev dependencies..."
+			rm -f requirements-dev.txt
+			uv pip compile pyproject.toml -U --extra dev -o requirements-dev.txt 2>/dev/null || true
+			if [ -f "requirements-dev.txt" ]; then
+				txt_files+=" requirements-dev.txt"
+			fi
+		fi
+
+		echo "Generated requirements files: ${txt_files}"
 	else
-		files=$(ls requirements/*.in | grep 'requirements*' | sort -V)
+		# Fall back to requirements/*.in files
+		echo "No pyproject.toml found, looking for requirements*.in files..."
+
+		# Find .in files in the current directory or in requirements/ directory
+		if ls requirements*.in &>/dev/null; then
+			files=$(ls *.in | grep '^requirements.*in' | sort -V)
+		else
+			files=$(ls requirements/*.in | grep 'requirements*' | sort -V)
+		fi
+
+		echo "Requirements files:"
+		echo "${files}"
+		# If no files were found, exit
+		if [ -z "${files}" ]; then
+			echo "No requirements*.in files found."
+			return 1
+		fi
+
+		# Pip-compile each .in file
+		for file in ${files}; do
+			echo "Compiling ${file}"
+			cat -s ${file} >tmp.txt && mv tmp.txt ${file}
+			(
+				grep "^-" ${file}
+				grep -v "^-" ${file} | sort
+			) | sponge ${file}
+			rm -f "${file//.in/.txt}"
+			uv pip compile "${file}" -U -o ${file//.in/.txt}
+		done
+
+		# Find .txt files generated by pip-compile
+		txt_files=$(echo "${files}" | sed 's/\.in/.txt/g')
+		echo "Generated requirements*.txt files: ${txt_files}"
 	fi
-
-	echo "Requirements files:"
-	echo "${files}"
-	# If no files were found, exit
-	if [ -z "${files}" ]; then
-		echo "No requirements*.in files found."
-		return 1
-	fi
-
-	# Pip-compile each .in file
-	for file in ${files}; do
-		echo "Compiling ${file}"
-		cat -s ${file} >tmp.txt && mv tmp.txt ${file}
-		(
-			grep "^-" ${file}
-			grep -v "^-" ${file} | sort
-		) | sponge ${file}
-		rm -f "${file//.in/.txt}"
-		uv pip compile "${file}" -o ${file//.in/.txt}
-	done
-
-	# Find .txt files generated by pip-compile
-	txt_files=$(echo "${files}" | sed 's/\.in/.txt/g')
-	echo "Generated requirements*.txt files: ${txt_files}"
 
 	# Build pip install command with each .txt file
 	install_command="uv pip sync"
@@ -897,19 +991,76 @@ function start_vpn {
 	popd >/dev/null
 }
 
+export JSON_LINE_WIDTH=180
+
 # Formatters
+# Set JSON_LINE_WIDTH to control max line width for simple arrays (default: 80)
 formatter_json() {
+	local line_width="${JSON_LINE_WIDTH:-80}"
+
 	find . -type f \( -iname "*.json" -o -iname "*.json5" \) \
 		-not -path "./.venv/*" -not -path "./target/*" | while read -r file; do
 		log "Processing $file"
 
 		ext="${file##*.}"
 
-		if [[ "$ext" == "json" ]]; then
+		# Convert json5 to json first if needed
+		if [[ "$ext" == "json5" ]]; then
 			json5 "$file" --out-file "$file"
 		fi
 
-		prettier --config ~/.prettierrc --write "$file"
+		# Sort keys and align colons using Python
+		python3 -c '
+import json
+import sys
+import os
+
+LINE_WIDTH = int(sys.argv[2])
+
+def align_json(obj, indent=0):
+    ind = "  " * indent
+
+    if isinstance(obj, dict):
+        if not obj:
+            return "{}"
+        sorted_keys = sorted(obj.keys())
+        max_len = max(len(json.dumps(k)) for k in sorted_keys)
+        lines = ["{"]
+        for i, key in enumerate(sorted_keys):
+            key_str = json.dumps(key)
+            value_str = align_json(obj[key], indent + 1)
+            padding = " " * (max_len - len(key_str))
+            comma = "," if i < len(sorted_keys) - 1 else ""
+            lines.append(f"{ind}  {key_str}{padding}: {value_str}{comma}")
+        lines.append(f"{ind}}}")
+        return "\n".join(lines)
+    elif isinstance(obj, list):
+        if not obj:
+            return "[]"
+        if all(not isinstance(x, (dict, list)) for x in obj):
+            simple = json.dumps(obj)
+            if len(simple) < LINE_WIDTH:
+                return simple
+        lines = ["["]
+        for i, item in enumerate(obj):
+            value_str = align_json(item, indent + 1)
+            comma = "," if i < len(obj) - 1 else ""
+            lines.append(f"{ind}  {value_str}{comma}")
+        lines.append(f"{ind}]")
+        return "\n".join(lines)
+    else:
+        return json.dumps(obj)
+
+with open(sys.argv[1], "r") as f:
+    data = json.load(f)
+with open(sys.argv[1], "w") as f:
+    f.write(align_json(data) + "\n")
+' "$file" "$line_width" 2>/dev/null || {
+			log "Failed to parse $file, falling back to jq"
+			if command -v jq &>/dev/null; then
+				jq -S '.' "$file" >"$file.tmp" && mv "$file.tmp" "$file"
+			fi
+		}
 	done
 }
 
