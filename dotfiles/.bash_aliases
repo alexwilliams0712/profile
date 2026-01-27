@@ -1017,12 +1017,33 @@ import os
 
 LINE_WIDTH = int(sys.argv[2])
 
+def compact_json(obj):
+    """Return compact JSON with sorted keys."""
+    if isinstance(obj, dict):
+        if not obj:
+            return "{}"
+        parts = []
+        for k in sorted(obj.keys()):
+            parts.append(f"{json.dumps(k)}: {compact_json(obj[k])}")
+        return "{" + ", ".join(parts) + "}"
+    elif isinstance(obj, list):
+        if not obj:
+            return "[]"
+        return "[" + ", ".join(compact_json(x) for x in obj) + "]"
+    else:
+        return json.dumps(obj)
+
 def align_json(obj, indent=0):
     ind = "  " * indent
+    current_col = len(ind)
 
     if isinstance(obj, dict):
         if not obj:
             return "{}"
+        # Try compact form first
+        compact = compact_json(obj)
+        if "\n" not in compact and current_col + len(compact) < LINE_WIDTH:
+            return compact
         sorted_keys = sorted(obj.keys())
         max_len = max(len(json.dumps(k)) for k in sorted_keys)
         lines = ["{"]
@@ -1037,10 +1058,10 @@ def align_json(obj, indent=0):
     elif isinstance(obj, list):
         if not obj:
             return "[]"
-        if all(not isinstance(x, (dict, list)) for x in obj):
-            simple = json.dumps(obj)
-            if len(simple) < LINE_WIDTH:
-                return simple
+        # Try compact form first
+        compact = compact_json(obj)
+        if "\n" not in compact and current_col + len(compact) < LINE_WIDTH:
+            return compact
         lines = ["["]
         for i, item in enumerate(obj):
             value_str = align_json(item, indent + 1)
