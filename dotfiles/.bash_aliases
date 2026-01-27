@@ -435,44 +435,28 @@ function pipcompiler() {
 	fi
 
 	echo "Running pip compiler"
-	uv pip install -U pip pip-tools
 
 	# Check if pyproject.toml exists and has a dependencies section
 	if [ -f "pyproject.toml" ] && grep -q '^dependencies\s*=' pyproject.toml; then
-		echo "Found pyproject.toml with dependencies, compiling from it..."
+		echo "Found pyproject.toml with dependencies, syncing directly..."
 
-		# Compile main dependencies with upgrade flag
-		echo "Compiling main dependencies..."
-		rm -f requirements.txt
-		uv pip compile pyproject.toml -U -o requirements.txt
+		# Build uv sync command with upgrade flag and all extras
+		local sync_cmd="uv sync -U --all-extras"
 
-		# Check for optional dependency groups and compile each
-		local extras=$(grep -oP '^\[project\.optional-dependencies\]\s*$|^\[tool\.uv\.dev-dependencies\]\s*$' pyproject.toml 2>/dev/null || true)
-		local extra_names=$(grep -oP '(?<=^\[project\.optional-dependencies\.)[^\]]+' pyproject.toml 2>/dev/null || true)
-
-		txt_files="requirements.txt"
-
-		for extra in ${extra_names}; do
-			echo "Compiling optional dependency group: ${extra}"
-			rm -f "requirements-${extra}.txt"
-			uv pip compile pyproject.toml -U --extra "${extra}" -o "requirements-${extra}.txt"
-			txt_files+=" requirements-${extra}.txt"
+		# Check for dependency-groups (PEP 735 style)
+		local dep_groups=$(grep -oP '(?<=^\[dependency-groups\.)[^\]]+' pyproject.toml 2>/dev/null || true)
+		for group in ${dep_groups}; do
+			echo "Including dependency group: ${group}"
+			sync_cmd+=" --group ${group}"
 		done
 
-		# Check for dev dependencies (uv style)
-		if grep -q '^\[tool\.uv\]' pyproject.toml && grep -q 'dev-dependencies' pyproject.toml; then
-			echo "Compiling dev dependencies..."
-			rm -f requirements-dev.txt
-			uv pip compile pyproject.toml -U --extra dev -o requirements-dev.txt 2>/dev/null || true
-			if [ -f "requirements-dev.txt" ]; then
-				txt_files+=" requirements-dev.txt"
-			fi
-		fi
-
-		echo "Generated requirements files: ${txt_files}"
+		echo -e "\033[1;33mExecuting: ${sync_cmd}\033[0m"
+		eval ${sync_cmd}
+		return 0
 	else
 		# Fall back to requirements/*.in files
 		echo "No pyproject.toml found, looking for requirements*.in files..."
+		uv pip install -U pip pip-tools
 
 		# Find .in files in the current directory or in requirements/ directory
 		if ls requirements*.in &>/dev/null; then
