@@ -403,6 +403,7 @@ function enter_pyenv() {
 
 	# Activate the virtual environment
 	source .venv/bin/activate
+	echo "Python version: $(python --version 2>&1)"
 	pypath
 }
 
