@@ -14,9 +14,19 @@ if ! command -v git >/dev/null 2>&1; then
 	fi
 fi
 
-git fetch origin && git reset --hard origin/main
-git checkout main
-git pull
+# Set up credential helper before fetching (macOS needs osxkeychain for HTTPS)
+if [ "$(uname)" = "Darwin" ]; then
+	git config --global credential.helper osxkeychain
+fi
+
+# Pull latest version of this repo (non-fatal on first run / auth issues)
+if git fetch origin 2>/dev/null; then
+	git reset --hard origin/main
+	git checkout main
+	git pull
+else
+	echo "Warning: could not fetch from remote, continuing with local copy."
+fi
 
 os_name="$(uname)"
 
