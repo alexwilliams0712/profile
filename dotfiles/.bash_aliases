@@ -21,7 +21,9 @@ alias lt='ls -lArth'           # show all as a list sorted by reversed modificat
 ##
 # CAT ALIASES
 ##
-alias bat='batcat'
+if command -v batcat >/dev/null 2>&1; then
+	alias bat='batcat'
+fi
 
 ##
 # CD ALIASES
