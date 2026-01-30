@@ -33,6 +33,27 @@ copy_dotfiles() {
 	sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
 	source $HOME/.bash_aliases
 }
+collect_user_input() {
+	# Gather all interactive input upfront so the rest of the setup is unattended
+	GIT_USER_NAME=$(git config --global user.name 2>/dev/null) || GIT_USER_NAME=""
+	GIT_USER_EMAIL=$(git config --global user.email 2>/dev/null) || GIT_USER_EMAIL=""
+	GIT_USER_PHONE=$(git config --global user.phonenumber 2>/dev/null) || GIT_USER_PHONE=""
+
+	if [ -z "$GIT_USER_NAME" ]; then
+		read -p "Enter github username: " GIT_USER_NAME
+	fi
+	read -p "Enter github email address (leave blank to keep '$GIT_USER_EMAIL'): " input
+	if [ ! -z "$input" ]; then
+		GIT_USER_EMAIL="$input"
+	fi
+	read -p "Enter phone number (leave blank to keep '$GIT_USER_PHONE'): " input
+	if [ ! -z "$input" ]; then
+		GIT_USER_PHONE="$input"
+	fi
+	echo ""
+	log "All input collected. Setup will now run unattended."
+}
+
 set_git_config() {
 	print_function_name
 	git config --global core.autocrlf false
@@ -53,25 +74,11 @@ set_git_config() {
 	git config --global alias.d diff
 	git config --global alias.dc 'diff --cached'
 	git config --global alias.l 'log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
-	name=$(git config --global user.name 2>/dev/null) || name=""
-	email=$(git config --global user.email 2>/dev/null) || email=""
-	phone=$(git config --global user.phonenumber 2>/dev/null) || phone=""
 
-	if [ -z "$name" ]; then
-		read -p "Enter github username: " name && git config --global user.name "$name"
-	fi
-	read -p "Enter github email address (leave blank to keep current): " new_email
-	if [ ! -z "$new_email" ]; then
-		git config --global user.email "$new_email"
-	else
-		new_email="$email"
-	fi
-	read -p "Enter phone number (leave blank to keep current): " new_phone
-	if [ ! -z "$new_phone" ]; then
-		git config --global user.phonenumber "$new_phone"
-	else
-		new_phone="$phone"
-	fi
+	# Apply values collected by collect_user_input
+	[ ! -z "$GIT_USER_NAME" ] && git config --global user.name "$GIT_USER_NAME"
+	[ ! -z "$GIT_USER_EMAIL" ] && git config --global user.email "$GIT_USER_EMAIL"
+	[ ! -z "$GIT_USER_PHONE" ] && git config --global user.phonenumber "$GIT_USER_PHONE"
 }
 install_apt_packages() {
 	print_function_name
@@ -613,7 +620,7 @@ install_ai() {
 	if command -v sgpt >/dev/null 2>&1; then
 		log "shell-gpt already installed, upgrading..."
 	fi
-	pip install -U shell-gpt
+	uv pip install -U shell-gpt
 
 	log "AI CLI tools installation complete"
 }
@@ -782,6 +789,8 @@ exit_script() {
 }
 
 main() {
+	collect_user_input
+
 	failed_functions=()
 
 	run_function() {
