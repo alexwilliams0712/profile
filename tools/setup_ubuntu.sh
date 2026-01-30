@@ -283,11 +283,6 @@ install_flatpaks() {
 
 install_browser() {
 	print_function_name
-	if command -v vivaldi >/dev/null 2>&1; then
-		log "Vivaldi is already installed, skipping installation"
-		return 0
-	fi
-
 	# Update package lists first
 	log "Updating package lists"
 	sudo apt update
@@ -303,6 +298,17 @@ install_browser() {
 	else
 		version="$latest_version"
 		log "Latest version found: $version"
+	fi
+
+	if command -v vivaldi >/dev/null 2>&1; then
+		installed_version=$(vivaldi --version 2>/dev/null | grep -o '[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*')
+		# Strip the package revision (e.g. -1) from version for comparison
+		latest_upstream=$(echo "$version" | sed 's/-[0-9]*$//')
+		if [ "$installed_version" = "$latest_upstream" ]; then
+			log "Vivaldi is already up to date ($installed_version)"
+			return 0
+		fi
+		log "Vivaldi $installed_version is installed, upgrading to $latest_upstream"
 	fi
 
 	if [ "$ARCHITECTURE" = "arm64" ]; then
