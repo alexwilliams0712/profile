@@ -110,12 +110,25 @@ install_homebrew() {
 			eval "$(/opt/homebrew/bin/brew shellenv)"
 		fi
 	fi
+
+	# Set HOMEBREW_NO_AUTO_UPDATE to prevent brew from running git updates
+	# during individual installs (we handle updates explicitly)
+	export HOMEBREW_NO_AUTO_UPDATE=1
+
+	# Ensure Homebrew's git uses the credential helper
+	export HOMEBREW_NO_INSTALL_FROM_API=0
 }
 
 install_packages() {
 	print_function_name
+	# Remove hashicorp tap if present (causes git errors, terraform installed manually)
+	if brew tap | grep -q "hashicorp/tap"; then
+		brew untap hashicorp/tap 2>/dev/null || true
+	fi
+
 	log "Updating Homebrew..."
-	brew update
+	# brew update can fail on stale taps — not critical
+	brew update || log "Warning: brew update had errors, continuing..."
 	log "Installing packages from Brewfile..."
 	brew bundle --file=$PROFILE_DIR/Brewfile
 	brew upgrade
@@ -286,6 +299,21 @@ install_ai() {
 	log "AI CLI tools installation complete"
 }
 
+install_terraform() {
+	print_function_name
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		arch="arm64"
+	else
+		arch="amd64"
+	fi
+	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '"tag_name":.*' | cut -d'v' -f2 | tr -d '",')
+	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_darwin_${arch}.zip"
+	unzip -o "terraform_${latest_version}_darwin_${arch}.zip"
+	sudo mv terraform /usr/local/bin/
+	rm -f "terraform_${latest_version}_darwin_${arch}.zip" LICENSE.txt
+	terraform version
+}
+
 install_webtools() {
 	print_function_name
 	# shfmt, shellcheck, and k9s are installed via Homebrew
@@ -330,6 +358,7 @@ main() {
 	run_function setup_docker
 	run_function install_espanso
 	run_function install_tailscale
+	run_function install_terraform
 	run_function install_webtools
 	run_function install_ai
 
