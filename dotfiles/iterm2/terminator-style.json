@@ -144,7 +144,44 @@
       "Right Option Key Sends": 2,
       "Custom Command": "No",
       "Custom Directory": "No",
-      "Title Components": 2
+      "Title Components": 2,
+      "Keyboard Map": {
+        "0x1f-0x60000": {
+          "Action": 25,
+          "Text": "",
+          "Label": "Ctrl+Shift+O: Split Horizontally (top/bottom)"
+        },
+        "0xe-0x60000": {
+          "Action": 26,
+          "Text": "",
+          "Label": "Ctrl+Shift+E: Split Vertically (left/right)"
+        },
+        "0x7e-0x80000": {
+          "Action": 46,
+          "Text": "",
+          "Label": "Alt+Up: Select Pane Above"
+        },
+        "0x7d-0x80000": {
+          "Action": 47,
+          "Text": "",
+          "Label": "Alt+Down: Select Pane Below"
+        },
+        "0x7b-0x80000": {
+          "Action": 44,
+          "Text": "",
+          "Label": "Alt+Left: Select Pane Left"
+        },
+        "0x7c-0x80000": {
+          "Action": 45,
+          "Text": "",
+          "Label": "Alt+Right: Select Pane Right"
+        },
+        "0xd-0x60000": {
+          "Action": 36,
+          "Text": "",
+          "Label": "Ctrl+Shift+W: Close Pane"
+        }
+      }
     }
   ]
 }
