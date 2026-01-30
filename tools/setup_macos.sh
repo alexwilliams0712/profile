@@ -32,12 +32,12 @@ ensure_directory() {
 
 copy_dotfiles() {
 	print_function_name
-	mkdir -p $HOME/.config
-	cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
-	cp $PROFILE_DIR/VERSION $HOME/BASH_PROFILE_VERSION
-	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
-	cp $PROFILE_DIR/dotfiles/.prettierrc $HOME/.prettierrc
-	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
+	mkdir -p "$HOME/.config"
+	cp "$PROFILE_DIR/dotfiles/.profile" "$HOME/.profile"
+	cp "$PROFILE_DIR/VERSION" "$HOME/BASH_PROFILE_VERSION"
+	cp "$PROFILE_DIR/dotfiles/.bashrc" "$HOME/.bashrc"
+	cp "$PROFILE_DIR/dotfiles/.prettierrc" "$HOME/.prettierrc"
+	cp "$PROFILE_DIR/dotfiles/.bash_aliases" "$HOME/.bash_aliases"
 
 	# Disable custom prefs folder (fragile — breaks if repo path changes)
 	defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool false
@@ -136,7 +136,7 @@ install_packages() {
 	# brew update can fail on stale taps — not critical
 	brew update || log "Warning: brew update had errors, continuing..."
 	log "Installing packages from Brewfile..."
-	brew bundle --file=$PROFILE_DIR/Brewfile
+	brew bundle --no-lock --file="$PROFILE_DIR/tools/Brewfile"
 	brew upgrade
 	brew cleanup
 }
@@ -354,10 +354,10 @@ main() {
 		fi
 	}
 
-	run_function install_homebrew
-	run_function install_packages
 	run_function copy_dotfiles
 	run_function set_git_config
+	run_function install_homebrew
+	run_function install_packages
 	run_function setup_bash
 	run_function setup_python
 	run_function install_rust
