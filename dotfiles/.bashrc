@@ -8,6 +8,9 @@ case $- in
 *) return ;;
 esac
 
+# Suppress macOS bash deprecation warning
+export BASH_SILENCE_DEPRECATION_WARNING=1
+
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
 HISTCONTROL=ignoreboth
@@ -86,8 +89,8 @@ fi
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
-# gsettings (Linux only)
-if command -v gsettings >/dev/null 2>&1; then
+# gsettings (Linux/GNOME only)
+if [ "$(uname)" = "Linux" ] && command -v gsettings >/dev/null 2>&1; then
 	gsettings set org.gnome.desktop.interface text-scaling-factor 0.95
 	gsettings set org.gnome.desktop.interface cursor-size 24
 fi
@@ -123,7 +126,9 @@ if command -v pyenv >/dev/null 2>&1; then
 	alias brew='env PATH="${PATH//$(pyenv root)\/shims:/}" brew'
 	eval "$(pyenv init --path)"
 	eval "$(pyenv init -)"
-	eval "$(pyenv virtualenv-init -)"
+	if pyenv commands 2>/dev/null | grep -q virtualenv-init; then
+		eval "$(pyenv virtualenv-init -)"
+	fi
 fi
 
 # npm
@@ -178,6 +183,8 @@ if ! shopt -oq posix; then
 		. /usr/share/bash-completion/bash_completion
 	elif [ -f /etc/bash_completion ]; then
 		. /etc/bash_completion
+	elif [ -f /opt/homebrew/etc/profile.d/bash_completion.sh ]; then
+		. /opt/homebrew/etc/profile.d/bash_completion.sh
 	fi
 fi
 
