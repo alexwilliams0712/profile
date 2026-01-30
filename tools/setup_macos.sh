@@ -43,6 +43,14 @@ copy_dotfiles() {
 	defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$PROFILE_DIR/dotfiles/iterm2"
 	defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
 
+	# Minimal window style (no title bar, matches terminator's show_titlebar=False)
+	defaults write com.googlecode.iterm2 TabStyleWithAutomaticOption -int 5
+
+	# Install Dynamic Profile (terminator-like appearance)
+	local iterm2_profiles_dir="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
+	mkdir -p "$iterm2_profiles_dir"
+	cp "$PROFILE_DIR/dotfiles/iterm2/terminator-style.json" "$iterm2_profiles_dir/terminator-style.json"
+
 	# Case-insensitive tab completion
 	if [ ! -f "$HOME/.inputrc" ] || ! grep -q 'completion-ignore-case' "$HOME/.inputrc" 2>/dev/null; then
 		echo 'set completion-ignore-case On' >>"$HOME/.inputrc"
@@ -141,6 +149,13 @@ setup_bash() {
 setup_python() {
 	print_function_name
 	log "Setting up Python environment..."
+
+	# Set build flags so pyenv can find Homebrew dependencies
+	# (openssl, readline, sqlite3, zlib, tcl-tk are keg-only on macOS)
+	export LDFLAGS="-L$(brew --prefix openssl)/lib -L$(brew --prefix readline)/lib -L$(brew --prefix sqlite3)/lib -L$(brew --prefix zlib)/lib"
+	export CPPFLAGS="-I$(brew --prefix openssl)/include -I$(brew --prefix readline)/include -I$(brew --prefix sqlite3)/include -I$(brew --prefix zlib)/include"
+	export PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig:$(brew --prefix readline)/lib/pkgconfig:$(brew --prefix sqlite3)/lib/pkgconfig:$(brew --prefix zlib)/lib/pkgconfig"
+
 	export PYENV_ROOT="$HOME/.pyenv"
 	export PATH="$PYENV_ROOT/bin:$PATH"
 	if command -v pyenv >/dev/null 2>&1; then
@@ -179,6 +194,9 @@ install_node() {
 	if command -v node >/dev/null 2>&1; then
 		node -v
 		npm -v
+		# Set npm global prefix to match PATH in .bashrc (~/.npm-global/bin)
+		mkdir -p "$HOME/.npm-global"
+		npm config set prefix "$HOME/.npm-global"
 		npm install -g wscat prettier json5 fracturedjsonjs
 	else
 		log "Node not found, skipping npm global installs"
@@ -243,6 +261,9 @@ install_tailscale() {
 
 install_ai() {
 	print_function_name
+
+	# Ensure npm global bin is on PATH for this session
+	export PATH="$HOME/.npm-global/bin:$PATH"
 
 	# Install Claude Code CLI
 	log "Installing Claude Code CLI..."

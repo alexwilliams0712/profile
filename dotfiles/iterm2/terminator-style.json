@@ -1,0 +1,150 @@
+{
+  "Profiles": [
+    {
+      "Name": "Terminator Style",
+      "Guid": "terminator-style-profile",
+      "Default Bookmark": "Yes",
+      "Normal Font": "FiraCodeNerdFontMono-Regular 9",
+      "Horizontal Spacing": 1.0,
+      "Vertical Spacing": 1.0,
+      "Use Bold Font": true,
+      "Use Bright Bold": true,
+      "Transparency": 0.25,
+      "Blend": 0.3,
+      "Background Color": {
+        "Red Component": 0.0,
+        "Green Component": 0.0,
+        "Blue Component": 0.0,
+        "Color Space": "sRGB"
+      },
+      "Foreground Color": {
+        "Red Component": 0.0,
+        "Green Component": 1.0,
+        "Blue Component": 0.0,
+        "Color Space": "sRGB"
+      },
+      "Bold Color": {
+        "Red Component": 0.0,
+        "Green Component": 1.0,
+        "Blue Component": 0.0,
+        "Color Space": "sRGB"
+      },
+      "Cursor Color": {
+        "Red Component": 0.0,
+        "Green Component": 1.0,
+        "Blue Component": 0.0,
+        "Color Space": "sRGB"
+      },
+      "Cursor Text Color": {
+        "Red Component": 0.0,
+        "Green Component": 0.0,
+        "Blue Component": 0.0,
+        "Color Space": "sRGB"
+      },
+      "Ansi 0 Color": {
+        "Red Component": 0.0,
+        "Green Component": 0.0,
+        "Blue Component": 0.0,
+        "Color Space": "sRGB"
+      },
+      "Ansi 1 Color": {
+        "Red Component": 0.8,
+        "Green Component": 0.0,
+        "Blue Component": 0.0,
+        "Color Space": "sRGB"
+      },
+      "Ansi 2 Color": {
+        "Red Component": 0.0,
+        "Green Component": 0.8,
+        "Blue Component": 0.0,
+        "Color Space": "sRGB"
+      },
+      "Ansi 3 Color": {
+        "Red Component": 0.8,
+        "Green Component": 0.8,
+        "Blue Component": 0.0,
+        "Color Space": "sRGB"
+      },
+      "Ansi 4 Color": {
+        "Red Component": 0.0,
+        "Green Component": 0.0,
+        "Blue Component": 0.8,
+        "Color Space": "sRGB"
+      },
+      "Ansi 5 Color": {
+        "Red Component": 0.8,
+        "Green Component": 0.0,
+        "Blue Component": 0.8,
+        "Color Space": "sRGB"
+      },
+      "Ansi 6 Color": {
+        "Red Component": 0.0,
+        "Green Component": 0.8,
+        "Blue Component": 0.8,
+        "Color Space": "sRGB"
+      },
+      "Ansi 7 Color": {
+        "Red Component": 0.8,
+        "Green Component": 0.8,
+        "Blue Component": 0.8,
+        "Color Space": "sRGB"
+      },
+      "Ansi 8 Color": {
+        "Red Component": 0.4,
+        "Green Component": 0.4,
+        "Blue Component": 0.4,
+        "Color Space": "sRGB"
+      },
+      "Ansi 9 Color": {
+        "Red Component": 1.0,
+        "Green Component": 0.2,
+        "Blue Component": 0.2,
+        "Color Space": "sRGB"
+      },
+      "Ansi 10 Color": {
+        "Red Component": 0.2,
+        "Green Component": 1.0,
+        "Blue Component": 0.2,
+        "Color Space": "sRGB"
+      },
+      "Ansi 11 Color": {
+        "Red Component": 1.0,
+        "Green Component": 1.0,
+        "Blue Component": 0.2,
+        "Color Space": "sRGB"
+      },
+      "Ansi 12 Color": {
+        "Red Component": 0.2,
+        "Green Component": 0.2,
+        "Blue Component": 1.0,
+        "Color Space": "sRGB"
+      },
+      "Ansi 13 Color": {
+        "Red Component": 1.0,
+        "Green Component": 0.2,
+        "Blue Component": 1.0,
+        "Color Space": "sRGB"
+      },
+      "Ansi 14 Color": {
+        "Red Component": 0.2,
+        "Green Component": 1.0,
+        "Blue Component": 1.0,
+        "Color Space": "sRGB"
+      },
+      "Ansi 15 Color": {
+        "Red Component": 1.0,
+        "Green Component": 1.0,
+        "Blue Component": 1.0,
+        "Color Space": "sRGB"
+      },
+      "Scrollback Lines": 100000,
+      "Unlimited Scrollback": false,
+      "Copy On Select": true,
+      "Option Key Sends": 2,
+      "Right Option Key Sends": 2,
+      "Custom Command": "No",
+      "Custom Directory": "No",
+      "Title Components": 2
+    }
+  ]
+}
