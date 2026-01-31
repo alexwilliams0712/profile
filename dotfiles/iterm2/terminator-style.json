@@ -147,35 +147,31 @@
       "Title Components": 2,
       "Keyboard Map": {
         "0x1f-0x100000": {
-          "Action": 25,
+          "Action": 28,
           "Text": ""
         },
         "0xe-0x100000": {
-          "Action": 26,
+          "Action": 29,
           "Text": ""
         },
-        "0xd-0x100000": {
-          "Action": 36,
+        "0x11-0x100000": {
+          "Action": 27,
           "Text": ""
         },
         "0x7e-0x80000": {
-          "Action": 46,
+          "Action": 20,
           "Text": ""
         },
         "0x7d-0x80000": {
-          "Action": 47,
+          "Action": 21,
           "Text": ""
         },
         "0x7b-0x80000": {
-          "Action": 44,
+          "Action": 18,
           "Text": ""
         },
         "0x7c-0x80000": {
-          "Action": 45,
-          "Text": ""
-        },
-        "0x78-0x60000": {
-          "Action": 34,
+          "Action": 19,
           "Text": ""
         }
       }
@@ -327,35 +323,31 @@
       "Title Components": 2,
       "Keyboard Map": {
         "0x1f-0x100000": {
-          "Action": 25,
+          "Action": 28,
           "Text": ""
         },
         "0xe-0x100000": {
-          "Action": 26,
+          "Action": 29,
           "Text": ""
         },
-        "0xd-0x100000": {
-          "Action": 36,
+        "0x11-0x100000": {
+          "Action": 27,
           "Text": ""
         },
         "0x7e-0x80000": {
-          "Action": 46,
+          "Action": 20,
           "Text": ""
         },
         "0x7d-0x80000": {
-          "Action": 47,
+          "Action": 21,
           "Text": ""
         },
         "0x7b-0x80000": {
-          "Action": 44,
+          "Action": 18,
           "Text": ""
         },
         "0x7c-0x80000": {
-          "Action": 45,
-          "Text": ""
-        },
-        "0x78-0x60000": {
-          "Action": 34,
+          "Action": 19,
           "Text": ""
         }
       }
