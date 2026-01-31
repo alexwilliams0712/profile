@@ -286,14 +286,17 @@ setup_docker() {
 setup_vscode() {
 	print_function_name
 
-	# Ensure VS Code is installed
-	if ! brew list --cask visual-studio-code &>/dev/null; then
-		log "Installing VS Code via Homebrew..."
-		brew install --cask visual-studio-code
+	local vscode_app="/Applications/Visual Studio Code.app"
+
+	# Install or reinstall if the .app is missing from /Applications
+	# (handles stale Caskroom metadata where brew thinks it's installed but the app is gone)
+	if [ ! -d "$vscode_app" ]; then
+		log "VS Code not found in /Applications, installing..."
+		brew reinstall --cask visual-studio-code
 	fi
 
 	# Add the `code` CLI to PATH
-	local code_bin="/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+	local code_bin="$vscode_app/Contents/Resources/app/bin/code"
 	if [ -f "$code_bin" ]; then
 		ln -sf "$code_bin" /usr/local/bin/code
 		log "VS Code CLI linked to /usr/local/bin/code"
