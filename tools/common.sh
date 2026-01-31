@@ -60,7 +60,7 @@ set_git_config() {
 	git config --global alias.l 'log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
 
 	# Apply values collected by collect_user_input
-	[ ! -z "$GIT_USER_NAME" ] && git config --global user.name "$GIT_USER_NAME"
-	[ ! -z "$GIT_USER_EMAIL" ] && git config --global user.email "$GIT_USER_EMAIL"
-	[ ! -z "$GIT_USER_PHONE" ] && git config --global user.phonenumber "$GIT_USER_PHONE"
+	if [ -n "$GIT_USER_NAME" ]; then git config --global user.name "$GIT_USER_NAME"; fi
+	if [ -n "$GIT_USER_EMAIL" ]; then git config --global user.email "$GIT_USER_EMAIL"; fi
+	if [ -n "$GIT_USER_PHONE" ]; then git config --global user.phonenumber "$GIT_USER_PHONE"; fi
 }
