@@ -16,6 +16,7 @@ brew "jq"
 brew "k9s"
 brew "lsd"
 brew "make"
+brew "mas"
 brew "moreutils"
 brew "node"
 brew "openssl"
@@ -63,3 +64,6 @@ cask "zoom"
 
 # Fonts
 cask "font-fira-code-nerd-font"
+
+# Mac App Store
+mas "Xcode", id: 497799835

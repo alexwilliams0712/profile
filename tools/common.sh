@@ -1,0 +1,66 @@
+#!/bin/bash
+# Shared functions used by both setup_macos.sh and setup_ubuntu.sh
+
+handle_error() {
+	echo "An error occurred on line $1"
+}
+
+print_function_name() {
+	log "\033[1;36mExecuting function: ${FUNCNAME[1]}\033[0m"
+}
+
+log() {
+	echo -e "$(date '+%Y-%m-%d %H:%M:%S') - $1"
+}
+
+ensure_directory() {
+	cd $PROFILE_DIR
+}
+
+collect_user_input() {
+	# Gather all interactive input upfront so the rest of the setup is unattended
+	GIT_USER_NAME=$(git config --global user.name 2>/dev/null) || GIT_USER_NAME=""
+	GIT_USER_EMAIL=$(git config --global user.email 2>/dev/null) || GIT_USER_EMAIL=""
+	GIT_USER_PHONE=$(git config --global user.phonenumber 2>/dev/null) || GIT_USER_PHONE=""
+
+	if [ -z "$GIT_USER_NAME" ]; then
+		read -p "Enter github username: " GIT_USER_NAME
+	fi
+	read -p "Enter github email address (leave blank to keep '$GIT_USER_EMAIL'): " input
+	if [ ! -z "$input" ]; then
+		GIT_USER_EMAIL="$input"
+	fi
+	read -p "Enter phone number (leave blank to keep '$GIT_USER_PHONE'): " input
+	if [ ! -z "$input" ]; then
+		GIT_USER_PHONE="$input"
+	fi
+	echo ""
+	log "All input collected. Setup will now run unattended."
+}
+
+set_git_config() {
+	print_function_name
+	git config --global core.autocrlf false
+	git config --global pull.rebase false
+	git config --global http.sslVerify false
+	git config --global diff.tool bc3
+	git config --global color.branch auto
+	git config --global color.diff auto
+	git config --global color.interactive auto
+	git config --global color.status auto
+	git config --global push.default simple
+	git config --global merge.tool kdiff3
+	git config --global difftool.prompt false
+	git config --global alias.c commit
+	git config --global alias.ca 'commit -a'
+	git config --global alias.cm 'commit -m'
+	git config --global alias.cam 'commit -am'
+	git config --global alias.d diff
+	git config --global alias.dc 'diff --cached'
+	git config --global alias.l 'log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
+
+	# Apply values collected by collect_user_input
+	[ ! -z "$GIT_USER_NAME" ] && git config --global user.name "$GIT_USER_NAME"
+	[ ! -z "$GIT_USER_EMAIL" ] && git config --global user.email "$GIT_USER_EMAIL"
+	[ ! -z "$GIT_USER_PHONE" ] && git config --global user.phonenumber "$GIT_USER_PHONE"
+}
