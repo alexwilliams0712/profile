@@ -147,7 +147,6 @@ install_homebrew() {
 
 		# Add Homebrew to PATH for Apple Silicon Macs
 		if [[ $(uname -m) == 'arm64' ]]; then
-			echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >>$HOME/.zprofile
 			eval "$(/opt/homebrew/bin/brew shellenv)"
 		fi
 	fi
@@ -285,6 +284,10 @@ install_node() {
 	if command -v node >/dev/null 2>&1; then
 		node -v
 		npm -v
+		# Fix npm cache ownership if root-owned files exist
+		if [ -d "$HOME/.npm" ]; then
+			sudo chown -R "$(id -u):$(id -g)" "$HOME/.npm"
+		fi
 		# Set npm global prefix to match PATH in .bashrc (~/.npm-global/bin)
 		mkdir -p "$HOME/.npm-global"
 		npm config set prefix "$HOME/.npm-global"
@@ -331,8 +334,9 @@ install_espanso() {
 	print_function_name
 	# Espanso is installed via Homebrew cask
 	if command -v espanso >/dev/null 2>&1; then
-		mkdir -p "$(espanso path config)/match"
-		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$(espanso path config)/match/base.yml"
+		local espanso_config="$HOME/Library/Application Support/espanso"
+		mkdir -p "$espanso_config/match"
+		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$espanso_config/match/base.yml"
 		espanso --version
 	else
 		log "espanso not found, skipping config"
@@ -342,20 +346,23 @@ install_espanso() {
 install_tailscale() {
 	print_function_name
 	# Tailscale is installed via Homebrew cask. The cask installs the GUI app
-	# but does not put the CLI on PATH. We need to:
-	# 1. Open the app so the system extension can be activated
-	# 2. Create a symlink so `tailscale` works from the terminal
+	# but does not put the CLI on PATH. A symlink doesn't work because the
+	# binary checks its bundle path, so we use a wrapper script instead.
 	local tailscale_cli="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
-	local symlink_target="/usr/local/bin/tailscale"
+	local wrapper_target="/usr/local/bin/tailscale"
 
 	if [ -d "/Applications/Tailscale.app" ]; then
 		log "Opening Tailscale.app (required to activate system extension)..."
 		open -a Tailscale
 
-		# Create CLI symlink if not already present
-		if [ ! -L "$symlink_target" ] && [ -f "$tailscale_cli" ]; then
-			log "Creating CLI symlink: $symlink_target -> $tailscale_cli"
-			sudo ln -sf "$tailscale_cli" "$symlink_target"
+		# Create CLI wrapper script (symlinks crash due to bundle identifier check)
+		if [ -f "$tailscale_cli" ]; then
+			log "Creating CLI wrapper: $wrapper_target"
+			sudo tee "$wrapper_target" >/dev/null <<-WRAPPER
+			#!/bin/bash
+			exec "$tailscale_cli" "\$@"
+			WRAPPER
+			sudo chmod +x "$wrapper_target"
 		fi
 
 		if command -v tailscale >/dev/null 2>&1; then
@@ -371,7 +378,11 @@ install_tailscale() {
 install_ai() {
 	print_function_name
 
-	# Claude Code and Gemini CLI are installed via Homebrew
+	# Gemini CLI is installed via Homebrew
+
+	# Install Claude Code
+	log "Installing Claude Code..."
+	curl -fsSL https://claude.ai/install.sh | bash
 
 	# Install ChatGPT CLI (shell-gpt)
 	log "Installing ChatGPT CLI (shell-gpt)..."
@@ -381,6 +392,23 @@ install_ai() {
 	uv pip install -U shell-gpt
 
 	log "AI CLI tools installation complete"
+}
+
+install_terraform() {
+	print_function_name
+	local arch
+	if [ "$(uname -m)" = "arm64" ]; then
+		arch="arm64"
+	else
+		arch="amd64"
+	fi
+	local latest_version
+	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '"tag_name":.*' | cut -d'v' -f2 | tr -d '",')
+	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_darwin_${arch}.zip"
+	unzip "terraform_${latest_version}_darwin_${arch}.zip"
+	sudo mv terraform /usr/local/bin/
+	rm -rf terraform_* LICENSE.txt
+	terraform version
 }
 
 install_webtools() {
@@ -429,6 +457,7 @@ main() {
 	run_function setup_docker
 	run_function install_espanso
 	run_function install_tailscale
+	run_function install_terraform
 	run_function install_webtools
 	run_function install_ai
 

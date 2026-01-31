@@ -11,6 +11,11 @@ esac
 # Suppress macOS bash deprecation warning
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
+# Homebrew (Apple Silicon)
+if [ -x /opt/homebrew/bin/brew ]; then
+	eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
 HISTCONTROL=ignoreboth
