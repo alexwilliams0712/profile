@@ -30,7 +30,7 @@
 	},
 
 	"workbench.startupEditor": "none",
-	"workbench.colorTheme": "Default Dark Modern",
+	"workbench.colorTheme": "Armada",
 
 	"explorer.confirmDelete": false,
 	"explorer.confirmDragAndDrop": false,
