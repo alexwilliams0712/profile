@@ -36,6 +36,7 @@ brew "speedtest-cli"
 brew "tree"
 brew "uv"
 brew "wget"
+brew "xcodegen"
 brew "xz"
 brew "zlib"
 
