@@ -201,11 +201,11 @@ install_packages() {
 			brew uninstall --ignore-dependencies "$pkg" 2>/dev/null || true
 		fi
 	done
-	local unwanted_casks=("julia-app")
+	local unwanted_casks=("julia-app" "raspberry-pi-imager")
 	for cask in "${unwanted_casks[@]}"; do
 		if brew list --cask "$cask" &>/dev/null; then
 			log "Removing unwanted cask: $cask"
-			brew uninstall --cask "$cask" 2>/dev/null || true
+			brew uninstall --cask --force "$cask" 2>/dev/null || true
 		fi
 	done
 
