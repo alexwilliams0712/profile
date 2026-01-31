@@ -299,6 +299,9 @@ install_vscode() {
 
 	# Clean up
 	rm -f packages.microsoft.gpg
+
+	VSCODE_USER_DIR="$HOME/.config/Code/User"
+	configure_vscode
 }
 
 install_1password() {

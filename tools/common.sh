@@ -72,3 +72,39 @@ set_git_config() {
 	if [ -n "$GIT_USER_EMAIL" ]; then git config --global user.email "$GIT_USER_EMAIL"; fi
 	if [ -n "$GIT_USER_PHONE" ]; then git config --global user.phonenumber "$GIT_USER_PHONE"; fi
 }
+
+configure_vscode() {
+	# Copy VS Code settings and keybindings, install extensions.
+	# Expects $VSCODE_USER_DIR to be set by the caller (platform-specific path).
+	print_function_name
+
+	if ! command -v code >/dev/null 2>&1; then
+		log "code CLI not found, skipping VS Code configuration"
+		return 0
+	fi
+
+	local vscode_dotfiles="$PROFILE_DIR/dotfiles/vscode"
+
+	# Create the VS Code User directory if it doesn't exist
+	mkdir -p "$VSCODE_USER_DIR"
+
+	# Copy settings and keybindings
+	cp "$vscode_dotfiles/settings.json" "$VSCODE_USER_DIR/settings.json"
+	log "Copied VS Code settings.json"
+
+	cp "$vscode_dotfiles/keybindings.json" "$VSCODE_USER_DIR/keybindings.json"
+	log "Copied VS Code keybindings.json"
+
+	# Install extensions from list
+	if [ -f "$vscode_dotfiles/extensions.txt" ]; then
+		while IFS= read -r line; do
+			# Skip comments and blank lines
+			line=$(echo "$line" | xargs)
+			if [ -z "$line" ] || [[ "$line" == \#* ]]; then
+				continue
+			fi
+			code --install-extension "$line" --force 2>/dev/null || log "Failed to install extension: $line"
+		done <"$vscode_dotfiles/extensions.txt"
+		log "VS Code extensions installed"
+	fi
+}
