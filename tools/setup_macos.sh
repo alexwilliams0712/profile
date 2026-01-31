@@ -58,18 +58,21 @@ copy_dotfiles() {
 	local plist="$HOME/Library/Preferences/com.googlecode.iterm2.plist"
 	/usr/libexec/PlistBuddy -c "Delete :GlobalKeyMap" "$plist" 2>/dev/null || true
 	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap dict" "$plist"
-	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x1f-0x100000 dict" "$plist"
-	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x1f-0x100000:Action integer 25" "$plist"
-	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x1f-0x100000:Text string ''" "$plist"
-	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xe-0x100000 dict" "$plist"
-	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xe-0x100000:Action integer 26" "$plist"
-	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xe-0x100000:Text string ''" "$plist"
-	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xd-0x100000 dict" "$plist"
-	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xd-0x100000:Action integer 36" "$plist"
-	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xd-0x100000:Text string ''" "$plist"
+	# Cmd+O (0x6f) → Split Horizontally (Action 25)
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x6f-0x100000 dict" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x6f-0x100000:Action integer 25" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x6f-0x100000:Text string ''" "$plist"
+	# Cmd+E (0x65) → Split Vertically (Action 26)
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000 dict" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000:Action integer 26" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000:Text string ''" "$plist"
+	# Cmd+W (0x77) → Close Pane (Action 36)
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x77-0x100000 dict" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x77-0x100000:Action integer 36" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x77-0x100000:Text string ''" "$plist"
 
 	# Set the "Terminator Style" dynamic profile as the default profile
-	defaults write com.googlecode.iterm2 "Default Bookmark Guid" -string "terminator-style-profile"
+	defaults write com.googlecode.iterm2 "Default Bookmark Guid" -string "armada-profile"
 
 	# Install Dynamic Profile (terminator-like appearance)
 	local iterm2_profiles_dir="$HOME/Library/Application Support/iTerm2/DynamicProfiles"

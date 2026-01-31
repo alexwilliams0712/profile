@@ -146,15 +146,15 @@
       "Custom Directory": "Recycle",
       "Title Components": 2,
       "Keyboard Map": {
-        "0x1f-0x100000": {
+        "0x6f-0x100000": {
           "Action": 28,
           "Text": ""
         },
-        "0xe-0x100000": {
+        "0x65-0x100000": {
           "Action": 29,
           "Text": ""
         },
-        "0x11-0x100000": {
+        "0x71-0x100000": {
           "Action": 27,
           "Text": ""
         },
@@ -322,15 +322,15 @@
       "Custom Directory": "Recycle",
       "Title Components": 2,
       "Keyboard Map": {
-        "0x1f-0x100000": {
+        "0x6f-0x100000": {
           "Action": 28,
           "Text": ""
         },
-        "0xe-0x100000": {
+        "0x65-0x100000": {
           "Action": 29,
           "Text": ""
         },
-        "0x11-0x100000": {
+        "0x71-0x100000": {
           "Action": 27,
           "Text": ""
         },
