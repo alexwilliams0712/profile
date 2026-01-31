@@ -72,8 +72,8 @@ function scp_mirror() {
 	for path in "$@"; do
 		# Expand tilde for local destination
 		local local_path="${path/#\~/$HOME}"
-		# Normalize remote path (leave ~ intact for remote shell)
-		local remote_path="${path}"
+		# Replace local $HOME prefix with ~ so remote shell expands to its own home
+		local remote_path="${path/#$HOME/\~}"
 
 		# Ensure local parent exists
 		mkdir -p "$(dirname "$local_path")"
