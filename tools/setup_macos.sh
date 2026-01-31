@@ -59,13 +59,13 @@ copy_dotfiles() {
 	local plist="$HOME/Library/Preferences/com.googlecode.iterm2.plist"
 	/usr/libexec/PlistBuddy -c "Delete :GlobalKeyMap" "$plist" 2>/dev/null || true
 	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap dict" "$plist"
-	# Cmd+O (0x6f) → Split Horizontally with Profile (Action 28)
+	# Cmd+O (0x6f) → Split Horizontally with Current Profile (Action 25)
 	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x6f-0x100000 dict" "$plist"
-	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x6f-0x100000:Action integer 28" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x6f-0x100000:Action integer 25" "$plist"
 	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x6f-0x100000:Text string ''" "$plist"
-	# Cmd+E (0x65) → Split Vertically with Profile (Action 29)
+	# Cmd+E (0x65) → Split Vertically with Current Profile (Action 26)
 	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000 dict" "$plist"
-	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000:Action integer 29" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000:Action integer 26" "$plist"
 	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000:Text string ''" "$plist"
 
 	# Set the "Terminator Style" dynamic profile as the default profile

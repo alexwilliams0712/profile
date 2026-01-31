@@ -1137,6 +1137,24 @@ formatter() {
 	fi
 }
 
+# iTerm2 — apply custom global key bindings (run from Terminal.app with iTerm2 closed)
+function iterm2_fix_keys() {
+	if pgrep -q iTerm2; then
+		echo "Quit iTerm2 first, then re-run this from Terminal.app"
+		return 1
+	fi
+	local plist="$HOME/Library/Preferences/com.googlecode.iterm2.plist"
+	/usr/libexec/PlistBuddy -c "Delete :GlobalKeyMap" "$plist" 2>/dev/null || true
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap dict" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x6f-0x100000 dict" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x6f-0x100000:Action integer 25" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x6f-0x100000:Text string ''" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000 dict" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000:Action integer 26" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000:Text string ''" "$plist"
+	echo "GlobalKeyMap updated — open iTerm2 now"
+}
+
 # Fun
 function laughing_at_idiots() {
 	# sudo apt-get install -y fswebcam imagemagick

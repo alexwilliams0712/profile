@@ -147,11 +147,11 @@
       "Title Components": 2,
       "Keyboard Map": {
         "0x6f-0x100000": {
-          "Action": 28,
+          "Action": 25,
           "Text": ""
         },
         "0x65-0x100000": {
-          "Action": 29,
+          "Action": 26,
           "Text": ""
         },
         "0x71-0x100000": {
@@ -323,11 +323,11 @@
       "Title Components": 2,
       "Keyboard Map": {
         "0x6f-0x100000": {
-          "Action": 28,
+          "Action": 25,
           "Text": ""
         },
         "0x65-0x100000": {
-          "Action": 29,
+          "Action": 26,
           "Text": ""
         },
         "0x71-0x100000": {
