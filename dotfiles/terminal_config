@@ -7,8 +7,8 @@
     background_color = "#001a22"
     background_darkness = 0.75
     background_type = transparent
-    foreground_color = "#e0e1e4"
-    cursor_color = "#e0e1e4"
+    foreground_color = "#b8ccd6"
+    cursor_color = "#b8ccd6"
     cursor_shape = ibeam
     font = FiraCode Nerd Font Regular 9
     use_system_font = False
@@ -16,7 +16,7 @@
     bold_is_bright = True
     copy_on_selection = True
     scrollback_lines = 100000
-    palette = "#001a22:#ec5d6f:#4ab4b1:#ebc88d:#5db8e0:#cf8ad6:#8ee4e0:#9aa3ad:#c3c5c9:#f87c88:#69b090:#dda088:#a7abe9:#eb4dde:#6fc3e8:#e0e1e4"
+    palette = "#001a22:#ec5d6f:#4ab4b1:#ebc88d:#5db8e0:#cf8ad6:#8ee4e0:#9aa3ad:#c3c5c9:#f87c88:#69b090:#dda088:#a7abe9:#eb4dde:#6fc3e8:#b8ccd6"
 [layouts]
   [[default]]
     [[[window0]]]
