@@ -148,43 +148,35 @@
       "Keyboard Map": {
         "0x1f-0x100000": {
           "Action": 25,
-          "Text": "",
-          "Label": "Cmd+O: Split Horizontally (top/bottom)"
+          "Text": ""
         },
         "0xe-0x100000": {
           "Action": 26,
-          "Text": "",
-          "Label": "Cmd+E: Split Vertically (left/right)"
+          "Text": ""
+        },
+        "0xd-0x100000": {
+          "Action": 36,
+          "Text": ""
         },
         "0x7e-0x80000": {
           "Action": 46,
-          "Text": "",
-          "Label": "Alt+Up: Select Pane Above"
+          "Text": ""
         },
         "0x7d-0x80000": {
           "Action": 47,
-          "Text": "",
-          "Label": "Alt+Down: Select Pane Below"
+          "Text": ""
         },
         "0x7b-0x80000": {
           "Action": 44,
-          "Text": "",
-          "Label": "Alt+Left: Select Pane Left"
+          "Text": ""
         },
         "0x7c-0x80000": {
           "Action": 45,
-          "Text": "",
-          "Label": "Alt+Right: Select Pane Right"
-        },
-        "0xd-0x60000": {
-          "Action": 36,
-          "Text": "",
-          "Label": "Ctrl+Shift+W: Close Pane"
+          "Text": ""
         },
         "0x78-0x60000": {
           "Action": 34,
-          "Text": "",
-          "Label": "Ctrl+Shift+X: Toggle Maximize Pane"
+          "Text": ""
         }
       }
     }

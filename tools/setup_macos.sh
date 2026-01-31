@@ -57,6 +57,13 @@ copy_dotfiles() {
 	# Dim inactive split panes for visual focus indication
 	defaults write com.googlecode.iterm2 DimInactiveSplitPanes -bool true
 
+	# Global key bindings (override default menu shortcuts)
+	# Cmd+O: Split Horizontally, Cmd+E: Split Vertically, Cmd+W: Close Pane
+	defaults write com.googlecode.iterm2 GlobalKeyMap -dict \
+		"0x1f-0x100000" '{"Action":25,"Text":""}' \
+		"0xe-0x100000" '{"Action":26,"Text":""}' \
+		"0xd-0x100000" '{"Action":36,"Text":""}'
+
 	# Set the "Terminator Style" dynamic profile as the default profile
 	defaults write com.googlecode.iterm2 "Default Bookmark Guid" -string "terminator-style-profile"
 
@@ -146,7 +153,7 @@ install_homebrew() {
 
 install_packages() {
 	print_function_name
-	# Remove hashicorp tap if present (causes git errors, terraform installed manually)
+	# Remove hashicorp tap if present (causes git errors)
 	if brew tap | grep -q "hashicorp/tap"; then
 		brew untap hashicorp/tap 2>/dev/null || true
 	fi
@@ -204,8 +211,7 @@ setup_python() {
 	pyenv install -s $DEFAULT_PYTHON_VERSION
 	pyenv global $DEFAULT_PYTHON_VERSION
 
-	# Install uv
-	curl -LsSf https://astral.sh/uv/install.sh | sh
+	# uv is installed via Homebrew
 
 	# Install base packages
 	uv pip install pip-tools psutil
@@ -218,7 +224,8 @@ setup_python() {
 
 install_rust() {
 	print_function_name
-	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
+	# rustup is installed via Homebrew
+	rustup-init -y --default-toolchain stable
 	source "$HOME/.cargo/env"
 	rustup update stable
 	rustup install nightly
@@ -235,7 +242,7 @@ install_node() {
 		# Set npm global prefix to match PATH in .bashrc (~/.npm-global/bin)
 		mkdir -p "$HOME/.npm-global"
 		npm config set prefix "$HOME/.npm-global"
-		npm install -g wscat prettier json5 fracturedjsonjs
+		npm install -g wscat json5 fracturedjsonjs
 	else
 		log "Node not found, skipping npm global installs"
 	fi
@@ -243,8 +250,8 @@ install_node() {
 
 go_installs() {
 	print_function_name
+	# scc is installed via Homebrew
 	go install github.com/dim13/otpauth@latest
-	go install github.com/boyter/scc/v3@latest
 }
 
 install_go() {
@@ -318,19 +325,7 @@ install_tailscale() {
 install_ai() {
 	print_function_name
 
-	# Ensure npm global bin is on PATH for this session
-	export PATH="$HOME/.npm-global/bin:$PATH"
-
-	# Install Claude Code CLI
-	log "Installing Claude Code CLI..."
-	curl -fsSL https://claude.ai/install.sh | bash
-
-	# Install Gemini CLI
-	log "Installing Gemini CLI..."
-	if command -v gemini >/dev/null 2>&1; then
-		log "Gemini CLI already installed, upgrading..."
-	fi
-	npm install -g @google/gemini-cli
+	# Claude Code and Gemini CLI are installed via Homebrew
 
 	# Install ChatGPT CLI (shell-gpt)
 	log "Installing ChatGPT CLI (shell-gpt)..."
@@ -340,21 +335,6 @@ install_ai() {
 	uv pip install -U shell-gpt
 
 	log "AI CLI tools installation complete"
-}
-
-install_terraform() {
-	print_function_name
-	if [ "$ARCHITECTURE" = "arm64" ]; then
-		arch="arm64"
-	else
-		arch="amd64"
-	fi
-	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '"tag_name":.*' | cut -d'v' -f2 | tr -d '",')
-	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_darwin_${arch}.zip"
-	unzip -o "terraform_${latest_version}_darwin_${arch}.zip"
-	sudo mv terraform /usr/local/bin/
-	rm -f "terraform_${latest_version}_darwin_${arch}.zip" LICENSE.txt
-	terraform version
 }
 
 install_webtools() {
@@ -403,7 +383,6 @@ main() {
 	run_function setup_docker
 	run_function install_espanso
 	run_function install_tailscale
-	run_function install_terraform
 	run_function install_webtools
 	run_function install_ai
 
