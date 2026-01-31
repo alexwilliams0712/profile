@@ -201,7 +201,7 @@ install_packages() {
 			brew uninstall --ignore-dependencies "$pkg" 2>/dev/null || true
 		fi
 	done
-	local unwanted_casks=("julia-app" "raspberry-pi-imager")
+	local unwanted_casks=()
 	for cask in "${unwanted_casks[@]}"; do
 		if brew list --cask "$cask" &>/dev/null; then
 			log "Removing unwanted cask: $cask"
@@ -338,6 +338,18 @@ setup_docker() {
 	fi
 }
 
+setup_vscode() {
+	print_function_name
+	# VS Code is installed via Homebrew cask. Add the `code` CLI to PATH.
+	local code_bin="/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+	if [ -f "$code_bin" ]; then
+		ln -sf "$code_bin" /usr/local/bin/code
+		log "VS Code CLI linked to /usr/local/bin/code"
+	else
+		log "VS Code not found, skipping CLI setup"
+	fi
+}
+
 install_espanso() {
 	print_function_name
 	# Espanso is installed via Homebrew cask
@@ -469,6 +481,7 @@ main() {
 	run_function install_node
 	run_function install_go
 	run_function setup_docker
+	run_function setup_vscode
 	run_function install_espanso
 	run_function install_tailscale
 	run_function install_terraform
