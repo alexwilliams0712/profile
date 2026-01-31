@@ -1,12 +1,6 @@
 #!/bin/bash
 echo "Setup running"
 
-# Keep sudo credentials alive for the duration of this script
-sudo -v
-(while true; do sudo -n true; sleep 30; done) 2>/dev/null &
-SUDO_KEEPALIVE_PID=$!
-trap 'kill $SUDO_KEEPALIVE_PID 2>/dev/null' EXIT
-
 mkdir -p $HOME/CODE
 export CODE_ROOT=$HOME/CODE
 export PROJECT_ROOT=$HOME/profile
@@ -21,6 +15,7 @@ set -o pipefail
 
 source "$PROFILE_DIR/tools/common.sh"
 trap 'handle_error $LINENO' ERR
+start_sudo_keepalive
 
 copy_dotfiles() {
 	print_function_name

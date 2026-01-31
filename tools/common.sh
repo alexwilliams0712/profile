@@ -1,6 +1,22 @@
 #!/bin/bash
 # Shared functions used by both setup_macos.sh and setup_ubuntu.sh
 
+start_sudo_keepalive() {
+	# Only prompt for password if credentials aren't already cached
+	# (avoids duplicate prompts when called from setup_entry.sh)
+	if ! sudo -n true 2>/dev/null; then
+		sudo -v
+	fi
+	# Refresh sudo credentials every 10 seconds in the background.
+	# Kill any existing keepalive first to avoid duplicates.
+	if [ -n "$SUDO_KEEPALIVE_PID" ] && kill -0 "$SUDO_KEEPALIVE_PID" 2>/dev/null; then
+		return 0
+	fi
+	(while true; do sudo -n true; sleep 10; done) 2>/dev/null &
+	SUDO_KEEPALIVE_PID=$!
+	trap 'kill $SUDO_KEEPALIVE_PID 2>/dev/null' EXIT
+}
+
 handle_error() {
 	echo "An error occurred on line $1"
 }
