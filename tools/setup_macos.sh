@@ -59,10 +59,18 @@ copy_dotfiles() {
 
 	# Global key bindings (override default menu shortcuts)
 	# Cmd+O: Split Horizontally, Cmd+E: Split Vertically, Cmd+W: Close Pane
-	defaults write com.googlecode.iterm2 GlobalKeyMap -dict \
-		"0x1f-0x100000" '{"Action":25,"Text":""}' \
-		"0xe-0x100000" '{"Action":26,"Text":""}' \
-		"0xd-0x100000" '{"Action":36,"Text":""}'
+	local plist="$HOME/Library/Preferences/com.googlecode.iterm2.plist"
+	/usr/libexec/PlistBuddy -c "Delete :GlobalKeyMap" "$plist" 2>/dev/null || true
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap dict" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x1f-0x100000 dict" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x1f-0x100000:Action integer 25" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x1f-0x100000:Text string ''" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xe-0x100000 dict" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xe-0x100000:Action integer 26" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xe-0x100000:Text string ''" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xd-0x100000 dict" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xd-0x100000:Action integer 36" "$plist"
+	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0xd-0x100000:Text string ''" "$plist"
 
 	# Set the "Terminator Style" dynamic profile as the default profile
 	defaults write com.googlecode.iterm2 "Default Bookmark Guid" -string "terminator-style-profile"
@@ -153,10 +161,14 @@ install_homebrew() {
 
 install_packages() {
 	print_function_name
-	# Remove hashicorp tap if present (causes git errors)
-	if brew tap | grep -q "hashicorp/tap"; then
-		brew untap hashicorp/tap 2>/dev/null || true
-	fi
+	# Remove stale/deprecated taps that cause git errors or auth prompts
+	local stale_taps=("hashicorp/tap" "homebrew/cask-drivers" "homebrew/cask-versions" "ubuntu/microk8s")
+	for tap in "${stale_taps[@]}"; do
+		if brew tap | grep -q "$tap"; then
+			log "Removing stale tap: $tap"
+			brew untap "$tap" 2>/dev/null || true
+		fi
+	done
 
 	log "Updating Homebrew..."
 	# brew update can fail on stale taps — not critical
