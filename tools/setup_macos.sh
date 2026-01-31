@@ -161,8 +161,9 @@ install_homebrew() {
 
 install_packages() {
 	print_function_name
+
 	# Remove stale/deprecated taps that cause git errors or auth prompts
-	local stale_taps=("hashicorp/tap" "homebrew/cask-drivers" "homebrew/cask-versions" "ubuntu/microk8s")
+	local stale_taps=("hashicorp/tap" "homebrew/cask-drivers" "homebrew/cask-versions" "homebrew/cask-fonts" "ubuntu/microk8s")
 	for tap in "${stale_taps[@]}"; do
 		if brew tap | grep -q "$tap"; then
 			log "Removing stale tap: $tap"
@@ -170,11 +171,35 @@ install_packages() {
 		fi
 	done
 
+	# Homebrew uses the API by default now; local taps waste space
+	for tap in homebrew/core homebrew/cask; do
+		if brew tap | grep -q "^${tap}$"; then
+			log "Removing unnecessary tap: $tap"
+			brew untap "$tap" 2>/dev/null || true
+		fi
+	done
+
+	# Remove old/unwanted packages
+	local unwanted=("python@3.8" "python@3.9" "pkg-config")
+	for pkg in "${unwanted[@]}"; do
+		if brew list "$pkg" &>/dev/null; then
+			log "Removing unwanted package: $pkg"
+			brew uninstall --ignore-dependencies "$pkg" 2>/dev/null || true
+		fi
+	done
+	local unwanted_casks=("julia-app")
+	for cask in "${unwanted_casks[@]}"; do
+		if brew list --cask "$cask" &>/dev/null; then
+			log "Removing unwanted cask: $cask"
+			brew uninstall --cask "$cask" 2>/dev/null || true
+		fi
+	done
+
 	log "Updating Homebrew..."
 	# brew update can fail on stale taps — not critical
 	brew update || log "Warning: brew update had errors, continuing..."
 	log "Installing packages from Brewfile..."
-	brew bundle --no-lock --file="$PROFILE_DIR/tools/Brewfile"
+	brew bundle --file="$PROFILE_DIR/tools/Brewfile"
 	brew upgrade
 	brew cleanup
 }
@@ -183,7 +208,7 @@ setup_bash() {
 	print_function_name
 	# macOS ships with bash 3.2 (GPLv2). Homebrew installs bash 5+ which is
 	# needed for associative arrays and other features used in .bash_aliases.
-	local brew_bash="/opt/homebrew/bin/bash"
+	local brew_bash="$(brew --prefix)/bin/bash"
 	if [ -f "$brew_bash" ]; then
 		if ! grep -q "$brew_bash" /etc/shells 2>/dev/null; then
 			log "Adding Homebrew bash to /etc/shells"

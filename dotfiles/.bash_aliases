@@ -11,7 +11,11 @@ alias grep='grep --color=auto -E'
 ##
 # LS ALIASES
 ##
-alias ls='lsd -F'
+if command -v lsd >/dev/null 2>&1; then
+	alias ls='lsd -F'
+else
+	alias ls='ls --color=auto'
+fi
 alias l='ls -c'                # show most recent files first
 alias la='ls -A'               # show all (including '.files', exluding ./ and ../)
 alias ll='ls -lAh'             # show all as a list sorted alphabetically
