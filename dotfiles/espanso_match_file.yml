@@ -36,32 +36,17 @@ matches:
 
   # And much more! For more information, visit the docs: https://espanso.org/docs/
   
-  # Email
+  # Email (placeholder substituted at install time by setup script)
   - trigger: ":email"
-    replace: "{{output}}"
-    vars:
-      - name: output
-        type: shell
-        params:
-          cmd: "git config --global user.email"
+    replace: "__EMAIL__"
 
-  # GitUser
+  # GitUser (placeholder substituted at install time by setup script)
   - trigger: ":user"
-    replace: "{{output}}"
-    vars:
-      - name: output
-        type: shell
-        params:
-          cmd: "git config --global user.name"
-    
-  # Phone
+    replace: "__GIT_USER__"
+
+  # Phone (placeholder substituted at install time by setup script)
   - trigger: ":phone"
-    replace: "{{output}}"
-    vars:
-      - name: output
-        type: shell
-        params:
-          cmd: "git config --global user.phonenumber"
+    replace: "__PHONE__"
 
   - trigger: ":externalip"
     replace: "{{my_ip}}"

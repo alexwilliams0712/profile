@@ -1,0 +1,11 @@
+/* Darker, more visible pane dividers for Terminator */
+paned > separator {
+	min-width: 2px;
+	min-height: 2px;
+	background-color: #2a4a5a;
+	background-image: none;
+}
+
+paned > separator:hover {
+	background-color: #3a6a7a;
+}

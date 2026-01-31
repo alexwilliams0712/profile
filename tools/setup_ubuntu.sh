@@ -21,6 +21,8 @@ copy_dotfiles() {
 	print_function_name
 	mkdir -p $HOME/.config/terminator
 	cp $PROFILE_DIR/dotfiles/terminal_config $HOME/.config/terminator/config
+	mkdir -p $HOME/.config/gtk-3.0
+	cp $PROFILE_DIR/dotfiles/gtk.css $HOME/.config/gtk-3.0/gtk.css
 	cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
 	cp $PROFILE_DIR/VERSION $HOME/BASH_PROFILE_VERSION
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
@@ -485,6 +487,11 @@ install_espanso() {
 	# Copy config
 	mkdir -p "$(espanso path config)/match"
 	cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$(espanso path config)/match/base.yml"
+	# Substitute placeholders with git config values
+	local match_file="$(espanso path config)/match/base.yml"
+	sed -i "s|__EMAIL__|$(git config --global user.email)|" "$match_file"
+	sed -i "s|__GIT_USER__|$(git config --global user.name)|" "$match_file"
+	sed -i "s|__PHONE__|$(git config --global user.phonenumber)|" "$match_file"
 	espanso --version
 }
 
