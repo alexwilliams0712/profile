@@ -559,7 +559,7 @@ install_ai() {
 	if command -v sgpt >/dev/null 2>&1; then
 		log "shell-gpt already installed, upgrading..."
 	fi
-	uv pip install -U shell-gpt
+	pip install -U shell-gpt
 
 	log "AI CLI tools installation complete"
 }
