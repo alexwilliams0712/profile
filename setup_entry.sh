@@ -1,6 +1,12 @@
 #!/bin/bash
 
 sudo -v
+# Keep sudo alive in the background — refresh every 60 seconds until this
+# script (and its children) exit.
+(while true; do sudo -n true; sleep 60; done) 2>/dev/null &
+SUDO_KEEPALIVE_PID=$!
+trap 'kill $SUDO_KEEPALIVE_PID 2>/dev/null' EXIT
+
 if ! command -v git >/dev/null 2>&1; then
 	if [ "$(uname)" = "Darwin" ]; then
 		echo "git is not installed. Installing Xcode Command Line Tools..."

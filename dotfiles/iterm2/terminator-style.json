@@ -143,18 +143,18 @@
       "Option Key Sends": 2,
       "Right Option Key Sends": 2,
       "Custom Command": "No",
-      "Custom Directory": "No",
+      "Custom Directory": "Recycle",
       "Title Components": 2,
       "Keyboard Map": {
-        "0x1f-0x60000": {
+        "0x1f-0x100000": {
           "Action": 25,
           "Text": "",
-          "Label": "Ctrl+Shift+O: Split Horizontally (top/bottom)"
+          "Label": "Cmd+O: Split Horizontally (top/bottom)"
         },
-        "0xe-0x60000": {
+        "0xe-0x100000": {
           "Action": 26,
           "Text": "",
-          "Label": "Ctrl+Shift+E: Split Vertically (left/right)"
+          "Label": "Cmd+E: Split Vertically (left/right)"
         },
         "0x7e-0x80000": {
           "Action": 46,
@@ -180,6 +180,11 @@
           "Action": 36,
           "Text": "",
           "Label": "Ctrl+Shift+W: Close Pane"
+        },
+        "0x78-0x60000": {
+          "Action": 34,
+          "Text": "",
+          "Label": "Ctrl+Shift+X: Toggle Maximize Pane"
         }
       }
     }
