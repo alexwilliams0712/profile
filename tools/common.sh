@@ -14,7 +14,7 @@ start_sudo_keepalive() {
 	fi
 	(while true; do sudo -n true; sleep 10; done) 2>/dev/null &
 	SUDO_KEEPALIVE_PID=$!
-	trap 'kill $SUDO_KEEPALIVE_PID 2>/dev/null' EXIT
+	trap 'kill $SUDO_KEEPALIVE_PID 2>/dev/null || true' EXIT
 }
 
 handle_error() {

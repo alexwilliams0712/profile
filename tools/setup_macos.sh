@@ -401,7 +401,7 @@ install_webtools() {
 exit_script() {
 	print_function_name
 	ensure_directory
-	source ~/.bashrc
+	source ~/.bashrc 2>/dev/null || true
 	if [ ${#failed_functions[@]} -eq 0 ]; then
 		echo "==============================="
 		echo "       Setup Complete          "

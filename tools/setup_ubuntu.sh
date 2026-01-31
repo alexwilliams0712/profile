@@ -352,9 +352,9 @@ install_pyenv() {
 	else
 		curl https://pyenv.run | bash
 	fi
-	source ~/.bashrc
+	source ~/.bashrc 2>/dev/null || true
 	pyenv update
-	source ~/.bashrc
+	source ~/.bashrc 2>/dev/null || true
 	pyenv install -s $DEFAULT_PYTHON_VERSION
 	pyenv global $DEFAULT_PYTHON_VERSION
 	FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
@@ -373,7 +373,7 @@ install_rust() {
 	print_function_name
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 	source ~/.cargo/env
-	source ~/.bashrc
+	source ~/.bashrc 2>/dev/null || true
 	rustup update stable
 	rustup install nightly
 	# cargo install diesel_cli --no-default-features --features postgres
@@ -707,7 +707,7 @@ pip_installs() {
 exit_script() {
 	print_function_name
 	ensure_directory
-	source ~/.bashrc
+	source ~/.bashrc 2>/dev/null || true
 	if [ ${#failed_functions[@]} -eq 0 ]; then
 		figlet "Complete"
 	else
