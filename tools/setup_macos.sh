@@ -6,8 +6,13 @@ export PROJECT_ROOT=$HOME/profile
 export PATH="/usr/local/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
-# Ensure Homebrew is on PATH for Apple Silicon and Intel Macs
-eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null || true)"
+# Use the Homebrew matching the current architecture
+# (Apple Silicon native uses /opt/homebrew, Rosetta/Intel uses /usr/local)
+if [ "$(uname -m)" = "arm64" ]; then
+	eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null || true)"
+else
+	eval "$(/usr/local/bin/brew shellenv 2>/dev/null || /opt/homebrew/bin/brew shellenv 2>/dev/null || true)"
+fi
 export DEFAULT_PYTHON_VERSION="3.14"
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(uname -m)
@@ -149,7 +154,11 @@ install_homebrew() {
 
 	# Re-evaluate brew shellenv to ensure PATH includes Homebrew for the
 	# rest of this script (covers both fresh install and existing install)
-	eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null || true)"
+	if [ "$(uname -m)" = "arm64" ]; then
+		eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null || true)"
+	else
+		eval "$(/usr/local/bin/brew shellenv 2>/dev/null || /opt/homebrew/bin/brew shellenv 2>/dev/null || true)"
+	fi
 
 	# Set HOMEBREW_NO_AUTO_UPDATE to prevent brew from running git updates
 	# during individual installs (we handle updates explicitly)
