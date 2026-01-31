@@ -404,11 +404,7 @@ install_go() {
 	# get downloads page without piping curl
 	page=$(curl -fsSL https://go.dev/dl/) || return 1
 
-	t=$(printf '%s\n' "$page" |
-		grep -oE "go[0-9.]+\.${go_arch}\.tar\.gz" |
-		head -n1) || return 1
-
-	[ -n "$t" ] || {
+	t=$(grep -oEm1 "go[0-9.]+\.${go_arch}\.tar\.gz" <<< "$page") || {
 		echo "could not determine latest Go version" >&2
 		return 1
 	}
