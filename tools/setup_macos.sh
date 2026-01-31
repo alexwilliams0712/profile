@@ -201,11 +201,14 @@ install_packages() {
 			brew uninstall --ignore-dependencies "$pkg" 2>/dev/null || true
 		fi
 	done
-	local unwanted_casks=()
+	local unwanted_casks=("julia-app" "julia")
+	local caskroom="$(brew --prefix)/Caskroom"
 	for cask in "${unwanted_casks[@]}"; do
-		if brew list --cask "$cask" &>/dev/null; then
-			log "Removing unwanted cask: $cask"
-			brew uninstall --cask --force "$cask" 2>/dev/null || true
+		if brew uninstall --cask --force "$cask" 2>/dev/null; then
+			log "Removed unwanted cask: $cask"
+		elif [ -d "$caskroom/$cask" ]; then
+			log "Removing stale cask metadata: $cask"
+			rm -rf "$caskroom/$cask"
 		fi
 	done
 
