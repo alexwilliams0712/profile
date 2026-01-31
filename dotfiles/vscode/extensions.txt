@@ -15,20 +15,15 @@ timonwong.shellcheck
 foxundermoon.shell-format
 
 # Git
-eamodio.gitlens
 
 # Docker / Kubernetes
 ms-azuretools.vscode-docker
 
 # Formatting & linting
-esbenp.prettier-vscode
-dbaeumer.vscode-eslint
 charliermarsh.ruff
 
 # Editor utilities
 streetsidesoftware.code-spell-checker
-christian-kohler.path-intellisense
-usernamehw.errorlens
 gruntfuggly.todo-tree
 
 # Remote development
