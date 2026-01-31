@@ -72,8 +72,9 @@ function scp_mirror() {
 	for path in "$@"; do
 		# Expand tilde for local destination
 		local local_path="${path/#\~/$HOME}"
-		# Replace local $HOME prefix with ~ so remote shell expands to its own home
-		local remote_path="${path/#$HOME/\~}"
+		# Strip home prefix to make a relative path (scp resolves relative paths from remote home)
+		local remote_path="${path/#$HOME\//}"
+		remote_path="${remote_path/#\~\//}"
 
 		# Ensure local parent exists
 		mkdir -p "$(dirname "$local_path")"
@@ -86,7 +87,7 @@ function scp_mirror() {
 			echo "Copying $host:$remote_path to $local_path"
 			sudo scp -r $host:$remote_path $local_path
 		fi
-		sudo chown -R "$owner":"$owner" "$local_path"
+		sudo chown -R "$owner":"$(id -gn "$owner")" "$local_path"
 		sudo chmod -R u+rwX "$local_path"
 	done
 }
