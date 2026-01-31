@@ -1,5 +1,11 @@
 #!/bin/bash
 echo "Setup running"
+
+# Keep sudo credentials alive for the duration of this script
+sudo -v
+(while true; do sudo -n true; sleep 60; done) 2>/dev/null &
+SUDO_KEEPALIVE_PID=$!
+trap 'kill $SUDO_KEEPALIVE_PID 2>/dev/null' EXIT
 mkdir -p $HOME/CODE
 export CODE_ROOT=$HOME/CODE
 export PROJECT_ROOT=$HOME/profile
