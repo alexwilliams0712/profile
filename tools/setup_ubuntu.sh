@@ -220,7 +220,8 @@ install_flatpaks() {
 		com.github.eneshecan.WhatsAppForLinux \
 		org.remmina.Remmina \
 		com.sublimetext.three \
-		com.valvesoftware.Steam; do
+		com.valvesoftware.Steam \
+		us.zoom.Zoom; do
 		log "Looking for $app"
 		if flatpak install --user --or-update -y flathub $app; then
 			log "Successfully installed $app"
@@ -639,11 +640,6 @@ install_helm() {
 	sudo rm get_helm.sh
 }
 
-install_zoom() {
-	print_function_name
-	flatpak install -y flathub us.zoom.Zoom
-}
-
 install_burpsuite() {
 	print_function_name
 	if [ "$ARCHITECTURE" = "arm64" ]; then
@@ -753,7 +749,6 @@ main() {
 	run_function install_terraform
 	# run_function install_k3s
 	# run_function install_helm
-	run_function install_zoom
 	# run_function install_coolercontrol
 	# run_function install_open_rgb_rules
 	run_function webinstalls
