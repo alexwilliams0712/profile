@@ -43,7 +43,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: "git config user.email"
+          cmd: "git config --global user.email"
 
   # GitUser
   - trigger: ":user"
@@ -52,7 +52,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: "git config user.name"
+          cmd: "git config --global user.name"
     
   # Phone
   - trigger: ":phone"
@@ -61,7 +61,7 @@ matches:
       - name: output
         type: shell
         params:
-          cmd: "git config user.phonenumber"
+          cmd: "git config --global user.phonenumber"
 
   - trigger: ":externalip"
     replace: "{{my_ip}}"
