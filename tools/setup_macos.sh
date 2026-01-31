@@ -284,10 +284,12 @@ install_node() {
 	if command -v node >/dev/null 2>&1; then
 		node -v
 		npm -v
-		# Fix npm cache ownership if root-owned files exist
-		if [ -d "$HOME/.npm" ]; then
-			sudo chown -R "$(id -u):$(id -g)" "$HOME/.npm"
-		fi
+		# Fix npm ownership if root-owned files exist
+		for dir in "$HOME/.npm" "$HOME/.npm-global"; do
+			if [ -d "$dir" ]; then
+				sudo chown -R "$(id -u):$(id -g)" "$dir"
+			fi
+		done
 		# Set npm global prefix to match PATH in .bashrc (~/.npm-global/bin)
 		mkdir -p "$HOME/.npm-global"
 		npm config set prefix "$HOME/.npm-global"
@@ -337,7 +339,7 @@ install_espanso() {
 		local espanso_config="$HOME/Library/Application Support/espanso"
 		mkdir -p "$espanso_config/match"
 		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$espanso_config/match/base.yml"
-		espanso --version
+		espanso --version || true
 	else
 		log "espanso not found, skipping config"
 	fi
@@ -358,6 +360,7 @@ install_tailscale() {
 		# Create CLI wrapper script (symlinks crash due to bundle identifier check)
 		if [ -f "$tailscale_cli" ]; then
 			log "Creating CLI wrapper: $wrapper_target"
+			sudo rm -f "$wrapper_target"
 			sudo tee "$wrapper_target" >/dev/null <<-WRAPPER
 			#!/bin/bash
 			exec "$tailscale_cli" "\$@"
@@ -380,14 +383,19 @@ install_ai() {
 
 	# Gemini CLI is installed via Homebrew
 
-	# Install Claude Code
-	log "Installing Claude Code..."
+	# Install/upgrade Claude Code
+	if command -v claude >/dev/null 2>&1; then
+		log "Claude Code already installed, upgrading..."
+	else
+		log "Installing Claude Code..."
+	fi
 	curl -fsSL https://claude.ai/install.sh | bash
 
-	# Install ChatGPT CLI (shell-gpt)
-	log "Installing ChatGPT CLI (shell-gpt)..."
+	# Install/upgrade ChatGPT CLI (shell-gpt)
 	if command -v sgpt >/dev/null 2>&1; then
 		log "shell-gpt already installed, upgrading..."
+	else
+		log "Installing ChatGPT CLI (shell-gpt)..."
 	fi
 	uv pip install -U shell-gpt
 
