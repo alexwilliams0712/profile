@@ -22,7 +22,6 @@ fi
 export DEFAULT_PYTHON_VERSION="3.14"
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(uname -m)
-exit_code=0
 set -e
 set -o pipefail
 
@@ -391,9 +390,9 @@ install_webtools() {
 
 exit_script() {
 	print_function_name
-	if [[ exit_code -eq 0 ]]; then
-		ensure_directory
-		source ~/.bashrc
+	ensure_directory
+	source ~/.bashrc
+	if [ ${#failed_functions[@]} -eq 0 ]; then
 		echo "==============================="
 		echo "       Setup Complete          "
 		echo "==============================="
@@ -408,14 +407,6 @@ main() {
 	collect_user_input
 
 	failed_functions=()
-
-	run_function() {
-		local func_name=$1
-		if ! $func_name; then
-			failed_functions+=("$func_name")
-			echo "Warning: $func_name failed, continuing with next function..."
-		fi
-	}
 
 	run_function copy_dotfiles
 	run_function set_git_config

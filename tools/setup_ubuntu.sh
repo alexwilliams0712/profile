@@ -16,13 +16,14 @@ export PATH="$HOME/.local/bin:$PATH"
 export DEFAULT_PYTHON_VERSION="3.14"
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(dpkg --print-architecture)
-exit_code=0
 set -e
+set -o pipefail
 
 source "$PROFILE_DIR/tools/common.sh"
 trap 'handle_error $LINENO' ERR
 
 copy_dotfiles() {
+	print_function_name
 	mkdir -p $HOME/.config/terminator
 	cp $PROFILE_DIR/dotfiles/terminal_config $HOME/.config/terminator/config
 	cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
@@ -30,7 +31,11 @@ copy_dotfiles() {
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
 	cp $PROFILE_DIR/dotfiles/.prettierrc $HOME/.prettierrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
-	sudo echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
+	# Case-insensitive tab completion (idempotent)
+	if ! grep -q 'completion-ignore-case' /etc/inputrc 2>/dev/null; then
+		echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
+	fi
+	# Source .bash_aliases so apt_upgrader (defined there) is available to later functions
 	source $HOME/.bash_aliases
 }
 install_apt_packages() {
@@ -130,22 +135,6 @@ install_apt_packages() {
 	sudo systemctl enable systemd-timesyncd
 	sudo systemctl start systemd-timesyncd
 	sudo timedatectl set-ntp true
-
-	ssh_stuff
-	install_pyenv
-	# pip_installs
-	install_pg_formatter
-	install_browser
-	install_vscode
-	install_flatpaks
-	install_rust
-	install_and_setup_docker
-	install_github_cli
-	install_espanso
-	install_clam_av
-	install_1password
-	install_jetbrains_toolbox
-	ensure_directory
 }
 
 install_slack() {
@@ -732,9 +721,9 @@ pip_installs() {
 
 exit_script() {
 	print_function_name
-	if [[ exit_code -eq 0 ]]; then
-		ensure_directory
-		source ~/.bashrc
+	ensure_directory
+	source ~/.bashrc
+	if [ ${#failed_functions[@]} -eq 0 ]; then
 		figlet "Complete"
 	else
 		figlet "Failed"
@@ -746,18 +735,23 @@ main() {
 
 	failed_functions=()
 
-	run_function() {
-		local func_name=$1
-		if ! $func_name; then
-			failed_functions+=("$func_name")
-			echo "Warning: $func_name failed, continuing with next function..."
-		fi
-	}
-
-	# Run all functions
+	# copy_dotfiles must run first — it sources .bash_aliases which defines apt_upgrader
 	run_function copy_dotfiles
 	run_function set_git_config
 	run_function install_apt_packages
+	run_function ssh_stuff
+	run_function install_pyenv
+	run_function install_pg_formatter
+	run_function install_browser
+	run_function install_vscode
+	run_function install_flatpaks
+	run_function install_rust
+	run_function install_and_setup_docker
+	run_function install_github_cli
+	run_function install_espanso
+	run_function install_clam_av
+	run_function install_1password
+	run_function install_jetbrains_toolbox
 	run_function install_font
 	run_function btop_install
 	run_function install_slack

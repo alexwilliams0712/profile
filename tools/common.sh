@@ -38,6 +38,14 @@ collect_user_input() {
 	log "All input collected. Setup will now run unattended."
 }
 
+run_function() {
+	local func_name=$1
+	if ! $func_name; then
+		failed_functions+=("$func_name")
+		echo "Warning: $func_name failed, continuing with next function..."
+	fi
+}
+
 set_git_config() {
 	print_function_name
 	git config --global core.autocrlf false
