@@ -641,12 +641,7 @@ install_helm() {
 
 install_zoom() {
 	print_function_name
-	if [ "$ARCHITECTURE" = "arm64" ]; then
-		return 0
-	fi
-	wget https://zoom.us/client/6.3.6.6315/zoom_amd64.deb
-	sudo apt install -y ./zoom_amd64.deb
-	sudo rm zoom_amd64.deb
+	flatpak install -y flathub us.zoom.Zoom
 }
 
 install_burpsuite() {
