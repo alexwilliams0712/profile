@@ -7,17 +7,24 @@ sudo -v
 SUDO_KEEPALIVE_PID=$!
 trap 'kill $SUDO_KEEPALIVE_PID 2>/dev/null' EXIT
 
-if ! command -v git >/dev/null 2>&1; then
-	if [ "$(uname)" = "Darwin" ]; then
-		echo "git is not installed. Installing Xcode Command Line Tools..."
+if [ "$(uname)" = "Darwin" ]; then
+	# Ensure Xcode Command Line Tools are installed and up to date
+	if ! xcode-select -p &>/dev/null; then
+		echo "Installing Xcode Command Line Tools..."
 		xcode-select --install
-		echo "Please re-run this script after Xcode Command Line Tools installation completes."
+		echo "Please re-run this script after installation completes."
 		exit 1
-	else
-		echo "git is not installed, installing git."
-		sudo apt-get update
-		sudo apt-get install -y git
 	fi
+	# Check for CLT updates (e.g. after a macOS upgrade)
+	clt_update=$(softwareupdate --list 2>&1 | grep -i "command line tools" || true)
+	if [ -n "$clt_update" ]; then
+		echo "Updating Command Line Tools..."
+		softwareupdate --install --all
+	fi
+elif ! command -v git >/dev/null 2>&1; then
+	echo "git is not installed, installing git."
+	sudo apt-get update
+	sudo apt-get install -y git
 fi
 
 # Pull latest version of this repo (non-fatal on first run / auth issues)
