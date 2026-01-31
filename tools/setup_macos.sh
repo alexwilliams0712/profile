@@ -6,6 +6,8 @@ export PROJECT_ROOT=$HOME/profile
 export PATH="/usr/local/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
+# Ensure Homebrew is on PATH for Apple Silicon and Intel Macs
+eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null || true)"
 export DEFAULT_PYTHON_VERSION="3.14"
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(uname -m)
@@ -44,6 +46,19 @@ copy_dotfiles() {
 
 	# Minimal window style (no title bar, matches terminator's show_titlebar=False)
 	defaults write com.googlecode.iterm2 TabStyleWithAutomaticOption -int 5
+
+	# Disable per-pane title bars (matches terminator's show_titlebar=False)
+	defaults write com.googlecode.iterm2 ShowPaneTitles -bool false
+
+	# Suppress quit and close-session confirmation dialogs
+	defaults write com.googlecode.iterm2 PromptOnQuit -bool false
+	defaults write com.googlecode.iterm2 OnlyWhenMoreTabs -bool false
+
+	# Dim inactive split panes for visual focus indication
+	defaults write com.googlecode.iterm2 DimInactiveSplitPanes -bool true
+
+	# Set the "Terminator Style" dynamic profile as the default profile
+	defaults write com.googlecode.iterm2 "Default Bookmark Guid" -string "terminator-style-profile"
 
 	# Install Dynamic Profile (terminator-like appearance)
 	local iterm2_profiles_dir="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
@@ -117,6 +132,10 @@ install_homebrew() {
 		fi
 	fi
 
+	# Re-evaluate brew shellenv to ensure PATH includes Homebrew for the
+	# rest of this script (covers both fresh install and existing install)
+	eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null || true)"
+
 	# Set HOMEBREW_NO_AUTO_UPDATE to prevent brew from running git updates
 	# during individual installs (we handle updates explicitly)
 	export HOMEBREW_NO_AUTO_UPDATE=1
@@ -153,7 +172,7 @@ setup_bash() {
 		fi
 		if [ "$SHELL" != "$brew_bash" ]; then
 			log "Setting Homebrew bash as default shell"
-			chsh -s "$brew_bash"
+			sudo chsh -s "$brew_bash" "$USER"
 		fi
 	fi
 
@@ -269,12 +288,30 @@ install_espanso() {
 
 install_tailscale() {
 	print_function_name
-	# Tailscale is installed via Homebrew cask
-	if command -v tailscale >/dev/null 2>&1; then
-		log "Tailscale is installed"
-		tailscale version
+	# Tailscale is installed via Homebrew cask. The cask installs the GUI app
+	# but does not put the CLI on PATH. We need to:
+	# 1. Open the app so the system extension can be activated
+	# 2. Create a symlink so `tailscale` works from the terminal
+	local tailscale_cli="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+	local symlink_target="/usr/local/bin/tailscale"
+
+	if [ -d "/Applications/Tailscale.app" ]; then
+		log "Opening Tailscale.app (required to activate system extension)..."
+		open -a Tailscale
+
+		# Create CLI symlink if not already present
+		if [ ! -L "$symlink_target" ] && [ -f "$tailscale_cli" ]; then
+			log "Creating CLI symlink: $symlink_target -> $tailscale_cli"
+			sudo ln -sf "$tailscale_cli" "$symlink_target"
+		fi
+
+		if command -v tailscale >/dev/null 2>&1; then
+			tailscale version
+		else
+			log "Tailscale CLI will be available after restarting your shell."
+		fi
 	else
-		log "Tailscale not found. Open Tailscale.app from Applications after install."
+		log "Tailscale.app not found in /Applications. Verify brew cask install succeeded."
 	fi
 }
 
