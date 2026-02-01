@@ -89,6 +89,12 @@ set_git_config() {
 	if [ -n "$GIT_USER_PHONE" ]; then git config --global user.phonenumber "$GIT_USER_PHONE"; fi
 }
 
+copy_btop_config() {
+	mkdir -p "$HOME/.config/btop/themes"
+	cp "$PROFILE_DIR/dotfiles/btop/themes/armada-deep.theme" "$HOME/.config/btop/themes/armada-deep.theme"
+	cp "$PROFILE_DIR/dotfiles/btop/btop.conf" "$HOME/.config/btop/btop.conf"
+}
+
 configure_vscode() {
 	# Copy VS Code settings and keybindings, install extensions.
 	# Expects $VSCODE_USER_DIR to be set by the caller (platform-specific path).
