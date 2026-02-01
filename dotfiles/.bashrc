@@ -123,17 +123,26 @@ LIGHT_GRAY="\[\033[0;37m\]"
 COLOR_NONE="\[\e[0m\]"
 
 export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
+export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
 export PATH=$PATH:$HOME/.local/share/JetBrains/Toolbox/scripts
 export PATH=$PATH:$HOME/.local/bin
 export PATH="$HOME/go/bin:$PATH"
 if command -v pyenv >/dev/null 2>&1; then
 	alias brew='env PATH="${PATH//$(pyenv root)\/shims:/}" brew'
-	eval "$(pyenv init --path)"
-	eval "$(pyenv init -)"
-	if pyenv commands 2>/dev/null | grep -q virtualenv-init; then
-		eval "$(pyenv virtualenv-init -)"
-	fi
+	# Lazy-load pyenv init (saves ~2s on shell startup).
+	# The shims directory is already on PATH above, so pyenv version
+	# selection works immediately. Full init runs on first use of
+	# python/pip/pyenv to set up completions and virtualenv hooks.
+	_pyenv_init() {
+		unset -f python python3 pip pip3 pyenv
+		eval "$(command pyenv init --path)"
+		eval "$(command pyenv init -)"
+	}
+	python()  { _pyenv_init; python "$@"; }
+	python3() { _pyenv_init; python3 "$@"; }
+	pip()     { _pyenv_init; pip "$@"; }
+	pip3()    { _pyenv_init; pip3 "$@"; }
+	pyenv()   { _pyenv_init; pyenv "$@"; }
 fi
 
 # npm
