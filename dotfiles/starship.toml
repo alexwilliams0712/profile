@@ -1,5 +1,6 @@
 format = """
 $username\
+$hostname\
 $directory\
 $git_branch\
 $git_status\
@@ -65,6 +66,6 @@ success_symbol = "[➜](bold green)"
 error_symbol = "[➜](bold red)"
 
 [hostname]
-ssh_only = true
-format = "[$ssh_symbol$hostname]($style) "
-style = "bold red"
+ssh_only = false
+format = "[@$hostname]($style) "
+style = "bold blue"
