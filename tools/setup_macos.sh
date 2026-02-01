@@ -27,6 +27,7 @@ start_sudo_keepalive
 copy_dotfiles() {
 	print_function_name
 	mkdir -p "$HOME/.config"
+	cp "$PROFILE_DIR/dotfiles/starship.toml" "$HOME/.config/starship.toml"
 	cp "$PROFILE_DIR/dotfiles/.profile" "$HOME/.profile"
 	cp "$PROFILE_DIR/VERSION" "$HOME/BASH_PROFILE_VERSION"
 	cp "$PROFILE_DIR/dotfiles/.bashrc" "$HOME/.bashrc"
@@ -407,15 +408,6 @@ install_terraform() {
 	terraform version
 }
 
-setup_shell_tools() {
-	print_function_name
-	# Atuin and carapace are installed via Brewfile.
-	# Atuin sync requires a one-time login after first install.
-	if command -v atuin >/dev/null 2>&1; then
-		log "Atuin installed. Run 'atuin register' or 'atuin login' to enable cross-machine sync."
-	fi
-}
-
 install_webtools() {
 	print_function_name
 	# shfmt, shellcheck, and k9s are installed via Homebrew
@@ -456,7 +448,7 @@ main() {
 	run_function install_espanso
 	run_function install_tailscale
 	run_function install_terraform
-	run_function setup_shell_tools
+	run_function install_starship
 	run_function install_webtools
 	run_function install_ai
 

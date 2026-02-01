@@ -164,9 +164,6 @@ function set_bash_prompt() {
 	PS1="${LIGHT_BLUE}${ENV_NAME} ${debian_chroot:+($debian_chroot)}${BLUE}\u${BLUE}@${BLUE}\h\[\033[00m\]:${YELLOW}\w\[\033[00m\] ${PURPLE}$(git_branch)$(hg_branch)${COLOR_NONE}$ "
 }
 
-# Execute this function before displaying prompt
-PROMPT_COMMAND=set_bash_prompt
-
 # Alias definitions.
 # You may want to put all your additions into a separate file like
 # ~/.bash_aliases, instead of adding them here directly.
@@ -193,14 +190,16 @@ if ! shopt -oq posix; then
 	fi
 fi
 
-# Atuin - enhanced shell history with cross-machine sync
-if command -v atuin >/dev/null 2>&1; then
-	eval "$(atuin init bash)"
-fi
-
 # Carapace - universal tab completions
 if command -v carapace >/dev/null 2>&1; then
 	source <(carapace _carapace bash)
+fi
+
+# Starship prompt, or fall back to custom prompt
+if command -v starship >/dev/null 2>&1; then
+	eval "$(starship init bash)"
+else
+	PROMPT_COMMAND=set_bash_prompt
 fi
 
 echo "Profile version: $(cat $HOME/BASH_PROFILE_VERSION)"

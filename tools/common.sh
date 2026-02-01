@@ -95,6 +95,14 @@ copy_btop_config() {
 	cp "$PROFILE_DIR/dotfiles/btop/btop.conf" "$HOME/.config/btop/btop.conf"
 }
 
+install_starship() {
+	print_function_name
+	curl -sS https://starship.rs/install.sh | sh -s -- -y
+	if command -v starship >/dev/null 2>&1; then
+		starship --version
+	fi
+}
+
 configure_vscode() {
 	# Copy VS Code settings and keybindings, install extensions.
 	# Expects $VSCODE_USER_DIR to be set by the caller (platform-specific path).
