@@ -97,7 +97,7 @@ copy_btop_config() {
 
 install_starship() {
 	print_function_name
-	curl -sS https://starship.rs/install.sh | sh
+	curl -sS https://starship.rs/install.sh | sh -s -- -y
 	if command -v starship >/dev/null 2>&1; then
 		starship --version
 	fi
