@@ -39,7 +39,6 @@ matches:
   # Email (placeholder substituted at install time by setup script)
   - trigger: ":email"
     replace: "__EMAIL__"
-    force_clipboard: true
 
   # GitUser (placeholder substituted at install time by setup script)
   - trigger: ":user"

@@ -487,6 +487,8 @@ install_espanso() {
 	# Copy config
 	mkdir -p "$(espanso path config)/match"
 	cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$(espanso path config)/match/base.yml"
+	# Use Clipboard backend to avoid Wayland key injection issues (e.g. @ becoming ")
+	sed -i 's/^# backend: Clipboard/backend: Clipboard/' "$(espanso path config)/config/default.yml"
 	# Substitute placeholders with git config values
 	local match_file="$(espanso path config)/match/base.yml"
 	sed -i "s|__EMAIL__|$(git config --global user.email)|" "$match_file"
