@@ -109,19 +109,6 @@ alias l='ls -CF'
 #   sleep 10; alert
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 
-#  Codes to color our prompt
-RED="\[\033[0;31m\]"
-YELLOW="\[\033[1;33m\]"
-GREEN="\[\033[0;32m\]"
-BLUE="\[\033[1;34m\]"
-LIGHT_BLUE="\[\033[1;36m\]"
-PURPLE="\[\033[1;35m\]"
-LIGHT_RED="\[\033[1;31m\]"
-LIGHT_GREEN="\[\033[1;32m\]"
-WHITE="\[\033[1;37m\]"
-LIGHT_GRAY="\[\033[0;37m\]"
-COLOR_NONE="\[\e[0m\]"
-
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 export PATH=$PATH:$HOME/.local/share/JetBrains/Toolbox/scripts
@@ -138,34 +125,6 @@ fi
 
 # npm
 export PATH=~/.npm-global/bin:$PATH
-
-hg_branch() {
-	hg branch 2>/dev/null | awk '{print "hg["$1"] "}'
-}
-
-git_branch() {
-	git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/git[\1] /'
-}
-
-pyenv_python_version() {
-	pyenv global 2>/dev/null || echo "No pyenv global"
-}
-
-# Set the full bash prompt
-function set_bash_prompt() {
-	# Check if VIRTUAL_ENV is set and not empty
-	if [ -z "$VIRTUAL_ENV" ]; then
-		ENV_NAME=$(pyenv_python_version)
-	else
-		ENV_NAME=$(echo $VIRTUAL_ENV | awk -F'/' '{print $(NF-1)}')
-	fi
-
-	# Set the PS1 variable with the updated ENV_NAME
-	PS1="${LIGHT_BLUE}${ENV_NAME} ${debian_chroot:+($debian_chroot)}${BLUE}\u${BLUE}@${BLUE}\h\[\033[00m\]:${YELLOW}\w\[\033[00m\] ${PURPLE}$(git_branch)$(hg_branch)${COLOR_NONE}$ "
-}
-
-# Execute this function before displaying prompt
-PROMPT_COMMAND=set_bash_prompt
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
@@ -193,14 +152,14 @@ if ! shopt -oq posix; then
 	fi
 fi
 
-# Atuin - enhanced shell history with cross-machine sync
-if command -v atuin >/dev/null 2>&1; then
-	eval "$(atuin init bash)"
-fi
-
 # Carapace - universal tab completions
 if command -v carapace >/dev/null 2>&1; then
 	source <(carapace _carapace bash)
+fi
+
+# Starship prompt (must be last — sets PROMPT_COMMAND)
+if command -v starship >/dev/null 2>&1; then
+	eval "$(starship init bash)"
 fi
 
 echo "Profile version: $(cat $HOME/BASH_PROFILE_VERSION)"

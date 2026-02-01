@@ -1,0 +1,6 @@
+[python]
+# Avoid executing the pyenv shim (slow, causes timeouts).
+# Starship will read the version from .python-version instead.
+python_binary = []
+detect_extensions = ["py"]
+detect_files = [".python-version", "pyproject.toml", "requirements.txt", "setup.py"]

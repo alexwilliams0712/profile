@@ -1,5 +1,4 @@
 # CLI Tools
-brew "atuin"
 brew "awscli"
 brew "bash"
 brew "bat"

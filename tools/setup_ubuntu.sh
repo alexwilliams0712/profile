@@ -23,6 +23,8 @@ copy_dotfiles() {
 	cp $PROFILE_DIR/dotfiles/terminal_config $HOME/.config/terminator/config
 	mkdir -p $HOME/.config/gtk-3.0
 	cp $PROFILE_DIR/dotfiles/gtk.css $HOME/.config/gtk-3.0/gtk.css
+	mkdir -p $HOME/.config
+	cp $PROFILE_DIR/dotfiles/starship.toml $HOME/.config/starship.toml
 	cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
 	cp $PROFILE_DIR/VERSION $HOME/BASH_PROFILE_VERSION
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
@@ -548,12 +550,6 @@ install_clam_av() {
 	sudo /etc/init.d/clamav-daemon start
 }
 
-install_atuin() {
-	print_function_name
-	curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
-	log "Atuin installed. Run 'atuin register' or 'atuin login' to enable cross-machine sync."
-}
-
 install_carapace() {
 	print_function_name
 	local arch
@@ -791,7 +787,7 @@ main() {
 	# run_function install_open_rgb_rules
 	run_function webinstalls
 	# run_function install_burpsuite
-	run_function install_atuin
+	run_function install_starship
 	run_function install_carapace
 	run_function install_ai
 	run_function apt_upgrader
