@@ -548,6 +548,36 @@ install_clam_av() {
 	sudo /etc/init.d/clamav-daemon start
 }
 
+install_atuin() {
+	print_function_name
+	curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
+	log "Atuin installed. Run 'atuin register' or 'atuin login' to enable cross-machine sync."
+}
+
+install_carapace() {
+	print_function_name
+	local arch
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		arch="arm64"
+	else
+		arch="amd64"
+	fi
+	local latest_version
+	latest_version=$(curl -fsSL https://api.github.com/repos/carapace-sh/carapace-bin/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+	if [ -z "$latest_version" ]; then
+		log "Could not fetch latest carapace version"
+		return 1
+	fi
+	local download_url="https://github.com/carapace-sh/carapace-bin/releases/download/${latest_version}/carapace-bin_linux_${arch}.tar.gz"
+	log "Downloading carapace ${latest_version} for ${arch}"
+	curl -fsSL "$download_url" -o /tmp/carapace.tar.gz
+	tar -xzf /tmp/carapace.tar.gz -C /tmp
+	sudo mv /tmp/carapace /usr/local/bin/carapace
+	sudo chmod +x /usr/local/bin/carapace
+	rm -f /tmp/carapace.tar.gz
+	carapace --version
+}
+
 install_ai() {
 	print_function_name
 
@@ -761,6 +791,8 @@ main() {
 	# run_function install_open_rgb_rules
 	run_function webinstalls
 	# run_function install_burpsuite
+	run_function install_atuin
+	run_function install_carapace
 	run_function install_ai
 	run_function apt_upgrader
 

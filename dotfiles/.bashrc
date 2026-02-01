@@ -193,6 +193,16 @@ if ! shopt -oq posix; then
 	fi
 fi
 
+# Atuin - enhanced shell history with cross-machine sync
+if command -v atuin >/dev/null 2>&1; then
+	eval "$(atuin init bash)"
+fi
+
+# Carapace - universal tab completions
+if command -v carapace >/dev/null 2>&1; then
+	source <(carapace _carapace bash)
+fi
+
 echo "Profile version: $(cat $HOME/BASH_PROFILE_VERSION)"
 # if command -v pyenv >/dev/null 2>&1; then pyenv --version; fi
 # if command -v uv >/dev/null 2>&1; then uv --version; fi
