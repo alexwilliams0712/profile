@@ -32,6 +32,9 @@ copy_dotfiles() {
 	cp "$PROFILE_DIR/dotfiles/.bashrc" "$HOME/.bashrc"
 	cp "$PROFILE_DIR/dotfiles/.prettierrc" "$HOME/.prettierrc"
 	cp "$PROFILE_DIR/dotfiles/.bash_aliases" "$HOME/.bash_aliases"
+	mkdir -p "$HOME/.config/btop/themes"
+	cp "$PROFILE_DIR/dotfiles/btop/themes/armada-deep.theme" "$HOME/.config/btop/themes/armada-deep.theme"
+	cp "$PROFILE_DIR/dotfiles/btop/btop.conf" "$HOME/.config/btop/btop.conf"
 
 	# Disable custom prefs folder (fragile — breaks if repo path changes)
 	defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool false

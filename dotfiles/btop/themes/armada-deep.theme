@@ -1,0 +1,89 @@
+# Btop Armada Deep theme
+# Based on the Armada Deep color palette (JetBrains Fleet-inspired)
+# Matches terminator and iTerm2 Armada profiles
+
+# Colors should be in 6 or 2 character hexadecimal or single spaced rgb decimal: "#RRGGBB", "#BW" or "0-255 0-255 0-255"
+
+# All graphs and meters can be gradients
+# For single color graphs leave "mid" and "end" variable empty.
+# Use "start" and "end" variables for two color gradient
+# Use "start", "mid" and "end" for three color gradient
+
+# Main background, empty for terminal default, need to be empty if you want transparent background
+theme[main_bg]="#001a22"
+
+# Main text color
+theme[main_fg]="#b8ccd6"
+
+# Title color for boxes
+theme[title]="#5db8e0"
+
+# Highlight color for keyboard shortcuts
+theme[hi_fg]="#ebc88d"
+
+# Background color of selected item in processes box
+theme[selected_bg]="#1E3455"
+
+# Foreground color of selected item in processes box
+theme[selected_fg]="#b8ccd6"
+
+# Color of inactive/disabled text
+theme[inactive_fg]="#4C5157"
+
+# Misc colors for processes box including mini cpu graphs, details memory graph and details status text
+theme[proc_misc]="#5db8e0"
+
+# Cpu box outline color
+theme[cpu_box]="#18263C"
+
+# Memory/disks box outline color
+theme[mem_box]="#18263C"
+
+# Net up/down box outline color
+theme[net_box]="#18263C"
+
+# Processes box outline color
+theme[proc_box]="#18263C"
+
+# Box divider line and small boxes line color
+theme[div_line]="#18263C"
+
+# Temperature graph colors (cool teal -> warm yellow -> hot red)
+theme[temp_start]="#4ab4b1"
+theme[temp_mid]="#ebc88d"
+theme[temp_end]="#ec5d6f"
+
+# CPU graph colors (blue -> cyan -> yellow)
+theme[cpu_start]="#5db8e0"
+theme[cpu_mid]="#8ee4e0"
+theme[cpu_end]="#ebc88d"
+
+# Mem/Disk free meter (teal/green)
+theme[free_start]="#4ab4b1"
+theme[free_mid]="#69b090"
+theme[free_end]="#8ee4e0"
+
+# Mem/Disk cached meter (violet/magenta)
+theme[cached_start]="#a7abe9"
+theme[cached_mid]="#cf8ad6"
+theme[cached_end]="#eb4dde"
+
+# Mem/Disk available meter (blue/cyan)
+theme[available_start]="#5db8e0"
+theme[available_mid]="#6fc3e8"
+theme[available_end]="#8ee4e0"
+
+# Mem/Disk used meter (yellow -> orange -> red)
+theme[used_start]="#ebc88d"
+theme[used_mid]="#dda088"
+theme[used_end]="#ec5d6f"
+
+# Download graph colors (blue/cyan)
+theme[download_start]="#5db8e0"
+theme[download_mid]="#6fc3e8"
+theme[download_end]="#8ee4e0"
+
+# Upload graph colors (magenta/violet)
+theme[upload_start]="#cf8ad6"
+theme[upload_mid]="#a7abe9"
+theme[upload_end]="#eb4dde"
