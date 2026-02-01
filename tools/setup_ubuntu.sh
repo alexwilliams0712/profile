@@ -740,17 +740,6 @@ pip_installs() {
 	sudo -u $USER pip install -U pip pip-tools psutil
 }
 
-exit_script() {
-	print_function_name
-	ensure_directory
-	source ~/.bashrc 2>/dev/null || true
-	if [ ${#failed_functions[@]} -eq 0 ]; then
-		figlet "Complete"
-	else
-		figlet "Failed"
-	fi
-}
-
 main() {
 	collect_user_input
 

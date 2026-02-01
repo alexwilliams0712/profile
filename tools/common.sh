@@ -87,6 +87,21 @@ install_starship() {
 	fi
 }
 
+exit_script() {
+	print_function_name
+	ensure_directory
+	if [ ${#failed_functions[@]} -eq 0 ]; then
+		echo "==============================="
+		echo "       Setup Complete          "
+		echo "==============================="
+	else
+		echo "==============================="
+		echo "       Setup Failed            "
+		echo "==============================="
+	fi
+	exec bash -l
+}
+
 configure_vscode() {
 	# Copy VS Code settings and keybindings, install extensions.
 	# Expects $VSCODE_USER_DIR to be set by the caller (platform-specific path).

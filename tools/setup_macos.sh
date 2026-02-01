@@ -413,21 +413,6 @@ install_webtools() {
 	curl -sS https://webi.sh/awless | sh
 }
 
-exit_script() {
-	print_function_name
-	ensure_directory
-	source ~/.bashrc 2>/dev/null || true
-	if [ ${#failed_functions[@]} -eq 0 ]; then
-		echo "==============================="
-		echo "       Setup Complete          "
-		echo "==============================="
-	else
-		echo "==============================="
-		echo "       Setup Failed            "
-		echo "==============================="
-	fi
-}
-
 main() {
 	collect_user_input
 
