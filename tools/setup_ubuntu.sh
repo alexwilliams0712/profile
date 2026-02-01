@@ -15,7 +15,6 @@ set -o pipefail
 
 source "$PROFILE_DIR/tools/common.sh"
 trap 'handle_error $LINENO' ERR
-start_sudo_keepalive
 
 copy_dotfiles() {
 	print_function_name

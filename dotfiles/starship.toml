@@ -1,32 +1,70 @@
+format = """
+$username\
+$directory\
+$git_branch\
+$git_status\
+$python\
+$rust\
+$golang\
+$terraform\
+$docker_context\
+$kubernetes\
+$cmd_duration\
+$line_break\
+$character"""
+
 [username]
-style_user = 'white bold'
-style_root = 'black bold'
-format = 'user: [$user]($style) '
-disabled = false
+format = "[$user]($style) "
+style_user = "bold blue"
+style_root = "bold red"
 show_always = true
+
+[directory]
+truncation_length = 0
+truncate_to_repo = false
+style = "bold cyan"
+
+[git_branch]
+format = "on [$symbol$branch]($style) "
+style = "bold purple"
+
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+style = "bold red"
 
 [python]
 pyenv_version_name = true
+format = "via [$symbol$version( \\($virtualenv\\))]($style) "
 detect_extensions = ["py", "ipynb"]
-detect_files = [
-	".python-version",
-	"pyproject.toml",
-	"requirements.txt",
-	"setup.py",
-]
+detect_files = [".python-version", "pyproject.toml", "requirements.txt", "setup.py"]
+
+[rust]
+format = "via [$symbol$version]($style) "
+
+[golang]
+format = "via [$symbol$version]($style) "
+
+[terraform]
+format = "via [$symbol$version $workspace]($style) "
+
+[docker_context]
+format = "via [$symbol$context]($style) "
+only_with_files = true
+
+[kubernetes]
+disabled = false
+format = "on [$symbol$context( \\($namespace\\))]($style) "
+
+[cmd_duration]
+min_time = 3_000
+format = "took [$duration]($style) "
+style = "bold yellow"
 
 [character]
-success_symbol = '[➜](bold green)'
-error_symbol = '[➜](bold red)'
+success_symbol = "[➜](bold green)"
+error_symbol = "[➜](bold red)"
 
 [hostname]
 ssh_only = true
-format = '[$ssh_symbol](bold blue) on [$hostname](bold red) '
-
-# [localip]
-# ssh_only = false
-# format = '@[$localipv4](bold red) '
-# disabled = false
-
-[terraform]
-format = 'via [$symbol$version $workspace]($style) '
+format = "[$ssh_symbol$hostname]($style) "
+style = "bold red"

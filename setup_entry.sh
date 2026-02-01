@@ -1,11 +1,6 @@
 #!/bin/bash
 
 sudo -v
-# Keep sudo alive in the background — refresh every 10 seconds until this
-# script (and its children) exit.
-(while true; do sudo -n true; sleep 10; done) 2>/dev/null &
-SUDO_KEEPALIVE_PID=$!
-trap 'kill $SUDO_KEEPALIVE_PID 2>/dev/null || true' EXIT
 
 if [ "$(uname)" = "Darwin" ]; then
 	# Ensure Xcode Command Line Tools are installed and up to date
