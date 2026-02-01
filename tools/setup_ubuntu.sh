@@ -564,7 +564,8 @@ install_carapace() {
 		log "Could not fetch latest carapace version"
 		return 1
 	fi
-	local download_url="https://github.com/carapace-sh/carapace-bin/releases/download/${latest_version}/carapace-bin_linux_${arch}.tar.gz"
+	local version_num="${latest_version#v}"
+	local download_url="https://github.com/carapace-sh/carapace-bin/releases/download/${latest_version}/carapace-bin_${version_num}_linux_${arch}.tar.gz"
 	log "Downloading carapace ${latest_version} for ${arch}"
 	curl -fsSL "$download_url" -o /tmp/carapace.tar.gz
 	tar -xzf /tmp/carapace.tar.gz -C /tmp
