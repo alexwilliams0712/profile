@@ -40,7 +40,6 @@ collect_user_input() {
 
 run_function() {
 	local func_name=$1
-	sudo -v
 	if ! $func_name; then
 		failed_functions+=("$func_name")
 		echo "Warning: $func_name failed, continuing with next function..."
