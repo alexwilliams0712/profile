@@ -15,7 +15,7 @@ $line_break\
 $character"""
 
 [username]
-format = "[$user]($style) "
+format = "[$user]($style)"
 style_user = "bold blue"
 style_root = "bold red"
 show_always = true
