@@ -561,7 +561,7 @@ install_ai() {
 	sudo npm install -g @google/gemini-cli
 
 	# Install Codex
-	npm i -g @openai/codex
+	sudo npm i -g @openai/codex
 
 	log "AI CLI tools installation complete"
 }
