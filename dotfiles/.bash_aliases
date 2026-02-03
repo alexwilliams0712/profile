@@ -335,6 +335,26 @@ _ver_gt() { [ "$1" != "$2" ] && _ver_gte "$1" "$2"; }
 _ver_lt() { ! _ver_gte "$1" "$2"; }
 _ver_lte() { ! _ver_gt "$1" "$2"; }
 
+# Check if version $1 satisfies requires-python spec $2 (e.g., ">=3.9,<3.13")
+_check_requires_python() {
+	local ver="$1" spec_str="$2" spec op spec_ver
+	IFS=',' read -ra specs <<< "$spec_str"
+	for spec in "${specs[@]}"; do
+		spec="${spec// /}"
+		[[ "$spec" =~ ^(>=|<=|!=|==|~=|>|<)(.+)$ ]] || continue
+		op="${BASH_REMATCH[1]}" spec_ver="${BASH_REMATCH[2]}"
+		case "$op" in
+			">=") _ver_gte "$ver" "$spec_ver" || return 1 ;;
+			">")  _ver_gt "$ver" "$spec_ver" || return 1 ;;
+			"<=") _ver_lte "$ver" "$spec_ver" || return 1 ;;
+			"<")  _ver_lt "$ver" "$spec_ver" || return 1 ;;
+			"==") [[ "$spec_ver" == *".*" ]] && { [[ "$ver" == "${spec_ver%.*}"* ]] || return 1; } || { [ "$ver" = "$spec_ver" ] || return 1; } ;;
+			"!=") [ "$ver" != "$spec_ver" ] || return 1 ;;
+			"~=") _ver_gte "$ver" "$spec_ver" || return 1; IFS='.' read -ra p <<< "$spec_ver"; p[-2]=$((p[-2]+1)); _ver_lt "$ver" "$(IFS=.; echo "${p[*]:0:${#p[@]}-1}")" || return 1 ;;
+		esac
+	done
+}
+
 function _select_option() {
 	local prompt="$1"
 	shift
@@ -408,130 +428,40 @@ function enter_pyenv() {
 	print_function_name
 
 	if [ ! -d ".venv" ]; then
-		# Get available Python versions from pyenv (filter to version numbers only)
 		local versions=($(pyenv versions --bare 2>/dev/null | grep -E '^[0-9]+\.[0-9]+' | sort -V -r))
 
 		if [ ${#versions[@]} -eq 0 ]; then
 			echo "No Python versions found in pyenv. Using system Python."
 			uv venv
 		else
-			# Detect Python version constraints
+			local pyver_file="" requires_py=""
+			[ -f ".python-version" ] && pyver_file=$(head -1 .python-version | tr -d '[:space:]')
+			[ -f "pyproject.toml" ] && requires_py=$(grep -oP '(?<=requires-python\s=\s["\x27])[^"\x27]+' pyproject.toml 2>/dev/null | head -1)
+
+			# Build annotations for incompatible versions
 			_SELECT_ANNOTATIONS=()
-			local python_version_file=""
-			local requires_python=""
-
-			if [ -f ".python-version" ]; then
-				python_version_file=$(head -1 .python-version | tr -d '[:space:]')
-			fi
-
-			if [ -f "pyproject.toml" ]; then
-				requires_python=$(grep -E '^\s*requires-python\s*=' pyproject.toml 2>/dev/null | head -1 | sed "s/.*=[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/" | tr -d '[:space:]')
-			fi
-
-			# Build annotations for each version
 			for i in "${!versions[@]}"; do
-				local ver="${versions[$i]}"
-				local issues=()
-
-				# Check .python-version match (prefix match for partial specs like "3.11")
-				if [ -n "$python_version_file" ]; then
-					if [[ "$ver" != "$python_version_file" && "$ver" != "$python_version_file".* ]]; then
-						issues+=(".python-version requires ${python_version_file}")
-					fi
-				fi
-
-				# Check requires-python constraints
-				if [ -n "$requires_python" ]; then
-					local failed=""
-					IFS=',' read -ra specs <<< "$requires_python"
-					for spec in "${specs[@]}"; do
-						spec=$(echo "$spec" | tr -d '[:space:]')
-						local op="" spec_ver=""
-						if [[ "$spec" =~ ^(>=|<=|!=|==|~=|>|<)(.+)$ ]]; then
-							op="${BASH_REMATCH[1]}"
-							spec_ver="${BASH_REMATCH[2]}"
-						else
-							continue
-						fi
-
-						# Handle == with wildcard (e.g., ==3.11.*)
-						if [[ "$op" == "==" && "$spec_ver" == *".*" ]]; then
-							local prefix="${spec_ver%.*}"
-							if [[ "$ver" != "$prefix" && "$ver" != "$prefix".* ]]; then
-								failed="yes"
-								break
-							fi
-							continue
-						fi
-
-						# Handle ~= (compatible release, PEP 440)
-						if [[ "$op" == "~=" ]]; then
-							if ! _ver_gte "$ver" "$spec_ver"; then
-								failed="yes"; break
-							fi
-							local sv_parts
-							IFS='.' read -ra sv_parts <<< "$spec_ver"
-							local n=${#sv_parts[@]}
-							if [ "$n" -ge 2 ]; then
-								sv_parts[n - 2]=$(( ${sv_parts[n - 2]} + 1 ))
-								local upper=""
-								for ((j = 0; j < n - 1; j++)); do
-									[ -n "$upper" ] && upper+="."
-									upper+="${sv_parts[$j]}"
-								done
-								if ! _ver_lt "$ver" "$upper"; then
-									failed="yes"; break
-								fi
-							fi
-							continue
-						fi
-
-						case "$op" in
-						">=") _ver_gte "$ver" "$spec_ver" || { failed="yes"; break; } ;;
-						">") _ver_gt "$ver" "$spec_ver" || { failed="yes"; break; } ;;
-						"<=") _ver_lte "$ver" "$spec_ver" || { failed="yes"; break; } ;;
-						"<") _ver_lt "$ver" "$spec_ver" || { failed="yes"; break; } ;;
-						"==") [ "$ver" = "$spec_ver" ] || { failed="yes"; break; } ;;
-						"!=") [ "$ver" != "$spec_ver" ] || { failed="yes"; break; } ;;
-						esac
-					done
-					if [ -n "$failed" ]; then
-						issues+=("requires-python: ${requires_python}")
-					fi
-				fi
-
-				if [ ${#issues[@]} -gt 0 ]; then
-					_SELECT_ANNOTATIONS[i]=$(
-						IFS='; '
-						echo "${issues[*]}"
-					)
-				else
-					_SELECT_ANNOTATIONS[i]=""
-				fi
+				local ver="${versions[$i]}" issues=()
+				[ -n "$pyver_file" ] && [[ "$ver" != "$pyver_file"* ]] && issues+=(".python-version: $pyver_file")
+				[ -n "$requires_py" ] && ! _check_requires_python "$ver" "$requires_py" && issues+=("requires-python: $requires_py")
+				_SELECT_ANNOTATIONS[i]=$(IFS='; '; echo "${issues[*]}")
 			done
 
-			# Print constraint summary if any constraints were found
-			if [ -n "$python_version_file" ] || [ -n "$requires_python" ]; then
-				[ -n "$python_version_file" ] && printf '\033[33mDetected .python-version: %s\033[0m\n' "$python_version_file"
-				[ -n "$requires_python" ] && printf '\033[33mDetected requires-python: %s\033[0m\n' "$requires_python"
-				echo ""
-			fi
+			# Show detected constraints
+			[ -n "$pyver_file" ] && printf '\033[33mDetected .python-version: %s\033[0m\n' "$pyver_file"
+			[ -n "$requires_py" ] && printf '\033[33mDetected requires-python: %s\033[0m\n' "$requires_py"
+			[ -n "$pyver_file$requires_py" ] && echo ""
 
 			_select_option "Select Python version for new .venv:" "${versions[@]}"
-			local selected_version="$SELECTED_OPTION"
 			_SELECT_ANNOTATIONS=()
 
-			local python_bin
-			python_bin="$(pyenv prefix "$selected_version" 2>/dev/null)/bin/python"
-			if [ ! -x "$python_bin" ]; then
-				python_bin="$selected_version"
-			fi
-			echo "Creating .venv with Python ${selected_version}..."
+			local python_bin="$(pyenv prefix "$SELECTED_OPTION" 2>/dev/null)/bin/python"
+			[ ! -x "$python_bin" ] && python_bin="$SELECTED_OPTION"
+			echo "Creating .venv with Python ${SELECTED_OPTION}..."
 			uv venv -p "$python_bin"
 		fi
 	fi
 
-	# Activate the virtual environment
 	source .venv/bin/activate
 	echo "Python version: $(python --version 2>&1)"
 	pypath
