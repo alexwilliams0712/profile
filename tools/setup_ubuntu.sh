@@ -7,7 +7,6 @@ export PROJECT_ROOT=$HOME/profile
 export PATH="/usr/local/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
-export DEFAULT_PYTHON_VERSION="3.14"
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(dpkg --print-architecture)
 set -e
@@ -346,33 +345,6 @@ install_1password() {
 	fi
 }
 
-install_pyenv() {
-	print_function_name
-	apt_upgrader
-	sudo apt install -y software-properties-common
-	pyenv_dir="$HOME/.pyenv"
-	if [ -d "$pyenv_dir" ]; then
-		log "The $pyenv_dir directory already exists. Remove it to reinstall."
-	else
-		curl https://pyenv.run | bash
-	fi
-	source ~/.bashrc 2>/dev/null || true
-	pyenv update
-	source ~/.bashrc 2>/dev/null || true
-	pyenv install -s $DEFAULT_PYTHON_VERSION
-	pyenv global $DEFAULT_PYTHON_VERSION
-	FOLDER=$(pyenv root)/plugins/pyenv-virtualenv
-	URL=https://github.com/pyenv/pyenv-virtualenv.git
-	if [ ! -d "$FOLDER" ]; then
-		git clone $URL $FOLDER
-	else
-		cd "$FOLDER"
-		git pull $URL
-	fi
-	curl -LsSf https://astral.sh/uv/install.sh | sh
-
-	ensure_directory
-}
 install_rust() {
 	print_function_name
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable

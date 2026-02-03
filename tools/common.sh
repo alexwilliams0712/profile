@@ -1,6 +1,8 @@
 #!/bin/bash
 # Shared functions used by both setup_macos.sh and setup_ubuntu.sh
 
+export DEFAULT_PYTHON_VERSION="3.14"
+
 handle_error() {
 	echo "An error occurred on line $1"
 }
@@ -85,6 +87,86 @@ install_starship() {
 	if command -v starship >/dev/null 2>&1; then
 		starship --version
 	fi
+}
+
+install_pyenv() {
+	print_function_name
+	local os_type
+	os_type="$(uname -s)"
+
+	# Platform-specific pre-requisites
+	if [ "$os_type" = "Darwin" ]; then
+		# Set build flags so pyenv can find Homebrew keg-only dependencies
+		export LDFLAGS="-L$(brew --prefix openssl)/lib -L$(brew --prefix readline)/lib -L$(brew --prefix sqlite3)/lib -L$(brew --prefix zlib)/lib"
+		export CPPFLAGS="-I$(brew --prefix openssl)/include -I$(brew --prefix readline)/include -I$(brew --prefix sqlite3)/include -I$(brew --prefix zlib)/include"
+		export PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig:$(brew --prefix readline)/lib/pkgconfig:$(brew --prefix sqlite3)/lib/pkgconfig:$(brew --prefix zlib)/lib/pkgconfig"
+	else
+		apt_upgrader
+		sudo apt install -y software-properties-common
+	fi
+
+	# Install pyenv if not already present
+	local pyenv_dir="$HOME/.pyenv"
+	if [ -d "$pyenv_dir" ]; then
+		log "The $pyenv_dir directory already exists. Remove it to reinstall."
+	else
+		curl https://pyenv.run | bash
+	fi
+
+	export PYENV_ROOT="$HOME/.pyenv"
+	export PATH="$PYENV_ROOT/bin:$PATH"
+	if command -v pyenv >/dev/null 2>&1; then
+		eval "$(pyenv init --path)"
+		eval "$(pyenv init -)"
+	fi
+
+	# Update pyenv plugin index (Linux-only; on macOS pyenv is managed by Homebrew)
+	if [ "$os_type" != "Darwin" ]; then
+		source ~/.bashrc 2>/dev/null || true
+		pyenv update
+		source ~/.bashrc 2>/dev/null || true
+	fi
+
+	# Install Python versions
+	if [ "$os_type" = "Darwin" ]; then
+		pyenv install -s $DEFAULT_PYTHON_VERSION
+	else
+		for pyver in $DEFAULT_PYTHON_VERSION 3.13 3.12 3.11; do
+			pyenv install -f "$pyver"
+		done
+	fi
+	pyenv global $DEFAULT_PYTHON_VERSION
+
+	# Install pyenv-virtualenv plugin
+	local venv_folder
+	venv_folder="$(pyenv root)/plugins/pyenv-virtualenv"
+	local venv_url="https://github.com/pyenv/pyenv-virtualenv.git"
+	if [ ! -d "$venv_folder" ]; then
+		git clone "$venv_url" "$venv_folder"
+	else
+		cd "$venv_folder"
+		git pull "$venv_url"
+	fi
+
+	# Install uv
+	if [ "$os_type" = "Darwin" ]; then
+		# uv is installed via Homebrew on macOS
+		:
+	else
+		curl -LsSf https://astral.sh/uv/install.sh | sh
+	fi
+
+	# Install base Python packages
+	if command -v uv >/dev/null 2>&1; then
+		uv pip install pip-tools psutil
+	fi
+
+	# Create a default venv if needed (macOS convention)
+	if [ "$os_type" = "Darwin" ] && [ ! -d "$HOME/.venv" ]; then
+		uv venv "$HOME/.venv"
+	fi
+
+	ensure_directory
 }
 
 exit_script() {
