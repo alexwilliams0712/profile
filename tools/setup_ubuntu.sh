@@ -560,12 +560,8 @@ install_ai() {
 	fi
 	sudo npm install -g @google/gemini-cli
 
-	# Install ChatGPT CLI (shell-gpt)
-	log "Installing ChatGPT CLI (shell-gpt)..."
-	if command -v sgpt >/dev/null 2>&1; then
-		log "shell-gpt already installed, upgrading..."
-	fi
-	pip install -U shell-gpt
+	# Install Codex
+	npm i -g @openai/codex
 
 	log "AI CLI tools installation complete"
 }
