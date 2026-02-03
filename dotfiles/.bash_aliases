@@ -329,6 +329,32 @@ function pypath() {
 	unset IFS
 }
 
+# Version comparison helpers (using sort -V)
+_ver_gte() { [ "$(printf '%s\n%s' "$1" "$2" | sort -V | head -n1)" = "$2" ]; }
+_ver_gt() { [ "$1" != "$2" ] && _ver_gte "$1" "$2"; }
+_ver_lt() { ! _ver_gte "$1" "$2"; }
+_ver_lte() { ! _ver_gt "$1" "$2"; }
+
+# Check if version $1 satisfies requires-python spec $2 (e.g., ">=3.9,<3.13")
+_check_requires_python() {
+	local ver="$1" spec_str="$2" spec op spec_ver
+	IFS=',' read -ra specs <<< "$spec_str"
+	for spec in "${specs[@]}"; do
+		spec="${spec// /}"
+		[[ "$spec" =~ ^(>=|<=|!=|==|~=|>|<)(.+)$ ]] || continue
+		op="${BASH_REMATCH[1]}" spec_ver="${BASH_REMATCH[2]}"
+		case "$op" in
+			">=") _ver_gte "$ver" "$spec_ver" || return 1 ;;
+			">")  _ver_gt "$ver" "$spec_ver" || return 1 ;;
+			"<=") _ver_lte "$ver" "$spec_ver" || return 1 ;;
+			"<")  _ver_lt "$ver" "$spec_ver" || return 1 ;;
+			"==") [[ "$spec_ver" == *".*" ]] && { [[ "$ver" == "${spec_ver%.*}"* ]] || return 1; } || { [ "$ver" = "$spec_ver" ] || return 1; } ;;
+			"!=") [ "$ver" != "$spec_ver" ] || return 1 ;;
+			"~=") _ver_gte "$ver" "$spec_ver" || return 1; IFS='.' read -ra p <<< "$spec_ver"; p[-2]=$((p[-2]+1)); _ver_lt "$ver" "$(IFS=.; echo "${p[*]:0:${#p[@]}-1}")" || return 1 ;;
+		esac
+	done
+}
+
 function _select_option() {
 	local prompt="$1"
 	shift
@@ -347,10 +373,19 @@ function _select_option() {
 	while true; do
 		# Print menu
 		for i in "${!options[@]}"; do
+			local annotation="${_SELECT_ANNOTATIONS[$i]:-}"
 			if [ $i -eq $selected ]; then
-				printf '\033[1;32m> %s\033[0m\n' "${options[$i]}"
+				if [ -n "$annotation" ]; then
+					printf '\033[1;31m> %s  (%s)\033[0m\n' "${options[$i]}" "$annotation"
+				else
+					printf '\033[1;32m> %s\033[0m\n' "${options[$i]}"
+				fi
 			else
-				printf '  %s\n' "${options[$i]}"
+				if [ -n "$annotation" ]; then
+					printf '\033[31m  %s  (%s)\033[0m\n' "${options[$i]}" "$annotation"
+				else
+					printf '  %s\n' "${options[$i]}"
+				fi
 			fi
 		done
 
@@ -393,22 +428,40 @@ function enter_pyenv() {
 	print_function_name
 
 	if [ ! -d ".venv" ]; then
-		# Get available Python versions from pyenv (filter to version numbers only)
 		local versions=($(pyenv versions --bare 2>/dev/null | grep -E '^[0-9]+\.[0-9]+' | sort -V -r))
 
 		if [ ${#versions[@]} -eq 0 ]; then
 			echo "No Python versions found in pyenv. Using system Python."
 			uv venv
 		else
-			_select_option "Select Python version for new .venv:" "${versions[@]}"
-			local selected_version="$SELECTED_OPTION"
+			local pyver_file="" requires_py=""
+			[ -f ".python-version" ] && pyver_file=$(head -1 .python-version | tr -d '[:space:]')
+			[ -f "pyproject.toml" ] && requires_py=$(grep -oP '(?<=requires-python\s=\s["\x27])[^"\x27]+' pyproject.toml 2>/dev/null | head -1)
 
-			echo "Creating .venv with Python ${selected_version}..."
-			uv venv -p "$selected_version"
+			# Build annotations for incompatible versions
+			_SELECT_ANNOTATIONS=()
+			for i in "${!versions[@]}"; do
+				local ver="${versions[$i]}" issues=()
+				[ -n "$pyver_file" ] && [[ "$ver" != "$pyver_file"* ]] && issues+=(".python-version: $pyver_file")
+				[ -n "$requires_py" ] && ! _check_requires_python "$ver" "$requires_py" && issues+=("requires-python: $requires_py")
+				_SELECT_ANNOTATIONS[i]=$(IFS='; '; echo "${issues[*]}")
+			done
+
+			# Show detected constraints
+			[ -n "$pyver_file" ] && printf '\033[33mDetected .python-version: %s\033[0m\n' "$pyver_file"
+			[ -n "$requires_py" ] && printf '\033[33mDetected requires-python: %s\033[0m\n' "$requires_py"
+			[ -n "$pyver_file$requires_py" ] && echo ""
+
+			_select_option "Select Python version for new .venv:" "${versions[@]}"
+			_SELECT_ANNOTATIONS=()
+
+			local python_bin="$(pyenv prefix "$SELECTED_OPTION" 2>/dev/null)/bin/python"
+			[ ! -x "$python_bin" ] && python_bin="$SELECTED_OPTION"
+			echo "Creating .venv with Python ${SELECTED_OPTION}..."
+			uv venv -p "$python_bin"
 		fi
 	fi
 
-	# Activate the virtual environment
 	source .venv/bin/activate
 	echo "Python version: $(python --version 2>&1)"
 	pypath
@@ -447,6 +500,10 @@ function pipcompiler() {
 	# Check if pyproject.toml exists and has a dependencies section
 	if [ -f "pyproject.toml" ] && grep -q '^dependencies\s*=' pyproject.toml; then
 		echo "Found pyproject.toml with dependencies, syncing directly..."
+
+		# Sort dependencies alphabetically in pyproject.toml
+		echo "Sorting dependencies in pyproject.toml..."
+		uv tool run toml-sort --in-place --ignore-case --sort-inline-arrays --no-sort-tables pyproject.toml
 
 		# Build uv sync command with upgrade flag and all extras
 		local sync_cmd="uv sync -U --all-extras"

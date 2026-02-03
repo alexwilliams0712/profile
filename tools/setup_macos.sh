@@ -14,7 +14,6 @@ if [ "$(uname -m)" = "arm64" ]; then
 else
 	eval "$(/usr/local/bin/brew shellenv 2>/dev/null || /opt/homebrew/bin/brew shellenv 2>/dev/null || true)"
 fi
-export DEFAULT_PYTHON_VERSION="3.14"
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(uname -m)
 set -e
@@ -181,37 +180,6 @@ setup_bash() {
 	if [ ! -f "$HOME/.bash_profile" ] || ! grep -q '.bashrc' "$HOME/.bash_profile" 2>/dev/null; then
 		log "Configuring .bash_profile to source .bashrc"
 		echo '[ -f ~/.bashrc ] && source ~/.bashrc' >>"$HOME/.bash_profile"
-	fi
-}
-
-setup_python() {
-	print_function_name
-	log "Setting up Python environment..."
-
-	# Set build flags so pyenv can find Homebrew dependencies
-	# (openssl, readline, sqlite3, zlib, tcl-tk are keg-only on macOS)
-	export LDFLAGS="-L$(brew --prefix openssl)/lib -L$(brew --prefix readline)/lib -L$(brew --prefix sqlite3)/lib -L$(brew --prefix zlib)/lib"
-	export CPPFLAGS="-I$(brew --prefix openssl)/include -I$(brew --prefix readline)/include -I$(brew --prefix sqlite3)/include -I$(brew --prefix zlib)/include"
-	export PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig:$(brew --prefix readline)/lib/pkgconfig:$(brew --prefix sqlite3)/lib/pkgconfig:$(brew --prefix zlib)/lib/pkgconfig"
-
-	export PYENV_ROOT="$HOME/.pyenv"
-	export PATH="$PYENV_ROOT/bin:$PATH"
-	if command -v pyenv >/dev/null 2>&1; then
-		eval "$(pyenv init --path)"
-		eval "$(pyenv init -)"
-	fi
-
-	pyenv install -s $DEFAULT_PYTHON_VERSION
-	pyenv global $DEFAULT_PYTHON_VERSION
-
-	# uv is installed via Homebrew
-
-	# Install base packages
-	uv pip install pip-tools psutil
-
-	# Create a default venv if needed
-	if [ ! -d "$HOME/.venv" ]; then
-		uv venv "$HOME/.venv"
 	fi
 }
 
@@ -423,7 +391,7 @@ main() {
 	run_function install_homebrew
 	run_function install_packages
 	run_function setup_bash
-	run_function setup_python
+	run_function install_pyenv
 	run_function install_rust
 	run_function install_node
 	run_function install_go

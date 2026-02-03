@@ -34,7 +34,7 @@ format = '([$all_status$ahead_behind]($style) )'
 style = "bold red"
 
 [python]
-pyenv_version_name = true
+pyenv_version_name = false
 format = "via [$symbol$version( \\($virtualenv\\))]($style) "
 detect_extensions = ["py", "ipynb"]
 detect_files = [".python-version", "pyproject.toml", "requirements.txt", "setup.py"]
