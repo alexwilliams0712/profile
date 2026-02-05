@@ -1166,10 +1166,16 @@ formatter() {
 	# Check for Python project
 	if [ -f pyproject.toml ] || ls *.py &>/dev/null || [ -d .venv/ ]; then
 		if [ -n "$VIRTUAL_ENV" ]; then
-			log "Running pylint..."
-			pylint $(find . -type f -name "*.py")
+			if command -v ruff &>/dev/null; then
+				log "Running ruff check..."
+				ruff check --fix .
+				log "Running ruff format..."
+				ruff format .
+			else
+				log "ruff not found. Skipping Python linting/formatting."
+			fi
 		else
-			log "Python project detected, but not in a uv environment. Skipping pylint."
+			log "Python project detected, but not in a uv environment. Skipping Python linting/formatting."
 		fi
 	fi
 
