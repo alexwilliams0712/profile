@@ -1113,6 +1113,26 @@ def align_json(obj, indent=0):
         compact = compact_json(obj)
         if "\n" not in compact and current_col + len(compact) < LINE_WIDTH:
             return compact
+        # Pack scalar items wide (multiple per line)
+        if all(not isinstance(x, (dict, list)) for x in obj):
+            inner_ind = ind + "  "
+            lines = ["["]
+            current_line = inner_ind
+            for i, item in enumerate(obj):
+                value_str = json.dumps(item)
+                suffix = ", " if i < len(obj) - 1 else ""
+                entry = value_str + suffix
+                if current_line == inner_ind:
+                    current_line += entry
+                elif len(current_line) + len(entry) <= LINE_WIDTH:
+                    current_line += entry
+                else:
+                    lines.append(current_line.rstrip())
+                    current_line = inner_ind + entry
+            if current_line.strip():
+                lines.append(current_line.rstrip())
+            lines.append(f"{ind}]")
+            return "\n".join(lines)
         lines = ["["]
         for i, item in enumerate(obj):
             value_str = align_json(item, indent + 1)
