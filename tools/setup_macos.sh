@@ -311,8 +311,8 @@ install_tailscale() {
 			log "Creating CLI wrapper: $wrapper_target"
 			sudo rm -f "$wrapper_target"
 			sudo tee "$wrapper_target" >/dev/null <<-WRAPPER
-			#!/bin/bash
-			exec "$tailscale_cli" "\$@"
+				#!/bin/bash
+				exec "$tailscale_cli" "\$@"
 			WRAPPER
 			sudo chmod +x "$wrapper_target"
 		fi

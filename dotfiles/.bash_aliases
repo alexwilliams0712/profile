@@ -69,7 +69,10 @@ function scp_mirror() {
 	shift
 	local owner="${SUDO_USER:-$USER}"
 	local remote_home
-	remote_home=$(ssh "$host" 'echo $HOME') || { echo "Failed to get remote home directory"; return 1; }
+	remote_home=$(ssh "$host" 'echo $HOME') || {
+		echo "Failed to get remote home directory"
+		return 1
+	}
 
 	for path in "$@"; do
 		# Expand tilde for local destination
@@ -340,19 +343,27 @@ _ver_lte() { ! _ver_gt "$1" "$2"; }
 # Check if version $1 satisfies requires-python spec $2 (e.g., ">=3.9,<3.13")
 _check_requires_python() {
 	local ver="$1" spec_str="$2" spec op spec_ver
-	IFS=',' read -ra specs <<< "$spec_str"
+	IFS=',' read -ra specs <<<"$spec_str"
 	for spec in "${specs[@]}"; do
 		spec="${spec// /}"
 		[[ "$spec" =~ ^(>=|<=|!=|==|~=|>|<)(.+)$ ]] || continue
 		op="${BASH_REMATCH[1]}" spec_ver="${BASH_REMATCH[2]}"
 		case "$op" in
-			">=") _ver_gte "$ver" "$spec_ver" || return 1 ;;
-			">")  _ver_gt "$ver" "$spec_ver" || return 1 ;;
-			"<=") _ver_lte "$ver" "$spec_ver" || return 1 ;;
-			"<")  _ver_lt "$ver" "$spec_ver" || return 1 ;;
-			"==") [[ "$spec_ver" == *".*" ]] && { [[ "$ver" == "${spec_ver%.*}"* ]] || return 1; } || { [ "$ver" = "$spec_ver" ] || return 1; } ;;
-			"!=") [ "$ver" != "$spec_ver" ] || return 1 ;;
-			"~=") _ver_gte "$ver" "$spec_ver" || return 1; IFS='.' read -ra p <<< "$spec_ver"; p[-2]=$((p[-2]+1)); _ver_lt "$ver" "$(IFS=.; echo "${p[*]:0:${#p[@]}-1}")" || return 1 ;;
+		">=") _ver_gte "$ver" "$spec_ver" || return 1 ;;
+		">") _ver_gt "$ver" "$spec_ver" || return 1 ;;
+		"<=") _ver_lte "$ver" "$spec_ver" || return 1 ;;
+		"<") _ver_lt "$ver" "$spec_ver" || return 1 ;;
+		"==") [[ "$spec_ver" == *".*" ]] && { [[ "$ver" == "${spec_ver%.*}"* ]] || return 1; } || { [ "$ver" = "$spec_ver" ] || return 1; } ;;
+		"!=") [ "$ver" != "$spec_ver" ] || return 1 ;;
+		"~=")
+			_ver_gte "$ver" "$spec_ver" || return 1
+			IFS='.' read -ra p <<<"$spec_ver"
+			p[-2]=$((p[-2] + 1))
+			_ver_lt "$ver" "$(
+				IFS=.
+				echo "${p[*]:0:${#p[@]}-1}"
+			)" || return 1
+			;;
 		esac
 	done
 }
@@ -446,7 +457,10 @@ function enter_pyenv() {
 				local ver="${versions[$i]}" issues=()
 				[ -n "$pyver_file" ] && [[ "$ver" != "$pyver_file"* ]] && issues+=(".python-version: $pyver_file")
 				[ -n "$requires_py" ] && ! _check_requires_python "$ver" "$requires_py" && issues+=("requires-python: $requires_py")
-				_SELECT_ANNOTATIONS[i]=$(IFS='; '; echo "${issues[*]}")
+				_SELECT_ANNOTATIONS[i]=$(
+					IFS='; '
+					echo "${issues[*]}"
+				)
 			done
 
 			# Show detected constraints
@@ -1178,6 +1192,7 @@ formatter_shell() {
 }
 
 alias ti='terraform init'
+alias tp='terraform plan'
 alias tf='terraform fmt --recursive'
 alias ta='terraform apply'
 
