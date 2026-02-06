@@ -138,11 +138,26 @@ if command -v pyenv >/dev/null 2>&1; then
 		eval "$(command pyenv init --path)"
 		eval "$(command pyenv init -)"
 	}
-	python()  { _pyenv_init; python "$@"; }
-	python3() { _pyenv_init; python3 "$@"; }
-	pip()     { _pyenv_init; pip "$@"; }
-	pip3()    { _pyenv_init; pip3 "$@"; }
-	pyenv()   { _pyenv_init; pyenv "$@"; }
+	python() {
+		_pyenv_init
+		python "$@"
+	}
+	python3() {
+		_pyenv_init
+		python3 "$@"
+	}
+	pip() {
+		_pyenv_init
+		pip "$@"
+	}
+	pip3() {
+		_pyenv_init
+		pip3 "$@"
+	}
+	pyenv() {
+		_pyenv_init
+		pyenv "$@"
+	}
 fi
 
 # npm
@@ -202,6 +217,11 @@ fi
 # Carapace - universal tab completions
 if command -v carapace >/dev/null 2>&1; then
 	source <(carapace _carapace bash)
+fi
+
+# uv - tab completions
+if command -v uv >/dev/null 2>&1; then
+	eval "$(uv generate-shell-completion bash)"
 fi
 
 # Starship prompt, or fall back to custom prompt
