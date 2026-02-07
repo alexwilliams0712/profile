@@ -1,69 +1,15 @@
 [
-	// Split editor
-	{
-		"key": "ctrl+\\",
-		"command": "workbench.action.splitEditor",
-		"when": "!isMac"
-	},
-	{
-		"key": "cmd+\\",
-		"command": "workbench.action.splitEditor",
-		"when": "isMac"
-	},
-	// Split editor down
-	{
-		"key": "ctrl+shift+\\",
-		"command": "workbench.action.splitEditorDown",
-		"when": "!isMac"
-	},
-	{
-		"key": "cmd+shift+\\",
-		"command": "workbench.action.splitEditorDown",
-		"when": "isMac"
-	},
-	// Focus editor groups
-	{
-		"key": "ctrl+1",
-		"command": "workbench.action.focusFirstEditorGroup",
-		"when": "!isMac"
-	},
-	{
-		"key": "cmd+1",
-		"command": "workbench.action.focusFirstEditorGroup",
-		"when": "isMac"
-	},
-	{
-		"key": "ctrl+2",
-		"command": "workbench.action.focusSecondEditorGroup",
-		"when": "!isMac"
-	},
-	{
-		"key": "cmd+2",
-		"command": "workbench.action.focusSecondEditorGroup",
-		"when": "isMac"
-	},
-	{
-		"key": "ctrl+3",
-		"command": "workbench.action.focusThirdEditorGroup",
-		"when": "!isMac"
-	},
-	{
-		"key": "cmd+3",
-		"command": "workbench.action.focusThirdEditorGroup",
-		"when": "isMac"
-	},
-	// Move editor to other group
-	{
-		"key": "ctrl+shift+right",
-		"command": "workbench.action.moveEditorToNextGroup"
-	},
-	{
-		"key": "ctrl+shift+left",
-		"command": "workbench.action.moveEditorToPreviousGroup"
-	},
-	// Toggle split orientation (vertical <-> horizontal)
-	{
-		"key": "alt+shift+0",
-		"command": "workbench.action.toggleEditorGroupLayout"
-	}
+  {"command": "workbench.action.splitEditor", "key": "ctrl+\\", "when": "!isMac"},
+  {"command": "workbench.action.splitEditor", "key": "cmd+\\", "when": "isMac"},
+  {"command": "workbench.action.splitEditorDown", "key": "ctrl+shift+\\", "when": "!isMac"},
+  {"command": "workbench.action.splitEditorDown", "key": "cmd+shift+\\", "when": "isMac"},
+  {"command": "workbench.action.focusFirstEditorGroup", "key": "ctrl+1", "when": "!isMac"},
+  {"command": "workbench.action.focusFirstEditorGroup", "key": "cmd+1", "when": "isMac"},
+  {"command": "workbench.action.focusSecondEditorGroup", "key": "ctrl+2", "when": "!isMac"},
+  {"command": "workbench.action.focusSecondEditorGroup", "key": "cmd+2", "when": "isMac"},
+  {"command": "workbench.action.focusThirdEditorGroup", "key": "ctrl+3", "when": "!isMac"},
+  {"command": "workbench.action.focusThirdEditorGroup", "key": "cmd+3", "when": "isMac"},
+  {"command": "workbench.action.moveEditorToNextGroup", "key": "ctrl+shift+right"},
+  {"command": "workbench.action.moveEditorToPreviousGroup", "key": "ctrl+shift+left"},
+  {"command": "workbench.action.toggleEditorGroupLayout", "key": "alt+shift+0"}
 ]

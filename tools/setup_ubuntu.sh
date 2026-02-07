@@ -88,6 +88,7 @@ install_apt_packages() {
 		build-essential \
 		curl \
 		dos2unix \
+		duf \
 		fail2ban \
 		figlet \
 		flatpak \
@@ -546,6 +547,40 @@ install_carapace() {
 	carapace --version
 }
 
+install_viddy() {
+	print_function_name
+	local arch
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		arch="arm64"
+	else
+		arch="x86_64"
+	fi
+	local latest_version
+	latest_version=$(curl -fsSL https://api.github.com/repos/sachaos/viddy/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+	if [ -z "$latest_version" ]; then
+		log "Could not fetch latest viddy version"
+		return 1
+	fi
+	local download_url="https://github.com/sachaos/viddy/releases/download/${latest_version}/viddy-${latest_version}-linux-${arch}.tar.gz"
+	log "Downloading viddy ${latest_version} for ${arch}"
+	curl -fsSL "$download_url" -o /tmp/viddy.tar.gz
+	tar -xzf /tmp/viddy.tar.gz -C /tmp
+	sudo mv /tmp/viddy /usr/local/bin/viddy
+	sudo chmod +x /usr/local/bin/viddy
+	rm -f /tmp/viddy.tar.gz
+	viddy --version
+}
+
+install_gum() {
+	print_function_name
+	sudo mkdir -p /etc/apt/keyrings
+	curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+	echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+	sudo apt update
+	sudo apt install -y gum
+	gum --version
+}
+
 install_ai() {
 	print_function_name
 
@@ -746,6 +781,8 @@ main() {
 	# run_function install_burpsuite
 	run_function install_starship
 	run_function install_carapace
+	run_function install_viddy
+	run_function install_gum
 	run_function install_ai
 	run_function apt_upgrader
 

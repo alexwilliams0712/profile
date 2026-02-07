@@ -224,6 +224,10 @@ if command -v uv >/dev/null 2>&1; then
 	eval "$(uv generate-shell-completion bash)"
 fi
 
+# Ignore terminal focus in/out events (VTE-based terminals like Terminator)
+bind '"\e[I": ""' 2>/dev/null
+bind '"\e[O": ""' 2>/dev/null
+
 # Starship prompt, or fall back to custom prompt
 if command -v starship >/dev/null 2>&1; then
 	eval "$(starship init bash)"
