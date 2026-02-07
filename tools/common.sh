@@ -43,20 +43,20 @@ collect_user_input() {
 run_function() {
 	local func_name=$1 exit_code=0
 	if command -v gum >/dev/null 2>&1; then
-		local done_marker
-		done_marker=$(mktemp -u)
-		set +m 2>/dev/null
-		gum spin --spinner dot --title "Running $func_name..." -- bash -c "while [ ! -f '$done_marker' ]; do sleep 0.2; done" &
-		$func_name &>/dev/null || exit_code=$?
-		touch "$done_marker" && wait 2>/dev/null
-		set -m 2>/dev/null
-		rm -f "$done_marker"
+		gum style --foreground 212 --bold ">>> $func_name"
+		$func_name || exit_code=$?
+		if [ $exit_code -ne 0 ]; then
+			gum style --foreground 196 --bold "FAIL $func_name"
+			failed_functions+=("$func_name")
+		else
+			gum style --foreground 82 --bold "<<< $func_name done"
+		fi
 	else
 		$func_name || exit_code=$?
-	fi
-	if [ $exit_code -ne 0 ]; then
-		failed_functions+=("$func_name")
-		echo "Warning: $func_name failed, continuing with next function..."
+		if [ $exit_code -ne 0 ]; then
+			failed_functions+=("$func_name")
+			echo "Warning: $func_name failed, continuing with next function..."
+		fi
 	fi
 }
 
