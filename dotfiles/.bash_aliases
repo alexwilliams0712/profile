@@ -81,7 +81,6 @@ function scp_mirror() {
 
 	local host="$1"
 	shift
-	local owner="${SUDO_USER:-$USER}"
 	local remote_home
 	remote_home=$(ssh "$host" 'echo $HOME') || {
 		echo "Failed to get remote home directory"
@@ -89,25 +88,23 @@ function scp_mirror() {
 	}
 
 	for path in "$@"; do
-		# Expand tilde for local destination
+		# Bash expands ~ before the function sees it, so all paths arrive as
+		# absolute (e.g. /home/user/.netrc or /Users/user/.netrc).
+		# Strip the local $HOME prefix to get the relative portion, then
+		# reconstruct absolute paths for both sides.
 		local local_path="${path/#\~/$HOME}"
-		# Expand tilde/home to the remote home directory for an absolute remote path
-		local remote_path="${path/#\~/$remote_home}"
-		remote_path="${remote_path/#$HOME/$remote_home}"
+		local rel_path="${local_path#$HOME/}"
+		local remote_path="$remote_home/$rel_path"
 
-		# Ensure local parent exists
 		mkdir -p "$(dirname "$local_path")"
 
-		# If path ends with a slash, treat it as directory: copy contents only
 		if [[ "$path" == */ ]]; then
 			echo "Copying contents of $host:$remote_path to $local_path"
-			sudo scp -r "$host:${remote_path%/}/*" "$local_path"
+			scp -r "$host:${remote_path%/}/*" "$local_path"
 		else
 			echo "Copying $host:$remote_path to $local_path"
-			sudo scp -r "$host:$remote_path" "$local_path"
+			scp -r "$host:$remote_path" "$local_path"
 		fi
-		sudo chown -R "$owner":"$(id -gn "$owner")" "$local_path"
-		sudo chmod -R u+rwX "$local_path"
 	done
 }
 

@@ -88,7 +88,6 @@ install_apt_packages() {
 		build-essential \
 		curl \
 		dos2unix \
-		duf \
 		fail2ban \
 		figlet \
 		flatpak \
@@ -571,6 +570,30 @@ install_viddy() {
 	viddy --version
 }
 
+install_duf() {
+	print_function_name
+	local arch
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		arch="arm64"
+	else
+		arch="amd64"
+	fi
+	local latest_version
+	latest_version=$(curl -fsSL https://api.github.com/repos/muesli/duf/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+	if [ -z "$latest_version" ]; then
+		log "Could not fetch latest duf version"
+		return 1
+	fi
+	local version_num="${latest_version#v}"
+	local deb_file="duf_${version_num}_linux_${arch}.deb"
+	local download_url="https://github.com/muesli/duf/releases/download/${latest_version}/${deb_file}"
+	log "Downloading duf ${latest_version} for ${arch}"
+	curl -fsSL "$download_url" -o "/tmp/${deb_file}"
+	sudo dpkg -i "/tmp/${deb_file}"
+	rm -f "/tmp/${deb_file}"
+	duf --version
+}
+
 install_gum() {
 	print_function_name
 	sudo mkdir -p /etc/apt/keyrings
@@ -635,8 +658,8 @@ install_aws_cli() {
 
 install_node() {
 	print_function_name
-	curl -fsSL https://deb.nodesource.com/setup_21.x | sudo -E bash - &&
-		sudo apt-get install -y nodejs
+	curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
+	sudo apt-get install -y nodejs
 	node -v
 	npm -v
 	sudo npm install -g wscat prettier json5 fracturedjsonjs
@@ -782,6 +805,7 @@ main() {
 	run_function install_starship
 	run_function install_carapace
 	run_function install_viddy
+	run_function install_duf
 	run_function install_gum
 	run_function install_ai
 	run_function apt_upgrader
