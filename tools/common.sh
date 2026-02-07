@@ -43,8 +43,23 @@ collect_user_input() {
 run_function() {
 	local func_name=$1 exit_code=0
 	if command -v gum >/dev/null 2>&1; then
-		gum style --foreground 212 --bold ">>> $func_name"
+		local term_h
+		term_h=$(tput lines)
+		# Reserve last line for spinner via scrolling region
+		printf '\033[1;%dr' "$((term_h - 1))"
+		set +m 2>/dev/null
+		(while true; do
+			for c in '⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏'; do
+				printf '\033[s\033[%d;1H\033[2K  \033[1;35m%s %s\033[0m\033[u' "$term_h" "$c" "$func_name"
+				sleep 0.1
+			done
+		done) &
+		local spin_pid=$!
 		$func_name || exit_code=$?
+		kill $spin_pid 2>/dev/null
+		wait $spin_pid 2>/dev/null
+		printf '\033[r\033[%d;1H\033[2K' "$term_h"
+		set -m 2>/dev/null
 		if [ $exit_code -ne 0 ]; then
 			gum style --foreground 196 --bold "FAIL $func_name"
 			failed_functions+=("$func_name")
@@ -144,7 +159,26 @@ install_pyenv() {
 		pyenv install -s $DEFAULT_PYTHON_VERSION
 	else
 		for pyver in $DEFAULT_PYTHON_VERSION 3.13 3.12 3.11; do
-			pyenv install -f "$pyver"
+			# Find the latest available patch for this major.minor
+			local latest
+			latest=$(pyenv install --list | tr -d ' ' | grep -E "^${pyver}\.[0-9]+$" | sort -V | tail -1)
+			if [ -z "$latest" ]; then
+				log "No available patch found for $pyver, skipping"
+				continue
+			fi
+			# Check what's already installed for this major.minor
+			local installed
+			installed=$(pyenv versions --bare | grep -E "^${pyver}\.[0-9]+$" | sort -V | tail -1)
+			if [ "$installed" = "$latest" ]; then
+				log "Python $latest already installed, skipping"
+				continue
+			fi
+			if [ -n "$installed" ]; then
+				log "Upgrading Python $pyver: $installed -> $latest"
+			else
+				log "Installing Python $latest"
+			fi
+			pyenv install -f "$latest"
 		done
 	fi
 	pyenv global $DEFAULT_PYTHON_VERSION
@@ -170,7 +204,7 @@ install_pyenv() {
 
 	# Install base Python packages
 	if command -v uv >/dev/null 2>&1; then
-		uv pip install pip-tools psutil
+		uv pip install --system pip-tools psutil
 	fi
 
 	# Create a default venv if needed (macOS convention)
