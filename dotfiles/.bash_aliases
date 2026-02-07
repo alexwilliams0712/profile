@@ -30,6 +30,20 @@ if command -v batcat >/dev/null 2>&1; then
 fi
 
 ##
+# DF ALIASES
+##
+if command -v duf >/dev/null 2>&1; then
+	alias df='duf'
+fi
+
+##
+# WATCH ALIASES
+##
+if command -v viddy >/dev/null 2>&1; then
+	alias watch='viddy'
+fi
+
+##
 # CD ALIASES
 ##
 alias ..='cd ..'
@@ -451,29 +465,36 @@ function enter_pyenv() {
 			[ -f ".python-version" ] && pyver_file=$(head -1 .python-version | tr -d '[:space:]')
 			[ -f "pyproject.toml" ] && requires_py=$(grep -oP '(?<=requires-python\s=\s["\x27])[^"\x27]+' pyproject.toml 2>/dev/null | head -1)
 
-			# Build annotations for incompatible versions
-			_SELECT_ANNOTATIONS=()
-			for i in "${!versions[@]}"; do
-				local ver="${versions[$i]}" issues=()
-				[ -n "$pyver_file" ] && [[ "$ver" != "$pyver_file"* ]] && issues+=(".python-version: $pyver_file")
-				[ -n "$requires_py" ] && ! _check_requires_python "$ver" "$requires_py" && issues+=("requires-python: $requires_py")
-				_SELECT_ANNOTATIONS[i]=$(
-					IFS='; '
-					echo "${issues[*]}"
-				)
-			done
-
 			# Show detected constraints
 			[ -n "$pyver_file" ] && printf '\033[33mDetected .python-version: %s\033[0m\n' "$pyver_file"
 			[ -n "$requires_py" ] && printf '\033[33mDetected requires-python: %s\033[0m\n' "$requires_py"
 			[ -n "$pyver_file$requires_py" ] && echo ""
 
-			_select_option "Select Python version for new .venv:" "${versions[@]}"
-			_SELECT_ANNOTATIONS=()
+			# Build display labels with compatibility annotations
+			local labels=()
+			for i in "${!versions[@]}"; do
+				local ver="${versions[$i]}" issues=()
+				[ -n "$pyver_file" ] && [[ "$ver" != "$pyver_file"* ]] && issues+=(".python-version: $pyver_file")
+				[ -n "$requires_py" ] && ! _check_requires_python "$ver" "$requires_py" && issues+=("requires-python: $requires_py")
+				if [ ${#issues[@]} -gt 0 ]; then
+					local annotation
+					annotation=$(
+						IFS='; '
+						echo "${issues[*]}"
+					)
+					labels+=("$ver  ($annotation)")
+				else
+					labels+=("$ver")
+				fi
+			done
 
-			local python_bin="$(pyenv prefix "$SELECTED_OPTION" 2>/dev/null)/bin/python"
-			[ ! -x "$python_bin" ] && python_bin="$SELECTED_OPTION"
-			echo "Creating .venv with Python ${SELECTED_OPTION}..."
+			local selected
+			selected=$(printf '%s\n' "${labels[@]}" | gum choose --header "Select Python version for new .venv:")
+			selected="${selected%%  (*}"
+
+			local python_bin="$(pyenv prefix "$selected" 2>/dev/null)/bin/python"
+			[ ! -x "$python_bin" ] && python_bin="$selected"
+			echo "Creating .venv with Python ${selected}..."
 			uv venv -p "$python_bin"
 		fi
 	fi
@@ -1025,7 +1046,7 @@ function ecsclusters() {
 }
 
 function awsperv() {
-	watch -n 10 -x bash -ic "ecsclusters $1"
+	viddy -n 10 -x bash -ic "ecsclusters $1"
 }
 
 function ssh_aws() {
