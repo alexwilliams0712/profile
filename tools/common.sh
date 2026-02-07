@@ -43,23 +43,8 @@ collect_user_input() {
 run_function() {
 	local func_name=$1 exit_code=0
 	if command -v gum >/dev/null 2>&1; then
-		local term_h
-		term_h=$(tput lines)
-		# Reserve last line for spinner via scrolling region
-		printf '\033[1;%dr' "$((term_h - 1))"
-		set +m 2>/dev/null
-		(while true; do
-			for c in '⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏'; do
-				printf '\033[s\033[%d;1H\033[2K  \033[1;35m%s %s\033[0m\033[u' "$term_h" "$c" "$func_name"
-				sleep 0.1
-			done
-		done) &
-		local spin_pid=$!
+		gum style --foreground 212 --bold ">>> $func_name"
 		$func_name || exit_code=$?
-		kill $spin_pid 2>/dev/null
-		wait $spin_pid 2>/dev/null
-		printf '\033[r\033[%d;1H\033[2K' "$term_h"
-		set -m 2>/dev/null
 		if [ $exit_code -ne 0 ]; then
 			gum style --foreground 196 --bold "FAIL $func_name"
 			failed_functions+=("$func_name")
