@@ -6,7 +6,11 @@ alias refresh='source ~/.bashrc'
 alias reload='refresh'
 
 # Make grep always show color and enable Regex, which is normally a default behavior on Linux
-alias grep='grep --color=auto -E'
+if command -v rg >/dev/null 2>&1; then
+	alias grep='rg'
+else
+	alias grep='grep --color=auto -E'
+fi
 
 ##
 # LS ALIASES
@@ -21,6 +25,13 @@ alias la='ls -A'               # show all (including '.files', exluding ./ and .
 alias ll='ls -lAh'             # show all as a list sorted alphabetically
 alias llf='ll | grep -vE "^d"' # ll files only
 alias lt='ls -lArth'           # show all as a list sorted by reversed modification time
+
+##
+# FD ALIASES
+##
+if command -v fdfind >/dev/null 2>&1; then
+	alias fd='fdfind'
+fi
 
 ##
 # CAT ALIASES
