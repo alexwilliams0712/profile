@@ -89,9 +89,11 @@ install_apt_packages() {
 		curl \
 		dos2unix \
 		fail2ban \
+		fd-find \
 		figlet \
 		flatpak \
 		gcc \
+		hyperfine \
 		jq \
 		libbz2-dev \
 		libffi-dev \
@@ -116,6 +118,7 @@ install_apt_packages() {
 		pgformatter \
 		postgresql-common \
 		redis-tools \
+		ripgrep \
 		samba \
 		speedtest-cli \
 		systemd-timesyncd \
@@ -604,6 +607,104 @@ install_gum() {
 	gum --version
 }
 
+install_delta() {
+	print_function_name
+	local arch
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		arch="arm64"
+	else
+		arch="amd64"
+	fi
+	local latest_version
+	latest_version=$(curl -fsSL https://api.github.com/repos/dandavison/delta/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+	if [ -z "$latest_version" ]; then
+		log "Could not fetch latest delta version"
+		return 1
+	fi
+	local version_num="${latest_version}"
+	local deb_file="git-delta_${version_num}_${arch}.deb"
+	local download_url="https://github.com/dandavison/delta/releases/download/${latest_version}/${deb_file}"
+	log "Downloading delta ${latest_version} for ${arch}"
+	curl -fsSL "$download_url" -o "/tmp/${deb_file}"
+	sudo dpkg -i "/tmp/${deb_file}"
+	rm -f "/tmp/${deb_file}"
+	delta --version
+}
+
+install_lazygit() {
+	print_function_name
+	local arch
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		arch="arm64"
+	else
+		arch="x86_64"
+	fi
+	local latest_version
+	latest_version=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+	if [ -z "$latest_version" ]; then
+		log "Could not fetch latest lazygit version"
+		return 1
+	fi
+	local version_num="${latest_version#v}"
+	local download_url="https://github.com/jesseduffield/lazygit/releases/download/${latest_version}/lazygit_${version_num}_Linux_${arch}.tar.gz"
+	log "Downloading lazygit ${latest_version} for ${arch}"
+	curl -fsSL "$download_url" -o /tmp/lazygit.tar.gz
+	tar -xzf /tmp/lazygit.tar.gz -C /tmp lazygit
+	sudo mv /tmp/lazygit /usr/local/bin/lazygit
+	sudo chmod +x /usr/local/bin/lazygit
+	rm -f /tmp/lazygit.tar.gz
+	lazygit --version
+}
+
+install_lazydocker() {
+	print_function_name
+	local arch
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		arch="arm64"
+	else
+		arch="x86_64"
+	fi
+	local latest_version
+	latest_version=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazydocker/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+	if [ -z "$latest_version" ]; then
+		log "Could not fetch latest lazydocker version"
+		return 1
+	fi
+	local version_num="${latest_version#v}"
+	local download_url="https://github.com/jesseduffield/lazydocker/releases/download/${latest_version}/lazydocker_${version_num}_Linux_${arch}.tar.gz"
+	log "Downloading lazydocker ${latest_version} for ${arch}"
+	curl -fsSL "$download_url" -o /tmp/lazydocker.tar.gz
+	tar -xzf /tmp/lazydocker.tar.gz -C /tmp lazydocker
+	sudo mv /tmp/lazydocker /usr/local/bin/lazydocker
+	sudo chmod +x /usr/local/bin/lazydocker
+	rm -f /tmp/lazydocker.tar.gz
+	lazydocker --version
+}
+
+install_dust() {
+	print_function_name
+	local arch
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		arch="arm64"
+	else
+		arch="amd64"
+	fi
+	local latest_version
+	latest_version=$(curl -fsSL https://api.github.com/repos/bootandy/dust/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+	if [ -z "$latest_version" ]; then
+		log "Could not fetch latest dust version"
+		return 1
+	fi
+	local version_num="${latest_version#v}"
+	local deb_file="du-dust_${version_num}-1_${arch}.deb"
+	local download_url="https://github.com/bootandy/dust/releases/download/${latest_version}/${deb_file}"
+	log "Downloading dust ${latest_version} for ${arch}"
+	curl -fsSL "$download_url" -o "/tmp/${deb_file}"
+	sudo dpkg -i "/tmp/${deb_file}"
+	rm -f "/tmp/${deb_file}"
+	dust --version
+}
+
 install_ai() {
 	print_function_name
 
@@ -807,6 +908,10 @@ main() {
 	run_function install_viddy
 	run_function install_duf
 	run_function install_gum
+	run_function install_delta
+	run_function install_lazygit
+	run_function install_lazydocker
+	run_function install_dust
 	run_function install_ai
 	run_function apt_upgrader
 

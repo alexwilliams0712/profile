@@ -81,6 +81,16 @@ set_git_config() {
 	git config --global alias.dc 'diff --cached'
 	git config --global alias.l 'log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
 
+	# Use delta as the pager for diff/log/show if available
+	if command -v delta >/dev/null 2>&1; then
+		git config --global core.pager delta
+		git config --global interactive.diffFilter 'delta --color-only'
+		git config --global delta.navigate true
+		git config --global delta.side-by-side true
+		git config --global delta.line-numbers true
+		git config --global merge.conflictStyle zdiff3
+	fi
+
 	# Apply values collected by collect_user_input
 	if [ -n "$GIT_USER_NAME" ]; then git config --global user.name "$GIT_USER_NAME"; fi
 	if [ -n "$GIT_USER_EMAIL" ]; then git config --global user.email "$GIT_USER_EMAIL"; fi
