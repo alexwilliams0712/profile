@@ -80,6 +80,7 @@ set_git_config() {
 	git config --global alias.d diff
 	git config --global alias.dc 'diff --cached'
 	git config --global alias.l 'log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
+	git config --global merge.conflictStyle zdiff3
 
 	# Use delta as the pager for diff/log/show if available
 	if command -v delta >/dev/null 2>&1; then
@@ -88,7 +89,6 @@ set_git_config() {
 		git config --global delta.navigate true
 		git config --global delta.side-by-side true
 		git config --global delta.line-numbers true
-		git config --global merge.conflictStyle zdiff3
 	fi
 
 	# Apply values collected by collect_user_input
