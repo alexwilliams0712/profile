@@ -2,13 +2,6 @@
 
 sudo -v
 
-# Extend sudo timeout for the duration of setup so long-running steps
-# (e.g. brew bundle) don't trigger repeated password prompts.
-SUDO_SETUP_FILE="/etc/sudoers.d/profile_setup"
-printf 'Defaults timestamp_timeout=120\nDefaults !tty_tickets\n' | sudo tee "$SUDO_SETUP_FILE" >/dev/null
-sudo chmod 0440 "$SUDO_SETUP_FILE"
-trap 'sudo rm -f "$SUDO_SETUP_FILE"' EXIT
-
 if [ "$(uname)" = "Darwin" ]; then
 	# Ensure Xcode Command Line Tools are installed and up to date
 	if ! xcode-select -p &>/dev/null; then
