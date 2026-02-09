@@ -19,6 +19,8 @@ export ARCHITECTURE=$(uname -m)
 set -e
 set -o pipefail
 
+sudo -v
+
 source "$PROFILE_DIR/tools/common.sh"
 trap 'handle_error $LINENO' ERR
 
