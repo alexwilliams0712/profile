@@ -118,6 +118,18 @@ install_pyenv() {
 
 	# Platform-specific pre-requisites
 	if [ "$os_type" = "Darwin" ]; then
+		# Enforce native architecture — abort if running under Rosetta on Apple Silicon
+		local hw_arch
+		hw_arch="$(sysctl -n hw.optional.arm64 2>/dev/null || echo 0)"
+		if [ "$hw_arch" = "1" ] && [ "$(uname -m)" = "x86_64" ]; then
+			log "ERROR: Running under Rosetta (x86_64 translation) on Apple Silicon."
+			log "Re-run this script natively: arch -arm64 bash setup_entry.sh"
+			return 1
+		fi
+
+		# Force compiler to target the native architecture
+		export ARCHFLAGS="-arch $(uname -m)"
+
 		# Set build flags so pyenv can find Homebrew keg-only dependencies
 		export LDFLAGS="-L$(brew --prefix openssl)/lib -L$(brew --prefix readline)/lib -L$(brew --prefix sqlite3)/lib -L$(brew --prefix zlib)/lib"
 		export CPPFLAGS="-I$(brew --prefix openssl)/include -I$(brew --prefix readline)/include -I$(brew --prefix sqlite3)/include -I$(brew --prefix zlib)/include"
@@ -152,6 +164,23 @@ install_pyenv() {
 	# Install Python versions
 	if [ "$os_type" = "Darwin" ]; then
 		pyenv install -s $DEFAULT_PYTHON_VERSION
+
+		# Verify the installed Python matches the native architecture
+		local expected_arch
+		expected_arch="$(uname -m)"
+		local python_bin="$PYENV_ROOT/versions/$DEFAULT_PYTHON_VERSION/bin/python3"
+		if [ -f "$python_bin" ]; then
+			local binary_arch
+			binary_arch="$(file "$python_bin" | grep -o 'arm64\|x86_64' | head -1)"
+			if [ "$binary_arch" != "$expected_arch" ]; then
+				log "ERROR: Python binary is $binary_arch but expected $expected_arch"
+				log "Removing mismatched build and reinstalling..."
+				pyenv uninstall -f "$DEFAULT_PYTHON_VERSION"
+				pyenv install "$DEFAULT_PYTHON_VERSION"
+			else
+				log "Python architecture verified: $binary_arch"
+			fi
+		fi
 	else
 		for pyver in $DEFAULT_PYTHON_VERSION 3.13 3.12 3.11; do
 			# Find the latest available patch for this major.minor
