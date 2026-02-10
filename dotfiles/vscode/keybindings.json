@@ -1,8 +1,8 @@
 [
-  {"command": "workbench.action.splitEditor", "key": "ctrl+\\", "when": "!isMac"},
-  {"command": "workbench.action.splitEditor", "key": "cmd+\\", "when": "isMac"},
-  {"command": "workbench.action.splitEditorDown", "key": "ctrl+shift+\\", "when": "!isMac"},
-  {"command": "workbench.action.splitEditorDown", "key": "cmd+shift+\\", "when": "isMac"},
+  {"command": "workbench.action.moveEditorToNextGroup", "key": "ctrl+\\", "when": "!isMac"},
+  {"command": "workbench.action.moveEditorToNextGroup", "key": "cmd+\\", "when": "isMac"},
+  {"command": "workbench.action.moveEditorToBelowGroup", "key": "ctrl+shift+\\", "when": "!isMac"},
+  {"command": "workbench.action.moveEditorToBelowGroup", "key": "cmd+shift+\\", "when": "isMac"},
   {"command": "workbench.action.focusFirstEditorGroup", "key": "ctrl+1", "when": "!isMac"},
   {"command": "workbench.action.focusFirstEditorGroup", "key": "cmd+1", "when": "isMac"},
   {"command": "workbench.action.focusSecondEditorGroup", "key": "ctrl+2", "when": "!isMac"},
