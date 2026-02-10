@@ -695,6 +695,18 @@ install_dust() {
 	dust --version
 }
 
+install_redis_insight() {
+	print_function_name
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		log "Redis Insight .deb not available for arm64, skipping"
+		return 0
+	fi
+	local version
+	version=$(github_latest_tag "redis/RedisInsight") || return 1
+	log "Downloading Redis Insight ${version}"
+	github_install_deb "https://github.com/redis/RedisInsight/releases/download/${version}/Redis-Insight-linux-amd64.deb"
+}
+
 install_ai() {
 	print_function_name
 
@@ -902,6 +914,7 @@ main() {
 	run_function install_lazygit
 	run_function install_lazydocker
 	run_function install_dust
+	run_function install_redis_insight
 	run_function install_ai
 	run_function apt_upgrader
 
