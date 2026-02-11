@@ -637,7 +637,7 @@ github_install_deb() {
 	local url="$1"
 	local deb_file="/tmp/$(basename "$url")"
 	curl -fsSL "$url" -o "$deb_file"
-	sudo dpkg -i "$deb_file"
+	sudo apt install -y --reinstall "$deb_file"
 	rm -f "$deb_file"
 }
 
@@ -703,6 +703,17 @@ install_redis_insight() {
 	fi
 	local version
 	version=$(github_latest_tag "redis/RedisInsight") || return 1
+	local installed_version
+	installed_version=$(dpkg-query -W -f='${Version}' redisinsight 2>/dev/null || echo "")
+	if [ "$installed_version" = "$version" ]; then
+		log "Redis Insight ${version} already installed, skipping"
+		return 0
+	fi
+	# Purge first to avoid the prerm script wiping files during upgrade
+	if [ -n "$installed_version" ]; then
+		log "Purging old Redis Insight ${installed_version}"
+		sudo dpkg --purge redisinsight
+	fi
 	log "Downloading Redis Insight ${version}"
 	github_install_deb "https://github.com/redis/RedisInsight/releases/download/${version}/Redis-Insight-linux-amd64.deb"
 }
