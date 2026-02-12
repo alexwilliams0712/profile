@@ -185,6 +185,27 @@ setup_bash() {
 	fi
 }
 
+install_ruby() {
+	print_function_name
+	# Ruby is installed via Homebrew. Use Homebrew's Ruby instead of macOS system Ruby
+	# so we get a current version and can install gems without sudo.
+	local brew_ruby="/opt/homebrew/opt/ruby/bin/ruby"
+	if [ -f "$brew_ruby" ]; then
+		export PATH="/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/4.0.0/bin:$PATH"
+		log "Using Homebrew Ruby: $("$brew_ruby" --version)"
+
+		# Install bundler (used for managing project-level gem dependencies like fastlane)
+		if ! command -v bundle >/dev/null 2>&1; then
+			log "Installing Bundler..."
+			gem install bundler
+		else
+			log "Bundler already installed: $(bundle --version)"
+		fi
+	else
+		log "Homebrew Ruby not found, skipping Ruby setup"
+	fi
+}
+
 install_rust() {
 	print_function_name
 	# rustup is installed via Homebrew
@@ -393,6 +414,7 @@ main() {
 	run_function install_homebrew
 	run_function install_packages
 	run_function setup_bash
+	run_function install_ruby
 	run_function install_pyenv
 	run_function install_rust
 	run_function install_node
