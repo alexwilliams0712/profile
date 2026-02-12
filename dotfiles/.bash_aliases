@@ -1224,6 +1224,7 @@ alias ti='terraform init'
 alias tp='terraform plan'
 alias tf='terraform fmt --recursive'
 alias ta='terraform apply'
+alias taaa='terraform apply --auto-approve'
 
 formatter() {
 	formatter_json
