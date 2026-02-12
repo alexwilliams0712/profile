@@ -16,6 +16,11 @@ if [ -x /opt/homebrew/bin/brew ]; then
 	eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
+# Homebrew Ruby (use Homebrew's Ruby instead of macOS system Ruby)
+if [ -d /opt/homebrew/opt/ruby/bin ]; then
+	export PATH="/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/4.0.0/bin:$PATH"
+fi
+
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
 HISTCONTROL=ignoreboth
