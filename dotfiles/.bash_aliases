@@ -463,7 +463,7 @@ function enter_pyenv() {
 	print_function_name
 
 	if [ ! -d ".venv" ]; then
-		local versions=($(pyenv versions --bare 2>/dev/null | grep -E '^[0-9]+\.[0-9]+' | sort -V -r))
+		local versions=($(pyenv versions --bare 2>/dev/null | grep '^[0-9]+\.[0-9]+' | sort -V -r))
 
 		if [ ${#versions[@]} -eq 0 ]; then
 			echo "No Python versions found in pyenv. Using system Python."
