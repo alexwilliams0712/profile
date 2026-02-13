@@ -1088,12 +1088,25 @@ function start_vpn {
 export JSON_LINE_WIDTH=180
 
 # Formatters
+_fmt_files() {
+	if git rev-parse --is-inside-work-tree &>/dev/null; then
+		git ls-files --cached --others --exclude-standard -- "$@"
+	else
+		local find_args=()
+		for pat in "$@"; do
+			[[ ${#find_args[@]} -gt 0 ]] && find_args+=(-o)
+			find_args+=(-iname "$pat")
+		done
+		find . -type f \( "${find_args[@]}" \) \
+			-not -path "./.venv/*" -not -path "./target/*"
+	fi
+}
+
 # Set JSON_LINE_WIDTH to control max line width for simple arrays (default: 80)
 formatter_json() {
 	local line_width="${JSON_LINE_WIDTH:-80}"
 
-	find . -type f \( -iname "*.json" -o -iname "*.json5" \) \
-		-not -path "./.venv/*" -not -path "./target/*" | while read -r file; do
+	_fmt_files '*.json' '*.json5' | while read -r file; do
 		log "Processing $file"
 
 		ext="${file##*.}"
@@ -1200,8 +1213,7 @@ with open(sys.argv[1], "w") as f:
 }
 
 formatter_sql() {
-	find . -type f -iname "*.sql" \
-		-not -path "./.venv/*" -not -path "./target/*" | while read -r file; do
+	_fmt_files '*.sql' | while read -r file; do
 		log "Processing $file"
 
 		pg_format --keyword-case=2 --type-case=2 --comma-break --no-extra-line --inplace "$file"
@@ -1209,11 +1221,7 @@ formatter_sql() {
 }
 
 formatter_shell() {
-	find . \
-		-type f \
-		\( -iname "*.sh" -o -name ".bashrc" -o -name ".bash_aliases" \) \
-		-not -path "./.venv/*" \
-		-not -path "./target/*" |
+	_fmt_files '*.sh' '.bashrc' '.bash_aliases' |
 		while read -r file; do
 			log "Processing $file"
 			shfmt -l -w "$file"
@@ -1227,9 +1235,10 @@ alias ta='terraform apply'
 alias taaa='terraform apply --auto-approve'
 
 formatter() {
-	formatter_json
-	formatter_sql
-	formatter_shell
+	formatter_json &
+	formatter_sql &
+	formatter_shell &
+	wait
 	# Check for Python project
 	if [ -f pyproject.toml ] || ls *.py &>/dev/null || [ -d .venv/ ]; then
 		if [ -n "$VIRTUAL_ENV" ]; then
