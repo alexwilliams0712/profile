@@ -1296,6 +1296,8 @@ function iterm2_fix_keys() {
 }
 
 # Fun
+alias yolo='claude --dangerously-skip-permissions'
+
 function laughing_at_idiots() {
 	# sudo apt-get install -y fswebcam imagemagick
 	(

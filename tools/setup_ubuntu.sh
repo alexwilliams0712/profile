@@ -19,6 +19,8 @@ copy_dotfiles() {
 	print_function_name
 	mkdir -p $HOME/.config/terminator
 	cp $PROFILE_DIR/dotfiles/terminal_config $HOME/.config/terminator/config
+	mkdir -p $HOME/.config/ghostty
+	cp $PROFILE_DIR/dotfiles/ghostty/config $HOME/.config/ghostty/config
 	mkdir -p $HOME/.config/gtk-3.0
 	cp $PROFILE_DIR/dotfiles/gtk.css $HOME/.config/gtk-3.0/gtk.css
 	mkdir -p $HOME/.config
@@ -597,6 +599,39 @@ install_duf() {
 	duf --version
 }
 
+install_ghostty() {
+	print_function_name
+	# Install / upgrade Ghostty via the mkasberg community .deb, which tracks
+	# upstream releases. Always fetch the latest published asset.
+	local arch
+	arch=$(github_arch deb)
+	local release_json
+	release_json=$(curl -fsSL https://api.github.com/repos/mkasberg/ghostty-ubuntu/releases/latest)
+	local ubuntu_codename
+	ubuntu_codename=$(lsb_release -cs)
+	local deb_url
+	deb_url=$(echo "$release_json" |
+		grep -oE '"browser_download_url": *"[^"]*\.deb"' |
+		cut -d'"' -f4 |
+		grep "_${ubuntu_codename}_${arch}\.deb$" |
+		head -n1)
+	if [ -z "$deb_url" ]; then
+		# Fall back to any matching arch if no codename-specific asset exists
+		deb_url=$(echo "$release_json" |
+			grep -oE '"browser_download_url": *"[^"]*\.deb"' |
+			cut -d'"' -f4 |
+			grep "_${arch}\.deb$" |
+			head -n1)
+	fi
+	if [ -z "$deb_url" ]; then
+		log "Could not locate a Ghostty .deb for ${ubuntu_codename}/${arch}"
+		return 1
+	fi
+	log "Downloading Ghostty from $deb_url"
+	github_install_deb "$deb_url"
+	ghostty --version
+}
+
 install_gum() {
 	print_function_name
 	sudo mkdir -p /etc/apt/keyrings
@@ -921,6 +956,7 @@ main() {
 	run_function install_viddy
 	run_function install_duf
 	run_function install_gum
+	run_function install_ghostty
 	run_function install_delta
 	run_function install_lazygit
 	run_function install_lazydocker
