@@ -1,7 +1,7 @@
 # Armada theme — ported from iTerm2 / Terminator
 
 font-family = FiraCode Nerd Font
-font-size = 9
+font-size = 13
 
 background = 001a22
 foreground = b8ccd6
@@ -34,3 +34,9 @@ confirm-close-surface = false
 
 keybind = cmd+o=new_split:right
 keybind = cmd+e=new_split:down
+
+# Tailscale SSH shortcuts — types the command into the focused surface.
+keybind = ctrl+shift+1=text:"ssh alex-work\n"
+keybind = ctrl+shift+2=text:"ssh alex-home\n"
+keybind = ctrl+shift+3=text:"ssh dellxps\n"
+keybind = ctrl+shift+4=text:"ssh alexs-macbook-air\n"
