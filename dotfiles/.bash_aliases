@@ -85,6 +85,10 @@ function tailfix() {
 function scp_mirror() {
 	# Usage
 	# $ scp_mirror alex-home ~/.netrc ~/vpn/ ~/.aws ~/.personal ~/.packagr_details
+	#
+	# Files: copied verbatim, perms/mtimes preserved (scp -p).
+	# Directories (trailing slash): contents mirrored via a remote tar pipe, so
+	#   dotfiles inside are included and re-runs do NOT nest (~/vpn/vpn/...).
 	if [ $# -lt 2 ]; then
 		echo "Usage: scp_mirror remote_host path1 [path2 ...]"
 		return 1
@@ -107,14 +111,19 @@ function scp_mirror() {
 		local rel_path="${local_path#$HOME/}"
 		local remote_path="$remote_home/$rel_path"
 
-		mkdir -p "$(dirname "$local_path")"
-
 		if [[ "$path" == */ ]]; then
-			echo "Copying contents of $host:$remote_path to $local_path"
-			scp -r "$host:${remote_path%/}/*" "$local_path"
+			# Directory mirror: strip trailing slash, tar-pipe contents in.
+			local local_dir="${local_path%/}"
+			local remote_dir="${remote_path%/}"
+			local rel_dir="${rel_path%/}"
+			mkdir -p "$local_dir"
+			echo "Mirroring contents of $host:$remote_dir/ to $local_dir/"
+			ssh "$host" "tar -C \"$remote_home\" -cf - \"$rel_dir\"" |
+				tar -C "$HOME" -xf -
 		else
+			mkdir -p "$(dirname "$local_path")"
 			echo "Copying $host:$remote_path to $local_path"
-			scp -r "$host:$remote_path" "$local_path"
+			scp -rp "$host:$remote_path" "$local_path"
 		fi
 	done
 }
@@ -1293,6 +1302,27 @@ function iterm2_fix_keys() {
 	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000:Action integer 26" "$plist"
 	/usr/libexec/PlistBuddy -c "Add :GlobalKeyMap:0x65-0x100000:Text string ''" "$plist"
 	echo "GlobalKeyMap updated — open iTerm2 now"
+}
+
+# magpie_mirror — pull a curated set of credential / config files from another
+# machine (typically over Tailscale). Magpies are notorious for collecting
+# shiny things, which is exactly what credentials are.
+# Directories are passed with trailing slashes so scp_mirror mirrors contents
+# (no ~/vpn/vpn/vpn/… nesting on repeat runs).
+magpie_mirror() {
+	if [ $# -ne 1 ]; then
+		echo "Usage: magpie_mirror <host>"
+		echo "  Mirrors personal config/credentials from <host> onto this machine."
+		return 1
+	fi
+	scp_mirror "$1" \
+		~/.personal \
+		~/.netrc \
+		~/vpn/ \
+		~/.aws/ \
+		~/.cargo/credentials.toml \
+		~/.claude/CLAUDE.md \
+		~/.ssh/aws_key_dublin.pem
 }
 
 # Fun
