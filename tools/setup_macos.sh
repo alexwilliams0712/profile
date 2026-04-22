@@ -35,6 +35,10 @@ copy_dotfiles() {
 	cp "$PROFILE_DIR/dotfiles/.bash_aliases" "$HOME/.bash_aliases"
 	copy_btop_config
 
+	# Ghostty config (shared between macOS and Linux)
+	mkdir -p "$HOME/.config/ghostty"
+	cp "$PROFILE_DIR/dotfiles/ghostty/config" "$HOME/.config/ghostty/config"
+
 	# Disable custom prefs folder (fragile — breaks if repo path changes)
 	defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool false
 

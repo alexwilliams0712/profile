@@ -1,0 +1,36 @@
+# Armada theme — ported from iTerm2 / Terminator
+
+font-family = FiraCode Nerd Font
+font-size = 9
+
+background = 001a22
+foreground = b8ccd6
+cursor-color = b8ccd6
+cursor-style = bar
+
+background-opacity = 0.75
+
+palette = 0=#001a22
+palette = 1=#ec5d6f
+palette = 2=#4ab4b1
+palette = 3=#ebc88d
+palette = 4=#5db8e0
+palette = 5=#cf8ad6
+palette = 6=#8ee4e0
+palette = 7=#9aa3ad
+palette = 8=#c3c5c9
+palette = 9=#f87c88
+palette = 10=#69b090
+palette = 11=#dda088
+palette = 12=#a7abe9
+palette = 13=#eb4dde
+palette = 14=#6fc3e8
+palette = 15=#b8ccd6
+
+bold-is-bright = true
+copy-on-select = clipboard
+window-decoration = false
+confirm-close-surface = false
+
+keybind = cmd+o=new_split:right
+keybind = cmd+e=new_split:down
