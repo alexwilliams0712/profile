@@ -36,7 +36,7 @@ keybind = cmd+o=new_split:right
 keybind = cmd+e=new_split:down
 
 # Tailscale SSH shortcuts — types the command into the focused surface.
-keybind = ctrl+shift+1=text:"ssh alex-work\n"
-keybind = ctrl+shift+2=text:"ssh alex-home\n"
-keybind = ctrl+shift+3=text:"ssh dellxps\n"
-keybind = ctrl+shift+4=text:"ssh alexs-macbook-air\n"
+keybind = ctrl+shift+1=text:ssh alex-work\n
+keybind = ctrl+shift+2=text:ssh alex-home\n
+keybind = ctrl+shift+3=text:ssh dellxps\n
+keybind = ctrl+shift+4=text:ssh alexs-macbook-air\n
