@@ -602,29 +602,23 @@ install_duf() {
 install_ghostty() {
 	print_function_name
 	# Install / upgrade Ghostty via the mkasberg community .deb, which tracks
-	# upstream releases. Always fetch the latest published asset.
+	# upstream releases. Asset names are suffixed with the Ubuntu VERSION_ID
+	# (e.g. ghostty_1.3.1-0.ppa2_amd64_25.10.deb), not the codename, so match
+	# on `lsb_release -rs`.
 	local arch
 	arch=$(github_arch deb)
+	local ubuntu_version
+	ubuntu_version=$(lsb_release -rs)
 	local release_json
 	release_json=$(curl -fsSL https://api.github.com/repos/mkasberg/ghostty-ubuntu/releases/latest)
-	local ubuntu_codename
-	ubuntu_codename=$(lsb_release -cs)
 	local deb_url
 	deb_url=$(echo "$release_json" |
 		grep -oE '"browser_download_url": *"[^"]*\.deb"' |
 		cut -d'"' -f4 |
-		grep "_${ubuntu_codename}_${arch}\.deb$" |
+		grep "_${arch}_${ubuntu_version}\.deb$" |
 		head -n1)
 	if [ -z "$deb_url" ]; then
-		# Fall back to any matching arch if no codename-specific asset exists
-		deb_url=$(echo "$release_json" |
-			grep -oE '"browser_download_url": *"[^"]*\.deb"' |
-			cut -d'"' -f4 |
-			grep "_${arch}\.deb$" |
-			head -n1)
-	fi
-	if [ -z "$deb_url" ]; then
-		log "Could not locate a Ghostty .deb for ${ubuntu_codename}/${arch}"
+		log "Could not locate a Ghostty .deb for Ubuntu ${ubuntu_version}/${arch}"
 		return 1
 	fi
 	log "Downloading Ghostty from $deb_url"
