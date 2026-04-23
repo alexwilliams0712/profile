@@ -1010,6 +1010,128 @@ docker_build_with_creds() {
 	echo "Docker image $image_name built successfully."
 }
 
+function shipyard_delete_old_versions() {
+	# Hard-deletes all but the N newest versions of a crate from shipyard.rs.
+	# Cookie + csrf come from a logged-in browser session.
+	# Optional env:
+	#   SHIPYARD_ORG          default: low-observable-technology
+	#   SHIPYARD_INDEX_URL    default: ssh://git@ssh.shipyard.rs/<org>/crate-index.git
+	print_function_name
+	local crate="$1"
+	local keep="$2"
+	local cookie="$3"
+	local csrf="$4"
+	local org="${SHIPYARD_ORG:-low-observable-technology}"
+	local index_url="${SHIPYARD_INDEX_URL:-ssh://git@ssh.shipyard.rs/$org/crate-index.git}"
+
+	if [[ -z "$crate" || -z "$keep" || -z "$cookie" || -z "$csrf" ]]; then
+		echo "Usage: shipyard_delete_old_versions <crate-name> <num-versions-to-keep> <cookie-header> <csrf-token>"
+		echo "  <cookie-header>  full Cookie value from a logged-in browser session (shipyard_cid + shipyard_auth + shipyard_csrf)"
+		echo "  <csrf-token>     value of the shipyard_csrf cookie"
+		echo "Tip: prefix the command with a space if HISTCONTROL=ignorespace to keep secrets out of history."
+		return 1
+	fi
+	if ! [[ "$keep" =~ ^[0-9]+$ ]]; then
+		echo "Error: <num-versions-to-keep> must be a non-negative integer"
+		return 1
+	fi
+	for cmd in curl jq git; do
+		if ! command -v "$cmd" >/dev/null 2>&1; then
+			echo "Error: required command '$cmd' not found"
+			return 1
+		fi
+	done
+
+	# Cargo's sparse-index sharding scheme.
+	local lc=$(echo "$crate" | tr '[:upper:]' '[:lower:]')
+	local len=${#lc}
+	local index_path
+	case "$len" in
+	1) index_path="1/$lc" ;;
+	2) index_path="2/$lc" ;;
+	3) index_path="3/${lc:0:1}/$lc" ;;
+	*) index_path="${lc:0:2}/${lc:2:2}/$lc" ;;
+	esac
+
+	local index_dir=$(mktemp -d -t shipyard-index.XXXXXX)
+	echo "Cloning index from $index_url..."
+	if ! git clone -q --depth 1 "$index_url" "$index_dir" 2>&1; then
+		echo "Error: failed to clone index"
+		rm -rf "$index_dir"
+		return 1
+	fi
+
+	local index_file="$index_dir/$index_path"
+	if [[ ! -f "$index_file" ]]; then
+		echo "Error: crate '$crate' not found in index at $index_path"
+		rm -rf "$index_dir"
+		return 1
+	fi
+
+	local versions_sorted=$(jq -r '.vers' "$index_file" | sort -V -r)
+	rm -rf "$index_dir"
+
+	if [[ -z "$versions_sorted" ]]; then
+		echo "No versions of '$crate' found in index."
+		return 0
+	fi
+
+	local total=$(echo "$versions_sorted" | wc -l)
+	echo "Found $total version(s) of '$crate'."
+	if [[ "$total" -le "$keep" ]]; then
+		echo "Keeping $keep — nothing to delete."
+		return 0
+	fi
+
+	local to_delete=$(echo "$versions_sorted" | tail -n +$((keep + 1)))
+	local to_keep=$(echo "$versions_sorted" | head -n "$keep")
+
+	echo
+	echo "Will KEEP ($keep newest):"
+	echo "$to_keep" | sed 's/^/  + /'
+	echo
+	echo "Will DELETE ($(echo "$to_delete" | wc -l) version(s)) — THIS IS PERMANENT:"
+	echo "$to_delete" | sed 's/^/  - /'
+	echo
+
+	read -r -p "Proceed with hard deletion? [y/N] " confirm
+	if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+		echo "Aborted."
+		return 0
+	fi
+
+	local ua='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'
+	local tmpout=$(mktemp)
+	local failures=0
+	while IFS= read -r version; do
+		[[ -z "$version" ]] && continue
+		local url="https://shipyard.rs/$org/crates/$crate/$version/delete"
+		echo -n "Deleting $crate@$version... "
+		local code=$(curl -sS -o "$tmpout" -w '%{http_code}' -X DELETE "$url" \
+			-H 'accept: application/json' \
+			-H 'content-type: application/json' \
+			-H 'origin: https://shipyard.rs' \
+			-H "referer: $url" \
+			-H "user-agent: $ua" \
+			-H "cookie: $cookie" \
+			--data "{\"krate_name\":\"$crate\",\"krate_version\":\"$version\",\"csrf_token\":\"$csrf\"}")
+		if [[ "$code" =~ ^2 ]]; then
+			echo "OK ($code)"
+		else
+			echo "FAILED ($code): $(cat "$tmpout")"
+			failures=$((failures + 1))
+		fi
+		sleep 0.3
+	done <<<"$to_delete"
+	rm -f "$tmpout"
+
+	if [[ "$failures" -gt 0 ]]; then
+		echo "Done with $failures failure(s)."
+		return 1
+	fi
+	echo "Done."
+}
+
 function copy_to_k3s() {
 	local image_name=$1
 
