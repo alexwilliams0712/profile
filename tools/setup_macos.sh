@@ -156,7 +156,7 @@ install_packages() {
 	brew update || log "Warning: brew update had errors, continuing..."
 	log "Installing packages from Brewfile..."
 	brew bundle --file="$PROFILE_DIR/tools/Brewfile"
-	brew upgrade
+	brew upgrade --greedy
 	brew cleanup
 
 	# Accept Xcode license (installed via mas in Brewfile)
