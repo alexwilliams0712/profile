@@ -1,7 +1,7 @@
 # Armada theme — ported from iTerm2 / Terminator
 
 font-family = FiraCode Nerd Font
-font-size = 13
+font-size = 11
 
 background = 001a22
 foreground = b8ccd6
@@ -29,7 +29,6 @@ palette = 15=#b8ccd6
 
 bold-is-bright = true
 copy-on-select = clipboard
-window-decoration = false
 confirm-close-surface = false
 
 keybind = cmd+o=new_split:right
