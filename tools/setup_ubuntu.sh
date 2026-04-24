@@ -122,7 +122,6 @@ install_apt_packages() {
 		redis-tools \
 		ripgrep \
 		samba \
-		speedtest-cli \
 		systemd-timesyncd \
 		steam-devices \
 		terminator \
@@ -348,6 +347,24 @@ install_1password() {
 		log "1Password installation failed"
 		return 1
 	fi
+}
+
+install_speedtest() {
+	print_function_name
+	# Ookla's packagecloud repo lags Ubuntu releases, so install the static binary directly.
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		local arch="aarch64"
+	else
+		local arch="x86_64"
+	fi
+	local url="https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-${arch}.tgz"
+	local tmp
+	tmp="$(mktemp -d)"
+	log "Downloading Ookla speedtest CLI ($arch)"
+	curl -fsSL "$url" | tar xz -C "$tmp"
+	sudo install -m 0755 "$tmp/speedtest" /usr/local/bin/speedtest
+	rm -rf "$tmp"
+	speedtest --version | head -1
 }
 
 install_rust() {
@@ -939,6 +956,7 @@ main() {
 	run_function install_tailscale
 	run_function install_aws_cli
 	run_function install_terraform
+	run_function install_speedtest
 	# run_function install_k3s
 	# run_function install_helm
 	# run_function install_coolercontrol
