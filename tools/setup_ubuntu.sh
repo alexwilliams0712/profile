@@ -616,6 +616,16 @@ install_duf() {
 	duf --version
 }
 
+configure_gnome() {
+	print_function_name
+	# One-shot GNOME interface tweaks. Persistent in dconf, so this only
+	# needs to run at machine setup — not on every shell start.
+	if command -v gsettings >/dev/null 2>&1; then
+		gsettings set org.gnome.desktop.interface text-scaling-factor 0.95
+		gsettings set org.gnome.desktop.interface cursor-size 24
+	fi
+}
+
 install_ghostty() {
 	print_function_name
 	# Install / upgrade Ghostty via the mkasberg community .deb, which tracks
@@ -969,6 +979,7 @@ main() {
 	run_function install_duf
 	run_function install_gum
 	run_function install_ghostty
+	run_function configure_gnome
 	run_function install_delta
 	run_function install_lazygit
 	run_function install_lazydocker
