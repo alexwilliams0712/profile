@@ -33,7 +33,7 @@ confirm-close-surface = false
 
 # Linux perf: skip per-surface systemd transient scope (saves ~50–200ms on
 # new windows/splits), keep one process for all windows.
-linux-cgroup = false
+linux-cgroup = never
 gtk-single-instance = true
 
 keybind = cmd+o=new_split:down
