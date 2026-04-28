@@ -99,12 +99,6 @@ fi
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
-# gsettings (Linux/GNOME only)
-if [ "$(uname)" = "Linux" ] && command -v gsettings >/dev/null 2>&1; then
-	gsettings set org.gnome.desktop.interface text-scaling-factor 0.95
-	gsettings set org.gnome.desktop.interface cursor-size 24
-fi
-
 # some more ls aliases
 alias ll='ls -alF'
 alias la='ls -A'
