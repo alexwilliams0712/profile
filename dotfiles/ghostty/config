@@ -31,6 +31,8 @@ bold-is-bright = true
 copy-on-select = clipboard
 confirm-close-surface = false
 
+split-divider-color = #000000
+
 # Linux perf: skip per-surface systemd transient scope (saves ~50–200ms on
 # new windows/splits), keep one process for all windows.
 linux-cgroup = never
@@ -41,6 +43,7 @@ keybind = cmd+e=new_split:right
 keybind = ctrl+shift+o=new_split:down
 keybind = ctrl+shift+e=new_split:right
 keybind = ctrl+shift+w=close_surface
+keybind = ctrl+shift+0=equalize_splits
 
 # Tailscale SSH shortcuts — types the command into the focused surface.
 keybind = ctrl+shift+1=text:ssh alex-work\n
