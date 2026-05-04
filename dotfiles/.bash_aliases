@@ -244,6 +244,7 @@ function apt_upgrader() {
 	print_function_name
 	sudo find /etc/apt/sources.list.d/ -name "*.sources" -exec grep -l questing {} \; -exec rm -v {} \;
 	sudo systemctl stop packagekit
+	sudo dpkg --configure -a
 	clean_broken_repos
 	sudo apt update -y
 	sudo apt upgrade -y
