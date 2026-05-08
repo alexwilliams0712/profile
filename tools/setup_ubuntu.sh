@@ -482,7 +482,6 @@ install_espanso() {
 	else
 		espanso service start
 	fi
-	espanso --version
 }
 
 install_and_setup_docker() {
