@@ -435,61 +435,53 @@ install_jetbrains_toolbox() {
 
 install_espanso() {
 	print_function_name
-	if command -v espanso >/dev/null 2>&1; then
-		log "espanso is already installed, skipping installation"
+
+	# Upstream Wayland .deb is amd64-only.
+	if [ "$ARCHITECTURE" != "amd64" ]; then
+		log "espanso Wayland .deb is amd64-only (got: $ARCHITECTURE) — skipping"
 		return 0
 	fi
 
-	# Install wl-clipboard dependency for Wayland
-	sudo apt update
-	sudo apt install -y wl-clipboard
+	local latest installed
+	latest=$(curl -fsSL https://api.github.com/repos/espanso/espanso/releases/latest |
+		grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4)
+	latest="${latest:-v2.3.0}"
+	installed=$(command -v espanso >/dev/null && echo "v$(espanso --version 2>/dev/null)")
 
-	# Fetch latest version from GitHub API
-	local latest_version
-	latest_version=$(curl -fsSL https://api.github.com/repos/espanso/espanso/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
-	if [ -z "$latest_version" ]; then
-		log "Could not fetch latest espanso version, using fallback"
-		latest_version="v2.2.2"
-	fi
-	log "Installing espanso $latest_version for Wayland"
-
-	# Determine architecture
-	local deb_arch
-	if [ "$ARCHITECTURE" = "arm64" ]; then
-		deb_arch="arm64"
+	if [ "$installed" != "$latest" ]; then
+		log "Installing espanso $latest for Wayland (have: ${installed:-none})"
+		sudo apt-get update
+		sudo apt-get install -y wl-clipboard libxkbcommon0
+		local deb=/tmp/espanso-wayland.deb
+		curl -fsSL "https://github.com/espanso/espanso/releases/download/${latest}/espanso-debian-wayland-amd64.deb" -o "$deb" || {
+			log "Failed to download espanso .deb"
+			return 1
+		}
+		sudo dpkg -i "$deb" || sudo apt-get install -y -f
+		rm -f "$deb"
+		# Needed for keyboard capture on Wayland.
+		sudo setcap "cap_dac_override+p" "$(command -v espanso)"
+		espanso service register || true
 	else
-		deb_arch="amd64"
+		log "espanso $installed already installed"
 	fi
 
-	# Download and install the Wayland .deb
-	local deb_file="espanso-debian-wayland-${deb_arch}.deb"
-	local deb_url="https://github.com/espanso/espanso/releases/download/${latest_version}/${deb_file}"
-	log "Downloading from $deb_url"
-	wget -q "$deb_url" -O "/tmp/${deb_file}" || {
-		log "Failed to download espanso"
-		return 1
-	}
-	sudo apt install -y "/tmp/${deb_file}"
-	rm -f "/tmp/${deb_file}"
+	# Reapply config every run so git-config substitutions and template edits stay in sync.
+	local cfg
+	cfg="$(espanso path config)"
+	mkdir -p "$cfg/match"
+	cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$cfg/match/base.yml"
+	# Clipboard backend avoids Wayland keystroke quirks (e.g. @ → ").
+	sed -i 's/^# backend: Clipboard/backend: Clipboard/' "$cfg/config/default.yml"
+	sed -i "s|__EMAIL__|$(git config --global user.email)|;
+		s|__GIT_USER__|$(git config --global user.name)|;
+		s|__PHONE__|$(git config --global user.phonenumber)|" "$cfg/match/base.yml"
 
-	# Setup espanso service
-	sudo setcap "cap_dac_override+p" "$(which espanso)"
-	espanso service register
-	if espanso service status | grep -q "is running"; then
-		espanso service stop
+	if espanso service status 2>/dev/null | grep -q "is running"; then
+		espanso service restart
+	else
+		espanso service start
 	fi
-	espanso service start
-
-	# Copy config
-	mkdir -p "$(espanso path config)/match"
-	cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$(espanso path config)/match/base.yml"
-	# Use Clipboard backend to avoid Wayland key injection issues (e.g. @ becoming ")
-	sed -i 's/^# backend: Clipboard/backend: Clipboard/' "$(espanso path config)/config/default.yml"
-	# Substitute placeholders with git config values
-	local match_file="$(espanso path config)/match/base.yml"
-	sed -i "s|__EMAIL__|$(git config --global user.email)|" "$match_file"
-	sed -i "s|__GIT_USER__|$(git config --global user.name)|" "$match_file"
-	sed -i "s|__PHONE__|$(git config --global user.phonenumber)|" "$match_file"
 	espanso --version
 }
 
