@@ -205,7 +205,9 @@ install_pyenv() {
 			pyenv install -f "$latest"
 		done
 	fi
-	pyenv global $DEFAULT_PYTHON_VERSION
+	# Resolve the concrete installed patch (e.g. 3.14 -> 3.14.5); pyenv global
+	# requires an exact version name, not a major.minor prefix.
+	pyenv global "$(pyenv latest "$DEFAULT_PYTHON_VERSION")"
 
 	# Install pyenv-virtualenv plugin
 	local venv_folder
