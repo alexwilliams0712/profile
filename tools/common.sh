@@ -1,7 +1,7 @@
 #!/bin/bash
 # Shared functions used by both setup_macos.sh and setup_ubuntu.sh
 
-export DEFAULT_PYTHON_VERSION="3.14"
+export DEFAULT_PYTHON_VERSION="3.14.5"
 
 handle_error() {
 	echo "An error occurred on line $1"
@@ -182,7 +182,11 @@ install_pyenv() {
 			fi
 		fi
 	else
-		for pyver in $DEFAULT_PYTHON_VERSION 3.13 3.12 3.11; do
+		# Install the pinned default version exactly as specified
+		pyenv install -s "$DEFAULT_PYTHON_VERSION"
+
+		# Track the latest patch for the older minor versions
+		for pyver in 3.13 3.12 3.11; do
 			# Find the latest available patch for this major.minor
 			local latest
 			latest=$(pyenv install --list | tr -d ' ' | grep -E "^${pyver}\.[0-9]+$" | sort -V | tail -1)
@@ -205,9 +209,7 @@ install_pyenv() {
 			pyenv install -f "$latest"
 		done
 	fi
-	# Resolve the concrete installed patch (e.g. 3.14 -> 3.14.5); pyenv global
-	# requires an exact version name, not a major.minor prefix.
-	pyenv global "$(pyenv latest "$DEFAULT_PYTHON_VERSION")"
+	pyenv global "$DEFAULT_PYTHON_VERSION"
 
 	# Install pyenv-virtualenv plugin
 	local venv_folder
