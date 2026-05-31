@@ -459,12 +459,21 @@ install_espanso() {
 		}
 		sudo dpkg -i "$deb" || sudo apt-get install -y -f
 		rm -f "$deb"
-		# Needed for keyboard capture on Wayland.
-		sudo setcap "cap_dac_override+p" "$(command -v espanso)"
-		espanso service register || true
 	else
 		log "espanso $installed already installed"
 	fi
+
+	# Grant the keyboard-capture capability and register the service on EVERY
+	# run, not just on fresh install. espanso on Wayland needs CAP_DAC_OVERRIDE
+	# to read /dev/input/event* (detection) and write /dev/uinput (injection);
+	# without it the daemon starts but silently never expands. apt upgrades
+	# strip file capabilities, and a machine where espanso was already present
+	# never had it applied, so this must be reasserted idempotently.
+	if ! getcap "$(command -v espanso)" 2>/dev/null | grep -q cap_dac_override; then
+		log "Granting cap_dac_override to espanso (needed for keyboard capture on Wayland)"
+		sudo setcap "cap_dac_override+p" "$(command -v espanso)"
+	fi
+	espanso service register || true
 
 	# Reapply config every run so git-config substitutions and template edits stay in sync.
 	local cfg
@@ -473,10 +482,21 @@ install_espanso() {
 	cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$cfg/match/base.yml"
 	# Clipboard backend avoids Wayland keystroke quirks (e.g. @ → ").
 	sed -i 's/^# backend: Clipboard/backend: Clipboard/' "$cfg/config/default.yml"
+
+	# espanso cannot auto-detect the keyboard layout on Wayland; set it
+	# explicitly (otherwise triggers/expansions can mis-map keys, e.g. @ <-> ").
+	# Append once, idempotently, leaving the rest of the generated template intact.
+	local kb_layout
+	kb_layout=$(localectl status 2>/dev/null | sed -n 's/.*X11 Layout: *//p' | awk '{print $1}')
+	if [ -n "$kb_layout" ] && ! grep -q '^keyboard_layout:' "$cfg/config/default.yml"; then
+		printf '\nkeyboard_layout:\n  layout: "%s"\n' "$kb_layout" >>"$cfg/config/default.yml"
+	fi
+
 	sed -i "s|__EMAIL__|$(git config --global user.email)|;
 		s|__GIT_USER__|$(git config --global user.name)|;
 		s|__PHONE__|$(git config --global user.phonenumber)|" "$cfg/match/base.yml"
 
+	# (Re)start so a running worker picks up the capability and refreshed config.
 	if espanso service status 2>/dev/null | grep -q "is running"; then
 		espanso service restart
 	else
