@@ -1,0 +1,14 @@
+// Top-of-file header comment describing this config.
+{
+  name: 'demo',
+  // zebra should sort after alpha
+  zebra: true,
+  alpha: {
+    // nested comment above gamma
+    gamma: 3,
+    beta: 2,
+  },
+  ports: [80, 443, 8080, 22, 25, 3000, 5432, 6379, 9090, 1234, 5678],
+  timeout: 30, // trailing comment on a value
+  retries: 5,
+}
