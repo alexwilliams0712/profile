@@ -1222,8 +1222,8 @@ export JSON_LINE_WIDTH=180
 # Formatters
 _fmt_files() {
 	if git rev-parse --is-inside-work-tree &>/dev/null; then
-		git ls-files --cached --others --exclude-standard -- "$@" \
-			| grep -Ev '^(\.venv/|target/)'
+		git ls-files --cached --others --exclude-standard -- "$@" |
+			\grep -Ev '^(\.venv/|target/)'
 	else
 		local find_args=()
 		for pat in "$@"; do
