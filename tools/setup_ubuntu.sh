@@ -15,6 +15,9 @@ set -o pipefail
 source "$PROFILE_DIR/tools/common.sh"
 trap 'handle_error $LINENO' ERR
 
+# Prompt for sudo once, then keep the timestamp warm for the whole install.
+keep_sudo_alive
+
 copy_dotfiles() {
 	print_function_name
 	mkdir -p $HOME/.config/terminator
