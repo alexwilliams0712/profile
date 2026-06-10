@@ -26,14 +26,16 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
-IFS=:
-unique_paths=()
-for path in $PATH; do
-    if [[ ! "${unique_paths[*]}" =~ ${path} ]]; then
-        unique_paths+=("$path")
+# Deduplicate PATH, preserving order (exact match, not substring)
+declare -A _seen_paths
+_new_path=()
+IFS=: read -ra _path_parts <<<"$PATH"
+for _p in "${_path_parts[@]}"; do
+    if [ -n "$_p" ] && [ -z "${_seen_paths[$_p]:-}" ]; then
+        _seen_paths["$_p"]=1
+        _new_path+=("$_p")
     fi
 done
-IFS=$' \t\n'
-
-new_path=$(IFS=:; echo "${unique_paths[*]}")
-export PATH="$new_path"
+IFS=:
+export PATH="${_new_path[*]}"
+unset IFS _seen_paths _new_path _path_parts _p

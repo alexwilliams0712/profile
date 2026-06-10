@@ -30,6 +30,13 @@ copy_dotfiles() {
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
 	cp $PROFILE_DIR/dotfiles/.prettierrc $HOME/.prettierrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
+
+	# Helper scripts that .bash_aliases shells out to (keeps the sourced
+	# .bash_aliases small/fast). Same path is used on macOS and Linux.
+	mkdir -p "$HOME/.local/bin"
+	cp "$PROFILE_DIR/dotfiles/bin/json_formatter.py" "$HOME/.local/bin/json_formatter.py"
+	chmod +x "$HOME/.local/bin/json_formatter.py"
+
 	copy_btop_config
 	# Case-insensitive tab completion (idempotent)
 	if ! grep -q 'completion-ignore-case' /etc/inputrc 2>/dev/null; then
@@ -372,7 +379,6 @@ install_rust() {
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 	source ~/.cargo/env
 	source ~/.bashrc 2>/dev/null || true
-	rustup update stable
 	rustup install nightly
 	# cargo install diesel_cli --no-default-features --features postgres
 	rustup component add rustfmt clippy
