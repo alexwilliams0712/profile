@@ -14,6 +14,10 @@ $cmd_duration\
 $line_break\
 $character"""
 
+# Cap any per-module command (python/rust/go/terraform version lookups, etc.)
+# so a slow toolchain binary can never stall the prompt.
+command_timeout = 500
+
 [username]
 format = "[$user]($style)"
 style_user = "bold blue"

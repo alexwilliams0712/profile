@@ -19,6 +19,17 @@ ensure_directory() {
 	cd $PROFILE_DIR
 }
 
+# Evaluate the Homebrew shellenv matching the current architecture.
+# Apple Silicon native uses /opt/homebrew, Rosetta/Intel uses /usr/local;
+# fall back to the other prefix if the preferred one isn't present.
+brew_shellenv() {
+	if [ "$(uname -m)" = "arm64" ]; then
+		eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null || true)"
+	else
+		eval "$(/usr/local/bin/brew shellenv 2>/dev/null || /opt/homebrew/bin/brew shellenv 2>/dev/null || true)"
+	fi
+}
+
 collect_user_input() {
 	# Gather all interactive input upfront so the rest of the setup is unattended
 	GIT_USER_NAME=$(git config --global user.name 2>/dev/null) || GIT_USER_NAME=""
@@ -64,7 +75,6 @@ set_git_config() {
 	print_function_name
 	git config --global core.autocrlf false
 	git config --global pull.rebase false
-	git config --global http.sslVerify false
 	git config --global diff.tool bc3
 	git config --global color.branch auto
 	git config --global color.diff auto
@@ -182,32 +192,10 @@ install_pyenv() {
 			fi
 		fi
 	else
-		# Install the pinned default version exactly as specified
+		# Install the pinned default version exactly as specified.
+		# Only one version is installed on purpose — extra minor versions slow
+		# down pyenv shim resolution (and the prompt) without much benefit.
 		pyenv install -s "$DEFAULT_PYTHON_VERSION"
-
-		# Track the latest patch for the older minor versions
-		for pyver in 3.13 3.12 3.11; do
-			# Find the latest available patch for this major.minor
-			local latest
-			latest=$(pyenv install --list | tr -d ' ' | grep -E "^${pyver}\.[0-9]+$" | sort -V | tail -1)
-			if [ -z "$latest" ]; then
-				log "No available patch found for $pyver, skipping"
-				continue
-			fi
-			# Check what's already installed for this major.minor
-			local installed
-			installed=$(pyenv versions --bare | grep -E "^${pyver}\.[0-9]+$" | sort -V | tail -1)
-			if [ "$installed" = "$latest" ]; then
-				log "Python $latest already installed, skipping"
-				continue
-			fi
-			if [ -n "$installed" ]; then
-				log "Upgrading Python $pyver: $installed -> $latest"
-			else
-				log "Installing Python $latest"
-			fi
-			pyenv install -f "$latest"
-		done
 	fi
 	pyenv global "$DEFAULT_PYTHON_VERSION"
 

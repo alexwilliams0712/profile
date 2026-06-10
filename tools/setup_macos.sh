@@ -7,13 +7,6 @@ export PROJECT_ROOT=$HOME/profile
 export PATH="/usr/local/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
-# Use the Homebrew matching the current architecture
-# (Apple Silicon native uses /opt/homebrew, Rosetta/Intel uses /usr/local)
-if [ "$(uname -m)" = "arm64" ]; then
-	eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null || true)"
-else
-	eval "$(/usr/local/bin/brew shellenv 2>/dev/null || /opt/homebrew/bin/brew shellenv 2>/dev/null || true)"
-fi
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(uname -m)
 set -e
@@ -24,6 +17,9 @@ sudo -v
 source "$PROFILE_DIR/tools/common.sh"
 trap 'handle_error $LINENO' ERR
 
+# Use the Homebrew matching the current architecture
+brew_shellenv
+
 copy_dotfiles() {
 	print_function_name
 	mkdir -p "$HOME/.config"
@@ -33,6 +29,13 @@ copy_dotfiles() {
 	cp "$PROFILE_DIR/dotfiles/.bashrc" "$HOME/.bashrc"
 	cp "$PROFILE_DIR/dotfiles/.prettierrc" "$HOME/.prettierrc"
 	cp "$PROFILE_DIR/dotfiles/.bash_aliases" "$HOME/.bash_aliases"
+
+	# Helper scripts that .bash_aliases shells out to (keeps the sourced
+	# .bash_aliases small/fast). Same path is used on macOS and Linux.
+	mkdir -p "$HOME/.local/bin"
+	cp "$PROFILE_DIR/dotfiles/bin/json_formatter.py" "$HOME/.local/bin/json_formatter.py"
+	chmod +x "$HOME/.local/bin/json_formatter.py"
+
 	copy_btop_config
 
 	# Ghostty config (shared between macOS and Linux)
@@ -98,11 +101,7 @@ install_homebrew() {
 
 	# Re-evaluate brew shellenv to ensure PATH includes Homebrew for the
 	# rest of this script (covers both fresh install and existing install)
-	if [ "$(uname -m)" = "arm64" ]; then
-		eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null || true)"
-	else
-		eval "$(/usr/local/bin/brew shellenv 2>/dev/null || /opt/homebrew/bin/brew shellenv 2>/dev/null || true)"
-	fi
+	brew_shellenv
 
 	# Set HOMEBREW_NO_AUTO_UPDATE to prevent brew from running git updates
 	# during individual installs (we handle updates explicitly)
@@ -215,7 +214,6 @@ install_rust() {
 	# rustup is installed via Homebrew
 	rustup-init -y --default-toolchain stable
 	source "$HOME/.cargo/env"
-	rustup update stable
 	rustup install nightly
 	rustup component add rustfmt clippy
 	rustup update stable
