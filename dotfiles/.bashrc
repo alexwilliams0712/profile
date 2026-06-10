@@ -29,8 +29,8 @@ HISTCONTROL=ignoreboth
 shopt -s histappend
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
+HISTSIZE=100000
+HISTFILESIZE=200000
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -233,6 +233,13 @@ if command -v starship >/dev/null 2>&1; then
 else
 	PROMPT_COMMAND=set_bash_prompt
 fi
+
+# Share command history live across all open windows/panes. Without this,
+# histappend only writes on shell exit and each window reads the history file
+# only once at startup — so a window you've left idle never sees commands run
+# elsewhere (up-arrow looks "stale"). Append our new commands then pull in
+# everyone else's before each prompt. Prepended so it runs ahead of starship.
+PROMPT_COMMAND="history -a; history -n${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 
 echo "Profile version: $(cat $HOME/BASH_PROFILE_VERSION)"
 # if command -v pyenv >/dev/null 2>&1; then pyenv --version; fi
