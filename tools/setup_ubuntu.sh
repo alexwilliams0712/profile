@@ -36,6 +36,8 @@ copy_dotfiles() {
 	mkdir -p "$HOME/.local/bin"
 	cp "$PROFILE_DIR/dotfiles/bin/json_formatter.py" "$HOME/.local/bin/json_formatter.py"
 	chmod +x "$HOME/.local/bin/json_formatter.py"
+	cp "$PROFILE_DIR/dotfiles/bin/work-proxy" "$HOME/.local/bin/work-proxy"
+	chmod +x "$HOME/.local/bin/work-proxy"
 
 	copy_btop_config
 	# Case-insensitive tab completion (idempotent)
