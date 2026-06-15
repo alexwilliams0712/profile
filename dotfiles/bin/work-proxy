@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# work-proxy — start/stop an SSH SOCKS5 tunnel through alex-work.
+# Point DataSpell (and code you run) at 127.0.0.1:1080.
+#
+# Self-contained: connects over Tailscale MagicDNS with an explicit user, so it
+# works on any device in the tailnet (macOS or Linux) with no ~/.ssh/config entry.
+# Override the defaults with WORK_PROXY_{USER,HOST,PORT} if anything ever changes.
+#
+# Usage: work-proxy {start|stop|status|restart}
+set -euo pipefail
+
+REMOTE_USER="${WORK_PROXY_USER:-alexwilliams}"
+REMOTE_HOST="${WORK_PROXY_HOST:-alex-work.tail8c1fc.ts.net}"  # Tailscale MagicDNS name
+PORT="${WORK_PROXY_PORT:-1080}"                                # local SOCKS5 listen port
+BIND="127.0.0.1"
+PATTERN="ssh.*-D ${BIND}:${PORT}"
+
+SSH_OPTS=(
+	-o ExitOnForwardFailure=yes
+	-o ServerAliveInterval=30
+	-o ServerAliveCountMax=3
+	-o StrictHostKeyChecking=accept-new
+	-o ConnectTimeout=10
+)
+
+is_up() { pgrep -f "$PATTERN" >/dev/null 2>&1; }
+
+start() {
+	if is_up; then
+		echo "✓ proxy already up on ${BIND}:${PORT} (pid $(pgrep -f "$PATTERN" | tr '\n' ' '))"
+		return 0
+	fi
+	echo "→ connecting SOCKS5 ${BIND}:${PORT} → ${REMOTE_HOST} ..."
+	# -f background after auth, -N no remote command, -q quiet, -D dynamic SOCKS5
+	ssh -f -N -q -D "${BIND}:${PORT}" "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}"
+	sleep 1
+	if is_up; then
+		echo "✓ proxy up: ${BIND}:${PORT} → ${REMOTE_HOST}"
+	else
+		echo "✗ failed to start tunnel" >&2
+		exit 1
+	fi
+}
+
+stop() {
+	if ! is_up; then
+		echo "· proxy not running"
+		return 0
+	fi
+	pkill -f "$PATTERN" || true
+	sleep 1
+	if is_up; then
+		echo "✗ could not stop tunnel" >&2
+		exit 1
+	else
+		echo "✓ proxy stopped"
+	fi
+}
+
+status() {
+	if is_up; then
+		echo "✓ UP   ${BIND}:${PORT} → ${REMOTE_HOST}  (pid $(pgrep -f "$PATTERN" | tr '\n' ' '))"
+	else
+		echo "· DOWN ${BIND}:${PORT}"
+	fi
+}
+
+case "${1:-status}" in
+start) start ;;
+stop) stop ;;
+restart)
+	stop
+	start
+	;;
+status) status ;;
+*)
+	echo "Usage: work-proxy {start|stop|status|restart}" >&2
+	exit 2
+	;;
+esac
