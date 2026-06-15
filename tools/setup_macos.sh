@@ -12,10 +12,11 @@ export ARCHITECTURE=$(uname -m)
 set -e
 set -o pipefail
 
-sudo -v
-
 source "$PROFILE_DIR/tools/common.sh"
 trap 'handle_error $LINENO' ERR
+
+# Prompt for sudo once, then keep the timestamp warm for the whole install.
+keep_sudo_alive
 
 # Use the Homebrew matching the current architecture
 brew_shellenv
@@ -125,11 +126,24 @@ install_packages() {
 		fi
 	done
 
-	# Homebrew uses the API by default now; local taps waste space
+	# Homebrew uses the API by default now; local taps waste space and, worse,
+	# their stale cask .rb sources shadow the live API casks. A leftover
+	# definition referencing the long-removed `appcast` stanza (removed in
+	# brew 4.3) makes a cask "unreadable" and aborts the whole `brew bundle`.
+	# Force-untap and delete the leftover tap checkouts so the API casks win.
+	local brew_repo
+	brew_repo="$(brew --repository)"
 	for tap in homebrew/core homebrew/cask; do
 		if brew tap | grep -q "^${tap}$"; then
 			log "Removing unnecessary tap: $tap"
-			brew untap "$tap" 2>/dev/null || true
+			brew untap --force "$tap" 2>/dev/null || true
+		fi
+		# Remove any leftover on-disk tap checkout even if `brew tap` no longer
+		# lists it (untap can leave the directory behind).
+		local tap_dir="$brew_repo/Library/Taps/${tap%/*}/homebrew-${tap#*/}"
+		if [ -d "$tap_dir" ]; then
+			log "Removing leftover tap directory: $tap_dir"
+			rm -rf "$tap_dir"
 		fi
 	done
 
@@ -152,11 +166,31 @@ install_packages() {
 		fi
 	done
 
+	# Purge stale cached cask source (the `.rb` Homebrew caches per-install).
+	# When present these are loaded via FromInstalledPathLoader and can still
+	# reference the removed `appcast` stanza, shadowing the current API cask
+	# (e.g. "Cask 'google-chrome' is unreadable: undefined method 'appcast'").
+	# Deleting them is safe: brew re-reads the cask from the API on next run.
+	if [ -d "$caskroom" ]; then
+		log "Clearing stale cached cask sources (.rb) under Caskroom..."
+		find "$caskroom" -path '*/.metadata/*' -name '*.rb' -delete 2>/dev/null || true
+	fi
+	# Drop any stale downloaded cask metadata from the cache as well.
+	# Guard the path so an empty `brew --cache` can never expand to `/Cask`.
+	local brew_cache
+	brew_cache="$(brew --cache 2>/dev/null)"
+	[ -n "$brew_cache" ] && rm -rf "${brew_cache:?}/Cask" 2>/dev/null || true
+
 	log "Updating Homebrew..."
-	# brew update can fail on stale taps — not critical
+	# Reset local repo state so the JSON API (not stale local taps) is the
+	# source of truth, then update. Both are best-effort — non-fatal on error.
+	brew update-reset || log "Warning: brew update-reset had errors, continuing..."
 	brew update || log "Warning: brew update had errors, continuing..."
 	log "Installing packages from Brewfile..."
-	brew bundle --file="$PROFILE_DIR/tools/Brewfile"
+	# Resilience: one unreadable cask must not abort the whole bundle. The
+	# metadata purge above plus update-reset make a transiently-unreadable cask
+	# self-heal; `|| log` lets the rest of setup continue if one entry fails.
+	brew bundle --file="$PROFILE_DIR/tools/Brewfile" || log "Warning: brew bundle reported errors (likely a stale/unreadable cask); continuing..."
 	brew upgrade --greedy
 	brew cleanup
 

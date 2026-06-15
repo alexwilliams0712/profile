@@ -7,6 +7,34 @@ handle_error() {
 	echo "An error occurred on line $1"
 }
 
+# Prime the sudo timestamp once, then keep it warm in the background so a long
+# unattended install only prompts for the password a single time.
+# - Idempotent: a second call is a no-op while a loop is already running.
+# - set -e / pipefail safe: the priming `sudo -v` is guarded with `|| return`,
+#   and the background loop's commands can't abort the parent shell.
+# - The loop exits on its own once the parent script ($$) is gone, is killed by
+#   the EXIT trap on error/early-exit paths, and is killed explicitly by
+#   exit_script before its `exec bash -l` (which would otherwise bypass EXIT).
+SUDO_KEEPALIVE_PID=""
+keep_sudo_alive() {
+	# Already running? Do nothing.
+	if [ -n "$SUDO_KEEPALIVE_PID" ] && kill -0 "$SUDO_KEEPALIVE_PID" 2>/dev/null; then
+		return 0
+	fi
+	# Prompt for the password once (non-fatal under set -e if the user aborts).
+	sudo -v || return 1
+	# Refresh the timestamp every 60s until this script's PID disappears.
+	local parent_pid=$$
+	while true; do
+		sudo -n true 2>/dev/null || true
+		sleep 60
+		kill -0 "$parent_pid" 2>/dev/null || exit 0
+	done &
+	SUDO_KEEPALIVE_PID=$!
+	# Reap the loop when the script exits (without clobbering the ERR trap).
+	trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
+}
+
 print_function_name() {
 	log "\033[1;36mExecuting function: ${FUNCNAME[1]}\033[0m"
 }
@@ -233,6 +261,9 @@ install_pyenv() {
 
 exit_script() {
 	print_function_name
+	# Stop the sudo keepalive explicitly: the `exec bash -l` below replaces this
+	# process, so the EXIT trap would never fire to reap it otherwise.
+	[ -n "$SUDO_KEEPALIVE_PID" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
 	ensure_directory
 	if [ ${#failed_functions[@]} -eq 0 ]; then
 		echo "==============================="
