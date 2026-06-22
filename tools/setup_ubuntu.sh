@@ -226,7 +226,7 @@ install_flatpaks() {
 		org.openrgb.OpenRGB \
 		org.mozilla.Thunderbird \
 		com.spotify.Client \
-		com.github.eneshecan.WhatsAppForLinux \
+		com.rtosta.zapzap \
 		org.remmina.Remmina \
 		com.sublimetext.three \
 		com.valvesoftware.Steam \
