@@ -243,6 +243,10 @@ install_flatpaks() {
 			log "Failed to install $app - continuing with next application"
 		fi
 	done
+
+	# ZapZap is sandboxed and only sees XDG dirs by default; grant access to
+	# $HOME so it can attach and save files anywhere in the home directory.
+	flatpak override --user --filesystem=home com.rtosta.zapzap
 }
 
 install_browser() {
