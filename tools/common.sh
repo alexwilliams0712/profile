@@ -158,6 +158,22 @@ install_foundry() {
 	"$HOME/.foundry/bin/cast" --version
 }
 
+install_rust() {
+	print_function_name
+	# Rust via the official rustup installer (NOT Homebrew/apt). This keeps the
+	# real rustup binary and its cargo/rustc proxies in ~/.cargo/bin. Installing
+	# rustup from Homebrew puts the binary under /opt/homebrew and leaves the
+	# ~/.cargo/bin proxies dangling whenever the formula is renamed/upgraded.
+	if [ ! -x "$HOME/.cargo/bin/rustup" ]; then
+		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+	fi
+	# shellcheck source=/dev/null
+	source "$HOME/.cargo/env"
+	rustup toolchain install nightly
+	rustup component add rustfmt clippy
+	rustup update stable
+}
+
 install_pyenv() {
 	print_function_name
 	local os_type

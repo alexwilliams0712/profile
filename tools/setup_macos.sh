@@ -245,16 +245,6 @@ install_ruby() {
 	fi
 }
 
-install_rust() {
-	print_function_name
-	# rustup is installed via Homebrew
-	rustup-init -y --default-toolchain stable
-	source "$HOME/.cargo/env"
-	rustup install nightly
-	rustup component add rustfmt clippy
-	rustup update stable
-}
-
 install_node() {
 	print_function_name
 	# Node is installed via Homebrew
