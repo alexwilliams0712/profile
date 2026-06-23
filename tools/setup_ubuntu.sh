@@ -383,17 +383,6 @@ install_speedtest() {
 	speedtest --version | head -1
 }
 
-install_rust() {
-	print_function_name
-	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
-	source ~/.cargo/env
-	source ~/.bashrc 2>/dev/null || true
-	rustup install nightly
-	# cargo install diesel_cli --no-default-features --features postgres
-	rustup component add rustfmt clippy
-	rustup update stable
-}
-
 go_installs() {
 	print_function_name
 	go install github.com/dim13/otpauth@latest
