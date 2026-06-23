@@ -149,6 +149,15 @@ install_starship() {
 	fi
 }
 
+install_foundry() {
+	print_function_name
+	# Foundry (forge, cast, anvil, chisel) via the official installer — NOT snap.
+	# foundryup installs to ~/.foundry/bin (added to PATH in .bashrc).
+	curl -L https://foundry.paradigm.xyz | bash
+	"$HOME/.foundry/bin/foundryup"
+	"$HOME/.foundry/bin/cast" --version
+}
+
 install_pyenv() {
 	print_function_name
 	local os_type
