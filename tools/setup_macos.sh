@@ -255,6 +255,15 @@ install_rust() {
 	rustup update stable
 }
 
+install_foundry() {
+	print_function_name
+	# Foundry (forge, cast, anvil, chisel) via the official installer — NOT snap.
+	# foundryup installs to ~/.foundry/bin (added to PATH in .bashrc).
+	curl -L https://foundry.paradigm.xyz | bash
+	"$HOME/.foundry/bin/foundryup"
+	"$HOME/.foundry/bin/cast" --version
+}
+
 install_node() {
 	print_function_name
 	# Node is installed via Homebrew
@@ -455,6 +464,7 @@ main() {
 	run_function install_ruby
 	run_function install_pyenv
 	run_function install_rust
+	run_function install_foundry
 	run_function install_node
 	run_function install_go
 	run_function setup_docker

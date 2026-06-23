@@ -394,6 +394,15 @@ install_rust() {
 	rustup update stable
 }
 
+install_foundry() {
+	print_function_name
+	# Foundry (forge, cast, anvil, chisel) via the official installer — NOT snap.
+	# foundryup installs to ~/.foundry/bin (added to PATH in .bashrc).
+	curl -L https://foundry.paradigm.xyz | bash
+	"$HOME/.foundry/bin/foundryup"
+	"$HOME/.foundry/bin/cast" --version
+}
+
 go_installs() {
 	print_function_name
 	go install github.com/dim13/otpauth@latest
@@ -978,6 +987,7 @@ main() {
 	run_function install_vscode
 	run_function install_flatpaks
 	run_function install_rust
+	run_function install_foundry
 	run_function install_and_setup_docker
 	run_function install_github_cli
 	run_function install_espanso
