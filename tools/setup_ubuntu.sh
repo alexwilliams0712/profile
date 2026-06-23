@@ -978,6 +978,7 @@ main() {
 	run_function install_vscode
 	run_function install_flatpaks
 	run_function install_rust
+	run_function install_foundry
 	run_function install_and_setup_docker
 	run_function install_github_cli
 	run_function install_espanso

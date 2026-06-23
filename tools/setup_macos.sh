@@ -455,6 +455,7 @@ main() {
 	run_function install_ruby
 	run_function install_pyenv
 	run_function install_rust
+	run_function install_foundry
 	run_function install_node
 	run_function install_go
 	run_function setup_docker
