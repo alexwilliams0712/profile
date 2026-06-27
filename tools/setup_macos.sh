@@ -378,37 +378,6 @@ install_tailscale() {
 	fi
 }
 
-install_ai() {
-	print_function_name
-
-	# Gemini CLI is installed via Homebrew
-
-	# Install/upgrade Claude Code
-	if command -v claude >/dev/null 2>&1; then
-		log "Claude Code already installed, upgrading..."
-	else
-		log "Installing Claude Code..."
-	fi
-	# Use arch -arm64 on Apple Silicon to ensure the native arm64 binary is
-	# installed, even if the shell is running under Rosetta (which causes
-	# uname -m to report x86_64 and triggers Bun AVX warnings)
-	if [ "$(sysctl -n hw.optional.arm64 2>/dev/null)" = "1" ]; then
-		curl -fsSL https://claude.ai/install.sh | arch -arm64 bash
-	else
-		curl -fsSL https://claude.ai/install.sh | bash
-	fi
-
-	# Install/upgrade ChatGPT CLI (shell-gpt)
-	if command -v sgpt >/dev/null 2>&1; then
-		log "shell-gpt already installed, upgrading..."
-	else
-		log "Installing ChatGPT CLI (shell-gpt)..."
-	fi
-	uv pip install -U shell-gpt
-
-	log "AI CLI tools installation complete"
-}
-
 install_terraform() {
 	print_function_name
 	local arch

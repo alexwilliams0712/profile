@@ -284,6 +284,35 @@ install_pyenv() {
 	ensure_directory
 }
 
+install_ai() {
+	print_function_name
+
+	# Claude Code — official native installer. Self-contained binary, no Node
+	# required; auto-detects arch (darwin/linux × arm64/x64) and self-updates.
+	curl -fsSL https://claude.ai/install.sh | bash
+
+	# OpenAI Codex CLI — official native installer (Rust binary, arch-aware).
+	# Re-running upgrades in place.
+	curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_NON_INTERACTIVE=1 sh
+
+	# Gemini CLI — Google ships NO native curl/bash installer; every method
+	# (Homebrew, MacPorts, conda) just wraps the npm package, so npm is the only
+	# non-Homebrew path. Node is installed earlier in both setups.
+	if command -v npm >/dev/null 2>&1; then
+		if [ "$(uname -s)" = "Darwin" ]; then
+			# macOS uses a user-owned npm prefix (~/.npm-global), so no sudo.
+			npm install -g @google/gemini-cli
+		else
+			# Linux installs node as root (nodesource), so global needs sudo.
+			sudo npm install -g @google/gemini-cli
+		fi
+	else
+		log "npm not found, skipping Gemini CLI install"
+	fi
+
+	log "AI CLI tools installation complete"
+}
+
 exit_script() {
 	print_function_name
 	# Stop the sudo keepalive explicitly: the `exec bash -l` below replaces this
