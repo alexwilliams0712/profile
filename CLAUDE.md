@@ -31,8 +31,8 @@ There is no test suite.
 
 ### Key Components
 
-- **`tools/common.sh`** — Shared functions: `run_function()` (error-handling wrapper), `handle_error()`, `log()`, `collect_user_input()`, `set_git_config()`. Every setup function is wrapped with `run_function` so failures are collected and reported at the end without aborting.
-- **`tools/setup_macos.sh`** — macOS setup. Installs Homebrew, runs `brew bundle` from `tools/Brewfile`, sets Homebrew's bash 5+ as default shell, configures pyenv (Python 3.14), rustup, node, go, Docker, VS Code, Espanso, Tailscale, Terraform, AI tools (Claude Code, shell-gpt, Gemini CLI). Copies dotfiles to `$HOME`. Uses `set -e` and `set -o pipefail`.
+- **`tools/common.sh`** — Shared functions: `run_function()` (error-handling wrapper), `handle_error()`, `log()`, `collect_user_input()`, `set_git_config()`, and shared installers used by both OS scripts (e.g. `install_pyenv()`, `install_rust()`, `install_ai()`). `install_ai()` installs the AI CLIs cross-platform: Claude Code and Codex via their official native curl installers, and Gemini CLI via npm (no native installer exists, so npm is the only non-Homebrew path). Every setup function is wrapped with `run_function` so failures are collected and reported at the end without aborting.
+- **`tools/setup_macos.sh`** — macOS setup. Installs Homebrew, runs `brew bundle` from `tools/Brewfile`, sets Homebrew's bash 5+ as default shell, configures pyenv (Python 3.14), rustup, node, go, Docker, VS Code, Espanso, Tailscale, Terraform, and AI tools (via the shared `install_ai()` in `common.sh`). Copies dotfiles to `$HOME`. Uses `set -e` and `set -o pipefail`.
 - **`tools/setup_ubuntu.sh`** — Ubuntu/Linux setup. Same workflow using apt/aptitude instead of Homebrew. Configures Terminator instead of iTerm2.
 - **`tools/Brewfile`** — Declarative Homebrew package manifest (formulae, casks, Mac App Store apps).
 - **`dotfiles/.bash_aliases`** — ~1,150 lines of shell functions and aliases covering git, Docker, Kubernetes, AWS, Python, Rust, system utilities. Sourced by `.bashrc`.

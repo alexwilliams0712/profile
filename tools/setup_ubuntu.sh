@@ -789,26 +789,6 @@ install_redis_insight() {
 	github_install_deb "https://github.com/redis/RedisInsight/releases/download/${version}/Redis-Insight-linux-amd64.deb"
 }
 
-install_ai() {
-	print_function_name
-
-	# Install Claude Code CLI
-	log "Installing Claude Code CLI..."
-	curl -fsSL https://claude.ai/install.sh | bash
-
-	# Install Gemini CLI
-	log "Installing Gemini CLI..."
-	if command -v gemini >/dev/null 2>&1; then
-		log "Gemini CLI already installed, upgrading..."
-	fi
-	sudo npm install -g @google/gemini-cli
-
-	# Install Codex
-	sudo npm i -g @openai/codex
-
-	log "AI CLI tools installation complete"
-}
-
 install_terraform() {
 	print_function_name
 	if [ "$ARCHITECTURE" = "arm64" ]; then
