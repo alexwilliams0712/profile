@@ -127,6 +127,7 @@ export PATH=$PATH:$HOME/.local/share/JetBrains/Toolbox/scripts
 export PATH=$PATH:$HOME/.local/bin
 export PATH="$HOME/go/bin:$PATH"
 export PATH="$HOME/.foundry/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH"
 if command -v pyenv >/dev/null 2>&1; then
 	alias brew='env PATH="${PATH//$(pyenv root)\/shims:/}" brew'
 	# Lazy-load pyenv init (saves ~2s on shell startup).
