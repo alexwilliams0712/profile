@@ -26,6 +26,11 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
+# set PATH so it includes rust/cargo binaries if they exist
+if [ -d "$HOME/.cargo/bin" ] ; then
+    PATH="$HOME/.cargo/bin:$PATH"
+fi
+
 # Deduplicate PATH, preserving order (exact match, not substring)
 declare -A _seen_paths
 _new_path=()
