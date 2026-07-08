@@ -401,6 +401,20 @@ install_webtools() {
 	curl -sS https://webi.sh/awless | sh
 }
 
+install_syncthing() {
+	print_function_name
+	# Syncthing is installed as a formula via the Brewfile (brew "syncthing").
+	# It ships a launchd agent; start it so it runs at login and keeps folders
+	# (e.g. ~/dotfiles) in sync in the background. Idempotent — a second start
+	# just re-registers the already-running service.
+	if command -v syncthing >/dev/null 2>&1; then
+		brew services start syncthing || log "Could not start syncthing service"
+		syncthing --version | head -1
+	else
+		log "syncthing not found (brew bundle may have failed); skipping service start"
+	fi
+}
+
 main() {
 	collect_user_input
 
@@ -424,6 +438,7 @@ main() {
 	run_function install_terraform
 	run_function install_starship
 	run_function install_webtools
+	run_function install_syncthing
 	run_function install_ai
 
 	# Report failures if any

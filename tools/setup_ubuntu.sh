@@ -537,6 +537,32 @@ install_and_setup_docker() {
 	log "Docker setup complete"
 }
 
+install_syncthing() {
+	print_function_name
+	# Syncthing via the official apt repo (apt.syncthing.net) — NOT snap.
+	# Snap's confinement sandboxes ~/ and breaks syncing arbitrary folders, and
+	# we avoid snap on Ubuntu generally. This mirrors the gh/docker keyring +
+	# sources.list pattern used elsewhere in this script.
+	sudo mkdir -p /etc/apt/keyrings
+	sudo curl -fsSL -o /etc/apt/keyrings/syncthing-archive-keyring.gpg https://syncthing.net/release-key.gpg
+	echo "deb [signed-by=/etc/apt/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable" |
+		sudo tee /etc/apt/sources.list.d/syncthing.list >/dev/null
+	apt_upgrader
+	sudo apt-get -o DPkg::Lock::Timeout=60 install -y syncthing
+
+	# Run as a per-user service and keep it alive across logouts/reboots so
+	# folders (e.g. ~/dotfiles) stay in sync headlessly. enable-linger lets the
+	# user manager run without an active login session. Guarded because
+	# `systemctl --user` needs a user DBus, which may be absent over plain SSH.
+	sudo loginctl enable-linger "$USER" || log "Could not enable linger for $USER"
+	if systemctl --user enable --now syncthing.service 2>/dev/null; then
+		log "syncthing.service enabled for $USER"
+	else
+		log "Could not enable syncthing user service now (no user session?); it will start on next login"
+	fi
+	syncthing --version | head -1 || true
+}
+
 install_github_cli() {
 	print_function_name
 	log "Running gh-cli setup"
@@ -950,6 +976,7 @@ main() {
 	run_function install_foundry
 	run_function install_and_setup_docker
 	run_function install_github_cli
+	run_function install_syncthing
 	run_function install_espanso
 	run_function install_clam_av
 	run_function install_1password
