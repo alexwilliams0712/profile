@@ -1357,6 +1357,7 @@ magpie_mirror() {
 
 # Fun
 alias yolo='claude --dangerously-skip-permissions'
+alias yodex='codex --dangerously-bypass-approvals-and-sandbox'
 
 function laughing_at_idiots() {
 	# sudo apt-get install -y fswebcam imagemagick
