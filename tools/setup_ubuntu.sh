@@ -192,6 +192,26 @@ ssh_stuff() {
 	sudo systemctl reload ssh
 }
 
+configure_remote_unlock() {
+	print_function_name
+	local sudoers_file="/etc/sudoers.d/remote-unlock"
+	local sudoers_rule="$USER ALL=(root) NOPASSWD: /usr/bin/loginctl unlock-sessions"
+	local temp_file
+	temp_file=$(mktemp)
+
+	printf '%s\n' "$sudoers_rule" >"$temp_file"
+	chmod 0440 "$temp_file"
+	sudo visudo -cf "$temp_file"
+
+	if sudo cmp -s "$temp_file" "$sudoers_file"; then
+		rm -f "$temp_file"
+		return
+	fi
+
+	sudo install -o root -g root -m 0440 "$temp_file" "$sudoers_file"
+	rm -f "$temp_file"
+}
+
 install_pg_formatter() {
 	echo "Installing pg_formatter..."
 
@@ -967,6 +987,7 @@ main() {
 	run_function set_git_config
 	run_function install_apt_packages
 	run_function ssh_stuff
+	run_function configure_remote_unlock
 	run_function install_pyenv
 	run_function install_pg_formatter
 	run_function install_browser

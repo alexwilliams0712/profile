@@ -88,7 +88,7 @@ function unlock() {
 		return 1
 	fi
 
-	ssh "$1" 'loginctl unlock-sessions'
+	ssh "$1" 'sudo -n /usr/bin/loginctl unlock-sessions'
 }
 
 function scp_mirror() {
