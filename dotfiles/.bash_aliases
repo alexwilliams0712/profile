@@ -82,6 +82,15 @@ function tailfix() {
 	\tail -f $@ | sed 's/\x1/|/g'
 }
 
+function unlock() {
+	if [ "$#" -ne 1 ]; then
+		echo "Usage: unlock machine"
+		return 1
+	fi
+
+	ssh "$1" 'loginctl unlock-sessions'
+}
+
 function scp_mirror() {
 	# Usage
 	# $ scp_mirror alex-home ~/.netrc ~/vpn/ ~/.aws ~/.personal ~/.packagr_details
