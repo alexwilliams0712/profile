@@ -32,13 +32,32 @@ brew_shellenv
 install_command_line_tools() {
 	print_function_name
 	local clt_missing=false
+	local clt_update_required=false
 	local clt_placeholder="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
 	local clt_label=""
 
 	if ! xcode-select -p &>/dev/null; then
 		clt_missing=true
+		clt_update_required=true
+	elif ! /usr/sbin/pkgutil --pkg-info=com.apple.pkg.CLTools_Executables &>/dev/null; then
+		# A selected full Xcode can hide a stale or absent standalone CLT. Homebrew
+		# still requires a current standalone CLT and rejects formula installs.
+		log "Command Line Tools receipt is missing; checking for the current package..."
+		clt_update_required=true
+	elif command -v brew >/dev/null 2>&1; then
+		local brew_doctor_output
+		brew_doctor_output="$(brew doctor 2>&1 || true)"
+		if printf '%s\n' "$brew_doctor_output" |
+			grep -qiE 'newer Command Line Tools release is available|Command Line Tools are too outdated|outdated Command Line Tools'; then
+			log "Command Line Tools are outdated; checking for the current package..."
+			clt_update_required=true
+		fi
+	fi
+
+	if [ "$clt_update_required" = true ]; then
 		log "Searching for Xcode Command Line Tools..."
-		# This marker makes softwareupdate include the standalone CLT package.
+		# This marker makes softwareupdate include the standalone CLT package even
+		# when Xcode or an older CLT is already selected.
 		/usr/bin/sudo -n /usr/bin/touch "$clt_placeholder"
 	fi
 
@@ -51,13 +70,16 @@ install_command_line_tools() {
 			tail -n 1
 	) || true
 
-	if [ "$clt_missing" = true ]; then
+	if [ "$clt_update_required" = true ]; then
 		/usr/bin/sudo -n /bin/rm -f "$clt_placeholder"
 	fi
 
 	if [ -n "$clt_label" ]; then
 		log "Installing $clt_label..."
 		/usr/bin/sudo -n /usr/sbin/softwareupdate --install "$clt_label" --agree-to-license
+	elif [ "$clt_update_required" = true ]; then
+		log "A current Command Line Tools package is required but softwareupdate did not offer one."
+		return 1
 	fi
 
 	# Select the standalone CLT directory after a first-time headless install.
@@ -168,7 +190,7 @@ install_packages() {
 	print_function_name
 
 	# Remove stale/deprecated taps that cause git errors or auth prompts
-	local stale_taps=("hashicorp/tap" "homebrew/cask-drivers" "homebrew/cask-versions" "homebrew/cask-fonts" "ubuntu/microk8s")
+	local stale_taps=("hashicorp/tap" "homebrew/cask-drivers" "homebrew/cask-versions" "homebrew/cask-fonts" "jenkins-x/jx" "ubuntu/microk8s")
 	for tap in "${stale_taps[@]}"; do
 		if brew tap | grep -q "$tap"; then
 			log "Removing stale tap: $tap"
@@ -216,16 +238,8 @@ install_packages() {
 		fi
 	done
 
-	# Purge stale cached cask source (the `.rb` Homebrew caches per-install).
-	# When present these are loaded via FromInstalledPathLoader and can still
-	# reference the removed `appcast` stanza, shadowing the current API cask
-	# (e.g. "Cask 'google-chrome' is unreadable: undefined method 'appcast'").
-	# Deleting them is safe: brew re-reads the cask from the API on next run.
-	if [ -d "$caskroom" ]; then
-		log "Clearing stale cached cask sources (.rb) under Caskroom..."
-		find "$caskroom" -path '*/.metadata/*' -name '*.rb' -delete 2>/dev/null || true
-	fi
-	# Drop any stale downloaded cask metadata from the cache as well.
+	# Installed `.metadata` under Caskroom is Homebrew's receipt and must remain
+	# intact. Only drop disposable downloaded cask metadata from the cache.
 	# Guard the path so an empty `brew --cache` can never expand to `/Cask`.
 	local brew_cache
 	brew_cache="$(brew --cache 2>/dev/null)"
@@ -246,6 +260,19 @@ install_packages() {
 	mas_apps="$(brew bundle list --file="$brewfile" --mas | tr '\n' ' ')"
 	taps="$(brew bundle list --file="$brewfile" --tap | tr '\n' ' ')"
 	local bundle_failed=0
+	local cask
+
+	# Older setup versions removed legacy `.rb` cask receipts. Homebrew sees the
+	# app in Caskroom but cannot manage or upgrade it until the receipt is rebuilt.
+	for cask in $casks; do
+		if [ -d "$caskroom/$cask" ] && ! brew list --versions --cask "$cask" &>/dev/null; then
+			log "Repairing invalid Homebrew metadata for $cask..."
+			if ! brew reinstall --cask --force "$cask"; then
+				log "Warning: Could not repair Homebrew metadata for $cask; continuing..."
+				bundle_failed=1
+			fi
+		fi
+	done
 
 	if ! HOMEBREW_BUNDLE_CASK_SKIP="$casks" HOMEBREW_BUNDLE_MAS_SKIP="$mas_apps" \
 		brew bundle --file="$brewfile"; then
