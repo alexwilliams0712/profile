@@ -13,14 +13,16 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 cp "$here/input.json" "$here/input.json5" "$tmp/"
+unusable_tmp="$tmp/not-a-directory"
+: >"$unusable_tmp"
 
 # shellcheck source=/dev/null
 source "$aliases"
 
 first_output="$({
 	cd "$tmp" || exit 1
-	formatter
-})"
+	TMPDIR="$unusable_tmp" formatter
+} 2>&1)"
 
 status=0
 line_count="$(printf '%s\n' "$first_output" | grep -c .)"
@@ -37,6 +39,8 @@ if [ -n "$unexpected_output" ]; then
 	echo "FAIL: formatter produced unexpected output:"
 	printf '%s\n' "$unexpected_output"
 	status=1
+else
+	echo "PASS: formatter does not require writable temporary storage"
 fi
 
 for ext in json json5; do
@@ -70,6 +74,33 @@ if printf '%s\n' "$interactive_output" | grep -Eq '^\[[0-9]+\]'; then
 	status=1
 else
 	echo "PASS: formatter produces no interactive job-control output"
+fi
+
+# Project-wide formatters used to copy every candidate into a temporary
+# directory. Exercise that path with a fake Terraform formatter while TMPDIR
+# is unusable, and verify only the file it changes is reported.
+terraform_project="$tmp/terraform-project"
+mkdir -p "$terraform_project/bin"
+printf 'before\n' >"$terraform_project/changed.tf"
+printf 'stable\n' >"$terraform_project/stable.tf"
+cat >"$terraform_project/bin/terraform" <<'EOF'
+#!/usr/bin/env bash
+[ "$1" = fmt ] && [ "$2" = --recursive ] || exit 2
+printf 'after\n' >changed.tf
+EOF
+chmod +x "$terraform_project/bin/terraform"
+
+terraform_output="$({
+	cd "$terraform_project" || exit 1
+	PATH="$terraform_project/bin:$PATH" TMPDIR="$unusable_tmp" formatter
+} 2>&1)"
+if [ "$(printf '%s\n' "$terraform_output" | grep -c .)" -eq 1 ] &&
+	printf '%s\n' "$terraform_output" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2} .* - (\./)?changed\.tf$'; then
+	echo "PASS: project-wide formatter snapshots stay in memory"
+else
+	echo "FAIL: project-wide formatter produced unexpected output:"
+	printf '%s\n' "$terraform_output"
+	status=1
 fi
 
 for ext in json json5; do
