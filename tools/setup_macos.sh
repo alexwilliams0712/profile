@@ -458,10 +458,22 @@ install_terraform() {
 	fi
 	local latest_version
 	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '"tag_name":.*' | cut -d'v' -f2 | tr -d '",')
-	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_darwin_${arch}.zip"
-	unzip "terraform_${latest_version}_darwin_${arch}.zip"
-	/usr/bin/sudo -n mv terraform /usr/local/bin/
-	rm -rf terraform_* LICENSE.txt
+	local tmp_dir
+	tmp_dir="$(mktemp -d)"
+	curl -fsSL "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_darwin_${arch}.zip" \
+		-o "$tmp_dir/terraform.zip" || {
+		rm -rf "$tmp_dir"
+		return 1
+	}
+	unzip -oq "$tmp_dir/terraform.zip" -d "$tmp_dir" || {
+		rm -rf "$tmp_dir"
+		return 1
+	}
+	/usr/bin/sudo -n install -m 0755 "$tmp_dir/terraform" /usr/local/bin/terraform || {
+		rm -rf "$tmp_dir"
+		return 1
+	}
+	rm -rf "$tmp_dir"
 	terraform version
 }
 
