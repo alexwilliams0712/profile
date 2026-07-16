@@ -1395,10 +1395,11 @@ alias taaa='terraform apply --auto-approve'
 formatter() {
 	local snapshot_dir
 
-	formatter_json &
-	formatter_sql &
-	formatter_shell &
-	wait
+	# Keep these in the foreground so interactive shells do not print job IDs
+	# and completion notices around the formatter's own timestamped output.
+	formatter_json
+	formatter_sql
+	formatter_shell
 	# Check for Python project
 	if [ -f pyproject.toml ] || ls *.py &>/dev/null || [ -d .venv/ ]; then
 		if [ -n "$VIRTUAL_ENV" ]; then
