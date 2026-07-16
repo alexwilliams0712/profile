@@ -60,6 +60,18 @@ else
 	status=1
 fi
 
+# Interactive shells announce commands launched with `&` using output such as
+# "[1] 12345" and "[1] Done". The top-level formatter should not leak those
+# job-control messages around its own timestamped file output.
+interactive_output="$(bash --noprofile --norc -ic "source '$aliases'; cd '$tmp'; formatter" 2>&1)"
+if printf '%s\n' "$interactive_output" | grep -Eq '^\[[0-9]+\]'; then
+	echo "FAIL: formatter produced interactive job-control output:"
+	printf '%s\n' "$interactive_output"
+	status=1
+else
+	echo "PASS: formatter produces no interactive job-control output"
+fi
+
 for ext in json json5; do
 	if diff -u "$here/expected.$ext" "$tmp/input.$ext"; then
 		echo "PASS: input.$ext formatted as expected (comments preserved)"
