@@ -343,10 +343,7 @@ setup_docker() {
 		ln -sfn /opt/homebrew/opt/docker-compose/bin/docker-compose ~/.docker/cli-plugins/docker-compose
 	fi
 
-	# Start Docker Desktop
-	if [ -d "/Applications/Docker.app" ]; then
-		open -a Docker
-	fi
+	# Docker Desktop is installed by the Brewfile but started only by the user.
 }
 
 setup_vscode() {
