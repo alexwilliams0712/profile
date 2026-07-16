@@ -330,6 +330,50 @@ filecount_table() {
 }
 
 # Rust
+function carclean() {
+	local root="$PWD"
+	local directory cargo_output removed_line amount directory_name
+	local index=0 failed=0 directory_width=9 amount_width=14
+	local directories=() amounts=() cargo_outputs=()
+
+	for directory in "$root"/*/; do
+		[ -d "$directory" ] || continue
+		[ -f "$directory/Cargo.toml" ] || continue
+
+		directory_name="$(basename "${directory%/}")"
+		directories[index]="$directory_name"
+
+		if cargo_output=$(cd "$directory" && cargo clean 2>&1); then
+			cargo_outputs[index]="$cargo_output"
+			removed_line=$(printf '%s\n' "${cargo_outputs[index]}" | \grep 'Removed ' | tail -n 1 || true)
+			if [[ "$removed_line" =~ ,[[:space:]]+([^[:space:]]+)[[:space:]]+total ]]; then
+				amount="${BASH_REMATCH[1]}"
+			elif [[ "$removed_line" =~ Removed[[:space:]]+0[[:space:]]+files? ]]; then
+				amount="0 B"
+			else
+				amount="Unknown"
+			fi
+		else
+			cargo_outputs[index]="$cargo_output"
+			amount="ERROR"
+			failed=1
+		fi
+
+		amounts[index]="$amount"
+		((${#directory_name} > directory_width)) && directory_width=${#directory_name}
+		((${#amount} > amount_width)) && amount_width=${#amount}
+		index=$((index + 1))
+	done
+
+	printf '| %-*s | %-*s |\n' "$directory_width" "Directory" "$amount_width" "Amount cleaned"
+	printf '|-%s-|-%s-|\n' "$(printf '%*s' "$directory_width" '' | tr ' ' '-')" "$(printf '%*s' "$amount_width" '' | tr ' ' '-')"
+	for index in "${!directories[@]}"; do
+		printf '| %-*s | %-*s |\n' "$directory_width" "${directories[index]}" "$amount_width" "${amounts[index]}"
+	done
+
+	return "$failed"
+}
+
 function clippy() {
 	local current_toolchain=$(rustup show active-toolchain | cut -d '-' -f1)
 	echo "Current toolchain: $current_toolchain"
@@ -1241,39 +1285,104 @@ _fmt_files() {
 	fi
 }
 
+_formatter_run_quiet() {
+	local output
+	local status
+
+	output="$("$@" 2>&1)"
+	status=$?
+	if [ "$status" -ne 0 ] && [ -n "$output" ]; then
+		printf '%s\n' "$output" >&2
+	fi
+	return "$status"
+}
+
+_formatter_run_file() {
+	local file="$1"
+	local before
+	local status
+	shift
+
+	before="$(mktemp "${TMPDIR:-/tmp}/formatter.XXXXXX")" || return 1
+	cp "./${file#./}" "$before" || {
+		rm -f "$before"
+		return 1
+	}
+
+	_formatter_run_quiet "$@"
+	status=$?
+	if ! cmp -s "$before" "./${file#./}"; then
+		log "$file"
+	fi
+	rm -f "$before"
+	return "$status"
+}
+
+_formatter_snapshot_files() {
+	local snapshot_dir="$1"
+	local file
+	local index=0
+	shift
+
+	: >"$snapshot_dir/files"
+	_fmt_files "$@" | while IFS= read -r file; do
+		printf '%s\n' "$file" >>"$snapshot_dir/files"
+		cp "./${file#./}" "$snapshot_dir/$index"
+		index=$((index + 1))
+	done
+}
+
+_formatter_log_snapshot_changes() {
+	local snapshot_dir="$1"
+	local file
+	local index=0
+
+	while IFS= read -r file; do
+		if ! cmp -s "$snapshot_dir/$index" "./${file#./}"; then
+			log "$file"
+		fi
+		index=$((index + 1))
+	done <"$snapshot_dir/files"
+}
+
 # Set JSON_LINE_WIDTH to control max line width for simple arrays (default: 80)
 formatter_json() {
 	local line_width="${JSON_LINE_WIDTH:-80}"
 
 	_fmt_files '*.json' '*.json5' | while read -r file; do
-		log "Processing $file"
+		local before
+		before="$(mktemp "${TMPDIR:-/tmp}/formatter.XXXXXX")" || continue
+		cp "./${file#./}" "$before" || {
+			rm -f "$before"
+			continue
+		}
 
 		# Reformat in place: sort keys, align colons, pack scalar arrays
 		# wide, and PRESERVE comments. Parses json and json5 natively (no
 		# json5->json pre-pass), so // and /* */ comments survive on both.
 		# Heavy lifting lives in ~/.local/bin/json_formatter.py (copied by setup).
-		python3 "$HOME/.local/bin/json_formatter.py" "$file" "$line_width" 2>/dev/null || {
-			log "Failed to parse $file, falling back to jq"
+		_formatter_run_quiet python3 "$HOME/.local/bin/json_formatter.py" "$file" "$line_width" || {
 			if command -v jq &>/dev/null; then
 				jq -S '.' "$file" >"$file.tmp" && mv "$file.tmp" "$file"
 			fi
 		}
+		if ! cmp -s "$before" "./${file#./}"; then
+			log "$file"
+		fi
+		rm -f "$before"
 	done
 }
 
 formatter_sql() {
 	_fmt_files '*.sql' | while read -r file; do
-		log "Processing $file"
-
-		pg_format --keyword-case=2 --type-case=2 --comma-break --no-extra-line --inplace "$file"
+		_formatter_run_file "$file" pg_format --keyword-case=2 --type-case=2 --comma-break --no-extra-line --inplace "$file"
 	done
 }
 
 formatter_shell() {
 	_fmt_files '*.sh' '.bashrc' '.bash_aliases' |
 		while read -r file; do
-			log "Processing $file"
-			shfmt -l -w "$file"
+			_formatter_run_file "$file" shfmt -w "$file"
 		done
 }
 
@@ -1284,6 +1393,8 @@ alias ta='terraform apply'
 alias taaa='terraform apply --auto-approve'
 
 formatter() {
+	local snapshot_dir
+
 	formatter_json &
 	formatter_sql &
 	formatter_shell &
@@ -1292,35 +1403,35 @@ formatter() {
 	if [ -f pyproject.toml ] || ls *.py &>/dev/null || [ -d .venv/ ]; then
 		if [ -n "$VIRTUAL_ENV" ]; then
 			if command -v ruff &>/dev/null; then
-				log "Running ruff check..."
-				ruff check --fix .
-				log "Running ruff format..."
-				ruff format .
-			else
-				log "ruff not found. Skipping Python linting/formatting."
+				snapshot_dir="$(mktemp -d "${TMPDIR:-/tmp}/formatter.XXXXXX")" || return 1
+				_formatter_snapshot_files "$snapshot_dir" '*.py' '*.pyi' '*.ipynb'
+				_formatter_run_quiet ruff check --fix --quiet .
+				_formatter_run_quiet ruff format --quiet .
+				_formatter_log_snapshot_changes "$snapshot_dir"
+				rm -rf "$snapshot_dir"
 			fi
-		else
-			log "Python project detected, but not in a uv environment. Skipping Python linting/formatting."
 		fi
 	fi
 
 	# Check for Rust project
 	if [ -f Cargo.toml ]; then
 		if command -v cargo &>/dev/null; then
-			log "Running cargo +nightly fmt..."
-			cargo +nightly fmt
-		else
-			log "cargo not found. Skipping Rust formatting."
+			snapshot_dir="$(mktemp -d "${TMPDIR:-/tmp}/formatter.XXXXXX")" || return 1
+			_formatter_snapshot_files "$snapshot_dir" '*.rs'
+			_formatter_run_quiet cargo +nightly fmt
+			_formatter_log_snapshot_changes "$snapshot_dir"
+			rm -rf "$snapshot_dir"
 		fi
 	fi
 
 	# Terraform (terraform fmt)
 	if find . -name "*.tf" | grep -q .; then
 		if command -v terraform &>/dev/null; then
-			log "Running terraform fmt --recursive..."
-			terraform fmt --recursive
-		else
-			log "terraform not found. Skipping Terraform formatting."
+			snapshot_dir="$(mktemp -d "${TMPDIR:-/tmp}/formatter.XXXXXX")" || return 1
+			_formatter_snapshot_files "$snapshot_dir" '*.tf'
+			_formatter_run_quiet terraform fmt --recursive
+			_formatter_log_snapshot_changes "$snapshot_dir"
+			rm -rf "$snapshot_dir"
 		fi
 	fi
 }
