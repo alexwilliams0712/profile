@@ -1297,52 +1297,57 @@ _formatter_run_quiet() {
 	return "$status"
 }
 
+_formatter_file_signature() {
+	local file="./${1#./}"
+
+	if [ ! -f "$file" ]; then
+		printf 'missing\n'
+		return 0
+	fi
+
+	# POSIX cksum is available on both macOS and Ubuntu. Reading through stdin
+	# keeps the signature independent of how the file path is written.
+	cksum <"$file"
+}
+
 _formatter_run_file() {
 	local file="$1"
-	local before
+	local before after
 	local status
 	shift
 
-	before="$(mktemp "${TMPDIR:-/tmp}/formatter.XXXXXX")" || return 1
-	cp "./${file#./}" "$before" || {
-		rm -f "$before"
-		return 1
-	}
+	before="$(_formatter_file_signature "$file")" || return 1
 
 	_formatter_run_quiet "$@"
 	status=$?
-	if ! cmp -s "$before" "./${file#./}"; then
+	after="$(_formatter_file_signature "$file")" || return 1
+	if [ "$before" != "$after" ]; then
 		log "$file"
 	fi
-	rm -f "$before"
 	return "$status"
 }
 
 _formatter_snapshot_files() {
-	local snapshot_dir="$1"
 	local file
-	local index=0
-	shift
 
-	: >"$snapshot_dir/files"
-	_fmt_files "$@" | while IFS= read -r file; do
-		printf '%s\n' "$file" >>"$snapshot_dir/files"
-		cp "./${file#./}" "$snapshot_dir/$index"
-		index=$((index + 1))
-	done
+	_formatter_snapshot_paths=()
+	_formatter_snapshot_signatures=()
+	while IFS= read -r file; do
+		_formatter_snapshot_paths+=("$file")
+		_formatter_snapshot_signatures+=("$(_formatter_file_signature "$file")")
+	done < <(_fmt_files "$@")
 }
 
 _formatter_log_snapshot_changes() {
-	local snapshot_dir="$1"
-	local file
-	local index=0
+	local file after index
 
-	while IFS= read -r file; do
-		if ! cmp -s "$snapshot_dir/$index" "./${file#./}"; then
+	for index in "${!_formatter_snapshot_paths[@]}"; do
+		file="${_formatter_snapshot_paths[index]}"
+		after="$(_formatter_file_signature "$file")" || continue
+		if [ "${_formatter_snapshot_signatures[index]}" != "$after" ]; then
 			log "$file"
 		fi
-		index=$((index + 1))
-	done <"$snapshot_dir/files"
+	done
 }
 
 # Set JSON_LINE_WIDTH to control max line width for simple arrays (default: 80)
@@ -1350,12 +1355,8 @@ formatter_json() {
 	local line_width="${JSON_LINE_WIDTH:-80}"
 
 	_fmt_files '*.json' '*.json5' | while read -r file; do
-		local before
-		before="$(mktemp "${TMPDIR:-/tmp}/formatter.XXXXXX")" || continue
-		cp "./${file#./}" "$before" || {
-			rm -f "$before"
-			continue
-		}
+		local before after
+		before="$(_formatter_file_signature "$file")" || continue
 
 		# Reformat in place: sort keys, align colons, pack scalar arrays
 		# wide, and PRESERVE comments. Parses json and json5 natively (no
@@ -1366,10 +1367,10 @@ formatter_json() {
 				jq -S '.' "$file" >"$file.tmp" && mv "$file.tmp" "$file"
 			fi
 		}
-		if ! cmp -s "$before" "./${file#./}"; then
+		after="$(_formatter_file_signature "$file")" || continue
+		if [ "$before" != "$after" ]; then
 			log "$file"
 		fi
-		rm -f "$before"
 	done
 }
 
@@ -1393,7 +1394,8 @@ alias ta='terraform apply'
 alias taaa='terraform apply --auto-approve'
 
 formatter() {
-	local snapshot_dir
+	local _formatter_snapshot_paths=()
+	local _formatter_snapshot_signatures=()
 
 	# Keep these in the foreground so interactive shells do not print job IDs
 	# and completion notices around the formatter's own timestamped output.
@@ -1404,12 +1406,10 @@ formatter() {
 	if [ -f pyproject.toml ] || ls *.py &>/dev/null || [ -d .venv/ ]; then
 		if [ -n "$VIRTUAL_ENV" ]; then
 			if command -v ruff &>/dev/null; then
-				snapshot_dir="$(mktemp -d "${TMPDIR:-/tmp}/formatter.XXXXXX")" || return 1
-				_formatter_snapshot_files "$snapshot_dir" '*.py' '*.pyi' '*.ipynb'
+				_formatter_snapshot_files '*.py' '*.pyi' '*.ipynb'
 				_formatter_run_quiet ruff check --fix --quiet .
 				_formatter_run_quiet ruff format --quiet .
-				_formatter_log_snapshot_changes "$snapshot_dir"
-				rm -rf "$snapshot_dir"
+				_formatter_log_snapshot_changes
 			fi
 		fi
 	fi
@@ -1417,22 +1417,18 @@ formatter() {
 	# Check for Rust project
 	if [ -f Cargo.toml ]; then
 		if command -v cargo &>/dev/null; then
-			snapshot_dir="$(mktemp -d "${TMPDIR:-/tmp}/formatter.XXXXXX")" || return 1
-			_formatter_snapshot_files "$snapshot_dir" '*.rs'
+			_formatter_snapshot_files '*.rs'
 			_formatter_run_quiet cargo +nightly fmt
-			_formatter_log_snapshot_changes "$snapshot_dir"
-			rm -rf "$snapshot_dir"
+			_formatter_log_snapshot_changes
 		fi
 	fi
 
 	# Terraform (terraform fmt)
 	if find . -name "*.tf" | grep -q .; then
 		if command -v terraform &>/dev/null; then
-			snapshot_dir="$(mktemp -d "${TMPDIR:-/tmp}/formatter.XXXXXX")" || return 1
-			_formatter_snapshot_files "$snapshot_dir" '*.tf'
+			_formatter_snapshot_files '*.tf'
 			_formatter_run_quiet terraform fmt --recursive
-			_formatter_log_snapshot_changes "$snapshot_dir"
-			rm -rf "$snapshot_dir"
+			_formatter_log_snapshot_changes
 		fi
 	fi
 }
