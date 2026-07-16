@@ -9,6 +9,13 @@ export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(uname -m)
+# Upstream installers should use the sudo ticket primed below and must not stop
+# for their own confirmation prompts. HOMEBREW_ASK can be inherited from a
+# user's shell and explicitly enables confirmation prompts, so clear it.
+export NONINTERACTIVE=1
+export GIT_TERMINAL_PROMPT=0
+export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=10"
+unset INTERACTIVE HOMEBREW_ASK
 set -e
 set -o pipefail
 
@@ -20,6 +27,48 @@ keep_sudo_alive
 
 # Use the Homebrew matching the current architecture
 brew_shellenv
+
+install_command_line_tools() {
+	print_function_name
+	local clt_missing=false
+	local clt_placeholder="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
+	local clt_label=""
+
+	if ! xcode-select -p &>/dev/null; then
+		clt_missing=true
+		log "Searching for Xcode Command Line Tools..."
+		# This marker makes softwareupdate include the standalone CLT package.
+		/usr/bin/sudo -n /usr/bin/touch "$clt_placeholder"
+	fi
+
+	clt_label=$(
+		/usr/sbin/softwareupdate --list 2>&1 |
+			grep -B 1 -E 'Command Line Tools' |
+			awk -F'*' '/^ *\*/ {print $2}' |
+			sed -e 's/^ *Label: //' -e 's/^ *//' |
+			sort -V |
+			tail -n 1
+	) || true
+
+	if [ "$clt_missing" = true ]; then
+		/usr/bin/sudo -n /bin/rm -f "$clt_placeholder"
+	fi
+
+	if [ -n "$clt_label" ]; then
+		log "Installing $clt_label..."
+		/usr/bin/sudo -n /usr/sbin/softwareupdate --install "$clt_label" --agree-to-license
+	fi
+
+	# Select the standalone CLT directory after a first-time headless install.
+	if [ "$clt_missing" = true ] && [ -d /Library/Developer/CommandLineTools ]; then
+		/usr/bin/sudo -n /usr/bin/xcode-select --switch /Library/Developer/CommandLineTools
+	fi
+
+	if ! xcode-select -p &>/dev/null; then
+		log "Xcode Command Line Tools were not available from softwareupdate."
+		return 1
+	fi
+}
 
 copy_dotfiles() {
 	print_function_name
@@ -94,7 +143,7 @@ install_homebrew() {
 	print_function_name
 	if ! command -v brew >/dev/null 2>&1; then
 		log "Installing Homebrew..."
-		/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+		NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 		# Add Homebrew to PATH for Apple Silicon Macs
 		if [[ $(uname -m) == 'arm64' ]]; then
@@ -196,7 +245,7 @@ install_packages() {
 
 	# Accept Xcode license (installed via mas in Brewfile)
 	if command -v xcodebuild >/dev/null 2>&1; then
-		sudo xcodebuild -license accept
+		/usr/bin/sudo -n xcodebuild -license accept
 	fi
 }
 
@@ -208,11 +257,11 @@ setup_bash() {
 	if [ -f "$brew_bash" ]; then
 		if ! grep -q "$brew_bash" /etc/shells 2>/dev/null; then
 			log "Adding Homebrew bash to /etc/shells"
-			echo "$brew_bash" | sudo tee -a /etc/shells
+			echo "$brew_bash" | /usr/bin/sudo -n tee -a /etc/shells
 		fi
 		if [ "$SHELL" != "$brew_bash" ]; then
 			log "Setting Homebrew bash as default shell"
-			sudo chsh -s "$brew_bash" "$USER"
+			/usr/bin/sudo -n chsh -s "$brew_bash" "$USER"
 		fi
 	fi
 
@@ -254,7 +303,7 @@ install_node() {
 		# Fix npm ownership if root-owned files exist
 		for dir in "$HOME/.npm" "$HOME/.npm-global"; do
 			if [ -d "$dir" ]; then
-				sudo chown -R "$(id -u):$(id -g)" "$dir"
+				/usr/bin/sudo -n chown -R "$(id -u):$(id -g)" "$dir"
 			fi
 		done
 		# Set npm global prefix to match PATH in .bashrc (~/.npm-global/bin)
@@ -360,12 +409,12 @@ install_tailscale() {
 		# Create CLI wrapper script (symlinks crash due to bundle identifier check)
 		if [ -f "$tailscale_cli" ]; then
 			log "Creating CLI wrapper: $wrapper_target"
-			sudo rm -f "$wrapper_target"
-			sudo tee "$wrapper_target" >/dev/null <<-WRAPPER
+			/usr/bin/sudo -n rm -f "$wrapper_target"
+			/usr/bin/sudo -n tee "$wrapper_target" >/dev/null <<-WRAPPER
 				#!/bin/bash
 				exec "$tailscale_cli" "\$@"
 			WRAPPER
-			sudo chmod +x "$wrapper_target"
+			/usr/bin/sudo -n chmod +x "$wrapper_target"
 		fi
 
 		if command -v tailscale >/dev/null 2>&1; then
@@ -390,7 +439,7 @@ install_terraform() {
 	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '"tag_name":.*' | cut -d'v' -f2 | tr -d '",')
 	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_darwin_${arch}.zip"
 	unzip "terraform_${latest_version}_darwin_${arch}.zip"
-	sudo mv terraform /usr/local/bin/
+	/usr/bin/sudo -n mv terraform /usr/local/bin/
 	rm -rf terraform_* LICENSE.txt
 	terraform version
 }
@@ -416,9 +465,20 @@ install_syncthing() {
 }
 
 main() {
+	# A fresh mac needs CLT before git can read the existing identity. On a
+	# configured mac, collect the two optional values first, then check updates.
+	local clt_was_missing=false
+	if ! xcode-select -p &>/dev/null; then
+		clt_was_missing=true
+		install_command_line_tools
+	fi
+
 	collect_user_input
 
 	failed_functions=()
+	if [ "$clt_was_missing" = false ]; then
+		run_function install_command_line_tools
+	fi
 
 	run_function copy_dotfiles
 	run_function set_git_config

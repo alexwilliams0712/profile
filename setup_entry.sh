@@ -3,30 +3,22 @@
 sudo -v
 
 if [ "$(uname)" = "Darwin" ]; then
-	# Ensure Xcode Command Line Tools are installed and up to date
-	if ! xcode-select -p &>/dev/null; then
-		echo "Installing Xcode Command Line Tools..."
-		xcode-select --install
-		echo "Please re-run this script after installation completes."
-		exit 1
-	fi
-	# Check for CLT updates (e.g. after a macOS upgrade)
-	clt_update=$(softwareupdate --list 2>&1 | grep -i "command line tools" || true)
-	if [ -n "$clt_update" ]; then
-		echo "Updating Command Line Tools..."
-		softwareupdate --install --all
-	fi
+	# setup_macos installs/updates the Command Line Tools after starting the
+	# sudo keepalive. Running softwareupdate here used to happen before that
+	# keepalive and could cause another password prompt later in the setup.
+	:
 elif ! command -v git >/dev/null 2>&1; then
 	echo "git is not installed, installing git."
 	sudo apt-get update
 	sudo apt-get install -y git
 fi
 
-# Pull latest version of this repo (non-fatal on first run / auth issues)
-if git fetch origin 2>/dev/null; then
+# Pull latest version of this repo (non-fatal on first run / auth issues).
+# Apple's /usr/bin/git is only a launcher until the Command Line Tools exist.
+if { [ "$(uname)" != "Darwin" ] || xcode-select -p &>/dev/null; } && GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' git fetch origin 2>/dev/null; then
 	git reset --hard origin/main
 	git checkout main
-	git pull
+	GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' git pull
 else
 	echo "Warning: could not fetch from remote, continuing with local copy."
 fi

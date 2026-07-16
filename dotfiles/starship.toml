@@ -38,7 +38,8 @@ format = '([$all_status$ahead_behind]($style) )'
 style = "bold red"
 
 [python]
-pyenv_version_name = false
+# Query pyenv directly; its Python shims can exceed the prompt timeout.
+pyenv_version_name = true
 format = "via [$symbol$version( \\($virtualenv\\))]($style) "
 detect_extensions = ["py", "ipynb"]
 detect_files = [".python-version", "pyproject.toml", "requirements.txt", "setup.py"]
