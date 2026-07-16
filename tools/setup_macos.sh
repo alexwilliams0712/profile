@@ -10,9 +10,10 @@ export PATH="$HOME/.local/bin:$PATH"
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(uname -m)
 # Upstream installers should use the sudo ticket primed below and must not stop
-# for their own confirmation prompts. HOMEBREW_ASK can be inherited from a
-# user's shell and explicitly enables confirmation prompts, so clear it.
+# for their own confirmation prompts. Homebrew CLI ask mode is now the default;
+# HOMEBREW_NO_ASK disables it, while NONINTERACTIVE covers its bootstrap script.
 export NONINTERACTIVE=1
+export HOMEBREW_NO_ASK=1
 export GIT_TERMINAL_PROMPT=0
 export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=10"
 unset INTERACTIVE HOMEBREW_ASK

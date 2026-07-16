@@ -41,7 +41,7 @@ brew "scc"
 brew "shellcheck"
 brew "starship"
 brew "shfmt"
-tap "teamookla/speedtest"
+tap "teamookla/speedtest", trusted: { formula: "speedtest" }
 brew "speedtest"
 brew "sqlite3"
 brew "syncthing"
