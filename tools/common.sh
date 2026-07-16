@@ -23,11 +23,12 @@ keep_sudo_alive() {
 	fi
 	# Prompt for the password once (non-fatal under set -e if the user aborts).
 	sudo -v || return 1
-	# Refresh the timestamp every 60s until this script's PID disappears.
+	# Explicitly extend the cached credentials until this script exits. Running
+	# an arbitrary sudo command does not reliably refresh the timestamp on macOS.
 	local parent_pid=$$
 	while true; do
-		sudo -n true 2>/dev/null || true
-		sleep 60
+		/usr/bin/sudo -n -v 2>/dev/null || true
+		sleep 30
 		kill -0 "$parent_pid" 2>/dev/null || exit 0
 	done &
 	SUDO_KEEPALIVE_PID=$!

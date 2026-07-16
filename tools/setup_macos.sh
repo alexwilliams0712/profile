@@ -198,7 +198,7 @@ install_packages() {
 	done
 
 	# Remove old/unwanted packages
-	local unwanted=("python@3.8" "python@3.9" "pkg-config")
+	local unwanted=("python@3.8" "python@3.9" "pkg-config" "speedtest-cli")
 	for pkg in "${unwanted[@]}"; do
 		if brew list "$pkg" &>/dev/null; then
 			log "Removing unwanted package: $pkg"
@@ -237,17 +237,40 @@ install_packages() {
 	brew update-reset || log "Warning: brew update-reset had errors, continuing..."
 	brew update || log "Warning: brew update had errors, continuing..."
 	log "Installing packages from Brewfile..."
-	# Resilience: one unreadable cask must not abort the whole bundle. The
-	# metadata purge above plus update-reset make a transiently-unreadable cask
-	# self-heal; `|| log` lets the rest of setup continue if one entry fails.
-	brew bundle --file="$PROFILE_DIR/tools/Brewfile" || log "Warning: brew bundle reported errors (likely a stale/unreadable cask); continuing..."
+	# Homebrew 6 can misclassify casks as formulae when Bundle prefetches a mixed
+	# batch. Isolate each package type so one failed group cannot block the rest.
+	local brewfile="$PROFILE_DIR/tools/Brewfile"
+	local formulae casks mas_apps taps
+	formulae="$(brew bundle list --file="$brewfile" --formula | tr '\n' ' ')"
+	casks="$(brew bundle list --file="$brewfile" --cask | tr '\n' ' ')"
+	mas_apps="$(brew bundle list --file="$brewfile" --mas | tr '\n' ' ')"
+	taps="$(brew bundle list --file="$brewfile" --tap | tr '\n' ' ')"
+	local bundle_failed=0
+
+	if ! HOMEBREW_BUNDLE_CASK_SKIP="$casks" HOMEBREW_BUNDLE_MAS_SKIP="$mas_apps" \
+		brew bundle --file="$brewfile"; then
+		log "Warning: Homebrew formula installation reported errors; continuing..."
+		bundle_failed=1
+	fi
+	if ! HOMEBREW_BUNDLE_BREW_SKIP="$formulae" HOMEBREW_BUNDLE_MAS_SKIP="$mas_apps" \
+		HOMEBREW_BUNDLE_TAP_SKIP="$taps" brew bundle --file="$brewfile"; then
+		log "Warning: Homebrew cask installation reported errors; continuing..."
+		bundle_failed=1
+	fi
+	if ! HOMEBREW_BUNDLE_BREW_SKIP="$formulae" HOMEBREW_BUNDLE_CASK_SKIP="$casks" \
+		HOMEBREW_BUNDLE_TAP_SKIP="$taps" brew bundle --file="$brewfile"; then
+		log "Warning: Mac App Store installation reported errors; continuing..."
+		bundle_failed=1
+	fi
 	brew upgrade --greedy
 	brew cleanup
 
-	# Accept Xcode license (installed via mas in Brewfile)
-	if command -v xcodebuild >/dev/null 2>&1; then
+	# Accept the Xcode license only when the current installation requires it.
+	if command -v xcodebuild >/dev/null 2>&1 && ! xcodebuild -license check >/dev/null 2>&1; then
 		/usr/bin/sudo -n xcodebuild -license accept
 	fi
+
+	return "$bundle_failed"
 }
 
 setup_bash() {
@@ -435,10 +458,22 @@ install_terraform() {
 	fi
 	local latest_version
 	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '"tag_name":.*' | cut -d'v' -f2 | tr -d '",')
-	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_darwin_${arch}.zip"
-	unzip "terraform_${latest_version}_darwin_${arch}.zip"
-	/usr/bin/sudo -n mv terraform /usr/local/bin/
-	rm -rf terraform_* LICENSE.txt
+	local tmp_dir
+	tmp_dir="$(mktemp -d)"
+	curl -fsSL "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_darwin_${arch}.zip" \
+		-o "$tmp_dir/terraform.zip" || {
+		rm -rf "$tmp_dir"
+		return 1
+	}
+	unzip -oq "$tmp_dir/terraform.zip" -d "$tmp_dir" || {
+		rm -rf "$tmp_dir"
+		return 1
+	}
+	/usr/bin/sudo -n install -m 0755 "$tmp_dir/terraform" /usr/local/bin/terraform || {
+		rm -rf "$tmp_dir"
+		return 1
+	}
+	rm -rf "$tmp_dir"
 	terraform version
 }
 
