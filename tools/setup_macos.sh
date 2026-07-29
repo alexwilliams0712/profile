@@ -35,13 +35,25 @@ install_command_line_tools() {
 	local clt_update_required=false
 	local clt_placeholder="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
 	local clt_label=""
+	local developer_dir=""
+	local full_xcode_available=false
 
-	if ! xcode-select -p &>/dev/null; then
+	developer_dir="$(xcode-select -p 2>/dev/null || true)"
+	case "$developer_dir" in
+	*.app/Contents/Developer)
+		if /usr/bin/xcodebuild -version >/dev/null 2>&1 &&
+			/usr/bin/xcrun --find clang >/dev/null 2>&1; then
+			full_xcode_available=true
+		fi
+		;;
+	esac
+
+	if [ -z "$developer_dir" ]; then
 		clt_missing=true
 		clt_update_required=true
 	elif ! /usr/sbin/pkgutil --pkg-info=com.apple.pkg.CLTools_Executables &>/dev/null; then
-		# A selected full Xcode can hide a stale or absent standalone CLT. Homebrew
-		# still requires a current standalone CLT and rejects formula installs.
+		# Prefer a current standalone CLT when softwareupdate offers one. A full
+		# Xcode toolchain is still a valid fallback when it does not.
 		log "Command Line Tools receipt is missing; checking for the current package..."
 		clt_update_required=true
 	elif command -v brew >/dev/null 2>&1; then
@@ -77,6 +89,8 @@ install_command_line_tools() {
 	if [ -n "$clt_label" ]; then
 		log "Installing $clt_label..."
 		/usr/bin/sudo -n /usr/sbin/softwareupdate --install "$clt_label" --agree-to-license
+	elif [ "$clt_update_required" = true ] && [ "$full_xcode_available" = true ]; then
+		log "softwareupdate did not offer standalone Command Line Tools; using the active full Xcode toolchain."
 	elif [ "$clt_update_required" = true ]; then
 		log "A current Command Line Tools package is required but softwareupdate did not offer one."
 		return 1
@@ -186,6 +200,36 @@ install_homebrew() {
 	export HOMEBREW_NO_INSTALL_FROM_API=0
 }
 
+cask_has_existing_app_artifact() {
+	local cask="$1"
+	local applications_dir="${APPLICATIONS_DIR:-/Applications}"
+	local artifact
+	local artifact_path
+
+	while IFS= read -r artifact; do
+		artifact="${artifact% (App)}"
+		case "$artifact" in
+		*" -> "*) artifact="${artifact##* -> }" ;;
+		esac
+		case "$artifact" in
+		/*) artifact_path="$artifact" ;;
+		*) artifact_path="$applications_dir/${artifact##*/}" ;;
+		esac
+		if [ -e "$artifact_path" ]; then
+			return 0
+		fi
+	done < <(
+		brew info --cask "$cask" 2>/dev/null |
+			awk '
+				/^==> Artifacts$/ { in_artifacts = 1; next }
+				/^==>/ { in_artifacts = 0 }
+				in_artifacts && / \(App\)$/ { print }
+			'
+	)
+
+	return 1
+}
+
 install_packages() {
 	print_function_name
 
@@ -263,12 +307,22 @@ install_packages() {
 	local cask
 
 	# Older setup versions removed legacy `.rb` cask receipts. Homebrew sees the
-	# app in Caskroom but cannot manage or upgrade it until the receipt is rebuilt.
+	# app but cannot manage or upgrade it until the receipt is rebuilt. Repair
+	# both partial Caskroom entries and app-only installs left in /Applications.
 	for cask in $casks; do
-		if [ -d "$caskroom/$cask" ] && ! brew list --versions --cask "$cask" &>/dev/null; then
+		if brew list --versions --cask "$cask" &>/dev/null; then
+			continue
+		fi
+		if [ -d "$caskroom/$cask" ]; then
 			log "Repairing invalid Homebrew metadata for $cask..."
 			if ! brew reinstall --cask --force "$cask"; then
 				log "Warning: Could not repair Homebrew metadata for $cask; continuing..."
+				bundle_failed=1
+			fi
+		elif cask_has_existing_app_artifact "$cask"; then
+			log "Reinstalling unmanaged application cask: $cask"
+			if ! brew install --cask --force "$cask"; then
+				log "Warning: Could not reinstall unmanaged cask $cask; continuing..."
 				bundle_failed=1
 			fi
 		fi
@@ -353,7 +407,9 @@ install_node() {
 		npm -v
 		# Fix npm ownership if root-owned files exist
 		for dir in "$HOME/.npm" "$HOME/.npm-global"; do
-			if [ -d "$dir" ]; then
+			if [ -d "$dir" ] &&
+				[ -n "$(find "$dir" ! -user "$(id -un)" -print -quit 2>/dev/null)" ]; then
+				log "Fixing ownership under $dir"
 				/usr/bin/sudo -n chown -R "$(id -u):$(id -g)" "$dir"
 			fi
 		done
@@ -427,10 +483,17 @@ install_espanso() {
 	# Espanso is installed via Homebrew cask
 	if command -v espanso >/dev/null 2>&1; then
 		local espanso_config="$HOME/Library/Application Support/espanso"
-		mkdir -p "$espanso_config/match"
+		local config_file="$espanso_config/config/default.yml"
+		mkdir -p "$espanso_config/config" "$espanso_config/match"
 		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$espanso_config/match/base.yml"
 		# Use Clipboard backend to avoid key injection issues (e.g. @ becoming ")
-		sed -i '' 's/^# backend: Clipboard/backend: Clipboard/' "$espanso_config/config/default.yml"
+		if [ ! -f "$config_file" ]; then
+			printf 'backend: Clipboard\n' >"$config_file"
+		elif grep -qE '^[[:space:]]*#?[[:space:]]*backend:' "$config_file"; then
+			sed -i '' -E 's/^[[:space:]]*#?[[:space:]]*backend:.*/backend: Clipboard/' "$config_file"
+		else
+			printf '\nbackend: Clipboard\n' >>"$config_file"
+		fi
 		# Substitute placeholders with git config values
 		local match_file="$espanso_config/match/base.yml"
 		sed -i '' "s|__EMAIL__|$(git config --global user.email)|" "$match_file"
@@ -543,6 +606,11 @@ main() {
 	run_function copy_dotfiles
 	run_function set_git_config
 	run_function install_homebrew
+	# run_function isolates each step so errors are reliable. Refresh the
+	# environment changes made by install_homebrew in the parent shell.
+	brew_shellenv
+	export HOMEBREW_NO_AUTO_UPDATE=1
+	export HOMEBREW_NO_INSTALL_FROM_API=0
 	run_function install_packages
 	run_function setup_bash
 	run_function install_ruby

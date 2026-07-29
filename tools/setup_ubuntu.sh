@@ -984,6 +984,11 @@ main() {
 
 	# copy_dotfiles must run first — it sources .bash_aliases which defines apt_upgrader
 	run_function copy_dotfiles
+	# run_function isolates setup steps so failures cannot be masked. Source the
+	# copied aliases in the parent as well because later steps use apt_upgrader.
+	if [ -f "$HOME/.bash_aliases" ]; then
+		source "$HOME/.bash_aliases"
+	fi
 	run_function set_git_config
 	run_function install_apt_packages
 	run_function ssh_stuff
