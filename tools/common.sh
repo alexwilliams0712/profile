@@ -82,21 +82,47 @@ collect_user_input() {
 
 run_function() {
 	local func_name=$1 exit_code=0
+	local had_errexit=0
+
+	# Calling a function directly from `cmd || ...` disables errexit for every
+	# command in that function. Run it in a subshell instead so the first
+	# unhandled error is reported, while the parent can continue to the next
+	# setup step. Setup functions persist their changes on disk; any environment
+	# needed by later steps must be refreshed by the caller.
+	case $- in
+	*e*) had_errexit=1 ;;
+	esac
+
 	if command -v gum >/dev/null 2>&1; then
 		gum style --foreground 212 --bold ">>> $func_name"
-		$func_name || exit_code=$?
-		if [ $exit_code -ne 0 ]; then
-			gum style --foreground 196 --bold "FAIL $func_name"
-			failed_functions+=("$func_name")
-		else
-			gum style --foreground 82 --bold "<<< $func_name done"
-		fi
 	else
-		$func_name || exit_code=$?
-		if [ $exit_code -ne 0 ]; then
-			failed_functions+=("$func_name")
+		echo ">>> $func_name"
+	fi
+
+	set +e
+	(
+		set -E
+		set -e
+		set -o pipefail
+		trap 'handle_error $LINENO' ERR
+		"$func_name"
+	)
+	exit_code=$?
+	if [ "$had_errexit" -eq 1 ]; then
+		set -e
+	fi
+
+	if [ "$exit_code" -ne 0 ]; then
+		failed_functions+=("$func_name")
+		if command -v gum >/dev/null 2>&1; then
+			gum style --foreground 196 --bold "FAIL $func_name"
+		else
 			echo "Warning: $func_name failed, continuing with next function..."
 		fi
+	elif command -v gum >/dev/null 2>&1; then
+		gum style --foreground 82 --bold "<<< $func_name done"
+	else
+		echo "<<< $func_name done"
 	fi
 }
 
