@@ -7,8 +7,9 @@ handle_error() {
 	echo "An error occurred on line $1"
 }
 
-# Prime the sudo timestamp once, then keep it warm in the background so a long
-# unattended install only prompts for the password a single time.
+# Prime the sudo timestamp once, then keep it warm in the background. Homebrew
+# 6 deliberately resets the timestamp when it starts, so privileged steps that
+# run after Homebrew use run_sudo and can re-prompt when necessary.
 # - Idempotent: a second call is a no-op while a loop is already running.
 # - set -e / pipefail safe: the priming `sudo -v` is guarded with `|| return`,
 #   and the background loop's commands can't abort the parent shell.
@@ -34,6 +35,14 @@ keep_sudo_alive() {
 	SUDO_KEEPALIVE_PID=$!
 	# Reap the loop when the script exits (without clobbering the ERR trap).
 	trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
+}
+
+run_sudo() {
+	if /usr/bin/sudo -n -v 2>/dev/null; then
+		/usr/bin/sudo -n "$@"
+	else
+		/usr/bin/sudo "$@"
+	fi
 }
 
 print_function_name() {
