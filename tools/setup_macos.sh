@@ -90,6 +90,12 @@ install_command_line_tools() {
 		log "Installing $clt_label..."
 		/usr/bin/sudo -n /usr/sbin/softwareupdate --install "$clt_label" --agree-to-license
 	elif [ "$clt_update_required" = true ] && [ "$full_xcode_available" = true ]; then
+		if [ -d /Library/Developer/CommandLineTools ]; then
+			local stale_clt_backup
+			stale_clt_backup="/Library/Developer/CommandLineTools.stale-$(date '+%Y%m%d%H%M%S')"
+			log "Moving stale standalone Command Line Tools to $stale_clt_backup"
+			/usr/bin/sudo -n /bin/mv /Library/Developer/CommandLineTools "$stale_clt_backup"
+		fi
 		log "softwareupdate did not offer standalone Command Line Tools; using the active full Xcode toolchain."
 	elif [ "$clt_update_required" = true ]; then
 		log "A current Command Line Tools package is required but softwareupdate did not offer one."
@@ -343,12 +349,14 @@ install_packages() {
 		log "Warning: Mac App Store installation reported errors; continuing..."
 		bundle_failed=1
 	fi
-	brew upgrade --greedy
+	# brew bundle installs and upgrades Brewfile entries by default. Do not run
+	# a global greedy upgrade here: it also touches unrelated legacy casks and
+	# can fail the profile setup because of packages outside this Brewfile.
 	brew cleanup
 
 	# Accept the Xcode license only when the current installation requires it.
 	if command -v xcodebuild >/dev/null 2>&1 && ! xcodebuild -license check >/dev/null 2>&1; then
-		/usr/bin/sudo -n xcodebuild -license accept
+		run_sudo xcodebuild -license accept
 	fi
 
 	return "$bundle_failed"
@@ -362,11 +370,11 @@ setup_bash() {
 	if [ -f "$brew_bash" ]; then
 		if ! grep -q "$brew_bash" /etc/shells 2>/dev/null; then
 			log "Adding Homebrew bash to /etc/shells"
-			echo "$brew_bash" | /usr/bin/sudo -n tee -a /etc/shells
+			echo "$brew_bash" | run_sudo tee -a /etc/shells
 		fi
 		if [ "$SHELL" != "$brew_bash" ]; then
 			log "Setting Homebrew bash as default shell"
-			/usr/bin/sudo -n chsh -s "$brew_bash" "$USER"
+			run_sudo chsh -s "$brew_bash" "$USER"
 		fi
 	fi
 
@@ -410,7 +418,7 @@ install_node() {
 			if [ -d "$dir" ] &&
 				[ -n "$(find "$dir" ! -user "$(id -un)" -print -quit 2>/dev/null)" ]; then
 				log "Fixing ownership under $dir"
-				/usr/bin/sudo -n chown -R "$(id -u):$(id -g)" "$dir"
+				run_sudo chown -R "$(id -u):$(id -g)" "$dir"
 			fi
 		done
 		# Set npm global prefix to match PATH in .bashrc (~/.npm-global/bin)
@@ -512,6 +520,10 @@ install_tailscale() {
 	# binary checks its bundle path, so we use a wrapper script instead.
 	local tailscale_cli="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 	local wrapper_target="/usr/local/bin/tailscale"
+	if [ ! -d /usr/local/bin ] || [ ! -w /usr/local/bin ]; then
+		mkdir -p "$HOME/.local/bin"
+		wrapper_target="$HOME/.local/bin/tailscale"
+	fi
 
 	if [ -d "/Applications/Tailscale.app" ]; then
 		log "Opening Tailscale.app (required to activate system extension)..."
@@ -519,13 +531,15 @@ install_tailscale() {
 
 		# Create CLI wrapper script (symlinks crash due to bundle identifier check)
 		if [ -f "$tailscale_cli" ]; then
-			log "Creating CLI wrapper: $wrapper_target"
-			/usr/bin/sudo -n rm -f "$wrapper_target"
-			/usr/bin/sudo -n tee "$wrapper_target" >/dev/null <<-WRAPPER
-				#!/bin/bash
-				exec "$tailscale_cli" "\$@"
-			WRAPPER
-			/usr/bin/sudo -n chmod +x "$wrapper_target"
+			if [ -x "$wrapper_target" ] &&
+				grep -Fq "exec \"$tailscale_cli\"" "$wrapper_target"; then
+				log "Tailscale CLI wrapper is already current: $wrapper_target"
+			else
+				log "Creating CLI wrapper: $wrapper_target"
+				rm -f "$wrapper_target"
+				printf '#!/bin/bash\nexec "%s" "$@"\n' "$tailscale_cli" >"$wrapper_target"
+				chmod +x "$wrapper_target"
+			fi
 		fi
 
 		if command -v tailscale >/dev/null 2>&1; then
@@ -548,6 +562,13 @@ install_terraform() {
 	fi
 	local latest_version
 	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '"tag_name":.*' | cut -d'v' -f2 | tr -d '",')
+	if command -v terraform >/dev/null 2>&1 &&
+		terraform version | head -n 1 | grep -qx "Terraform v$latest_version"; then
+		log "Terraform $latest_version is already installed."
+		terraform version
+		return 0
+	fi
+
 	local tmp_dir
 	tmp_dir="$(mktemp -d)"
 	curl -fsSL "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_darwin_${arch}.zip" \
@@ -559,7 +580,12 @@ install_terraform() {
 		rm -rf "$tmp_dir"
 		return 1
 	}
-	/usr/bin/sudo -n install -m 0755 "$tmp_dir/terraform" /usr/local/bin/terraform || {
+	local install_dir="/usr/local/bin"
+	if [ ! -d "$install_dir" ] || [ ! -w "$install_dir" ]; then
+		install_dir="$HOME/.local/bin"
+		mkdir -p "$install_dir"
+	fi
+	install -m 0755 "$tmp_dir/terraform" "$install_dir/terraform" || {
 		rm -rf "$tmp_dir"
 		return 1
 	}
