@@ -5,9 +5,10 @@ Update this file whenever a correction reveals a rule worth keeping.
 
 ## Progress presentation
 
-Use a bright-green Rich-style bar for shared terminal setup progress on both
-platforms. Do not apply the Nova UI palette to this terminal output unless Alex
-explicitly asks for it.
+Use one in-place, bright-green Rich-style bar for shared interactive terminal
+setup progress on both platforms. Do not emit a new bar line after every step,
+and do not apply the Nova UI palette unless Alex explicitly asks for it. Keep
+newline-based output for non-interactive runs.
 
 ## Where a new install goes
 
@@ -47,6 +48,11 @@ For macOS, add the package to `tools/Brewfile` (formula or cask) so
 `brew bundle` handles the install; the `install_*` function then only does the
 extra wiring (start a service, link a CLI, copy config). Don't shell out to a
 manual installer on macOS when a maintained formula/cask exists.
+
+Homebrew's negative boolean environment flags are enabled by their presence,
+including when set to `0`. Unset `HOMEBREW_NO_INSTALL_FROM_API` to use the JSON
+API. After untapping `homebrew/core`, inspect installed formulae with one
+unnamed `brew list --formula`; a named lookup can clone the tap again.
 
 ## General conventions (enforced)
 

@@ -1,3 +1,21 @@
+# Render one interactive setup progress bar
+
+- [x] Replace per-step interactive progress lines with one in-place bar.
+- [x] Clear the live bar before setup output and finish it with a newline.
+- [x] Preserve newline-based ASCII progress for non-interactive runs.
+- [x] Add focused rendering regressions and run the shell checks.
+- [x] Obtain an independent review and prepare a follow-up pull request.
+
+## Review
+
+- [x] Interactive progress now redraws one bright-green line, preserves an
+      aggregate failure state, and adapts to narrow UTF-8 and ASCII terminals.
+- [x] Verified adjacent functions, parent-shell hooks, final newlines,
+      non-interactive output, failure ordering, syntax, formatting, and lint.
+- [x] The monitored run completed 20 of 21 functions. `install_packages` failed
+      for separately diagnosed Homebrew API and stale CLT reasons.
+- [x] Independent final review reported no remaining findings.
+
 # Persist setup logs for diagnostics
 
 - [x] Capture the complete entry-point and platform setup output without
@@ -28,6 +46,28 @@
 - [x] Independent review found and verified fixes for completed-bar rendering,
       directory-shaped latest pointers, inherited shell options, and the fresh
       macOS preflight count. The final review reported no remaining findings.
+
+# Fix monitored macOS package failures
+
+- [x] Reproduce the cask resolution failure from Homebrew's negative API flag.
+- [x] Enable API installs by leaving `HOMEBREW_NO_INSTALL_FROM_API` unset.
+- [x] Validate CLT state after `softwareupdate` and fall back to active Xcode
+      when a stale standalone installation remains.
+- [x] Avoid cloning `homebrew-core` while checking unwanted installed formulae.
+- [x] Add focused regressions and run shell checks.
+- [x] Obtain an independent review and prepare a separate pull request.
+
+## Review
+
+- [x] Confirmed live that setting the negative API flag to `0` breaks cask
+      lookup while leaving it unset resolves the same casks.
+- [x] Added post-update CLT validation with a recoverable stale-directory
+      backup only when full Xcode is valid and sufficient.
+- [x] Covered current, missing, outdated, advisory, stale, Xcode-only, and
+      standalone-required toolchain states with isolated stubs.
+- [x] Verified all focused regressions, syntax, formatting, lint, and the live
+      read-only cask and current-machine predicate checks.
+- [x] Independent final review reported no remaining findings.
 
 # Repair missing Homebrew cask applications
 

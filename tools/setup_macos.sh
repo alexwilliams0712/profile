@@ -16,11 +16,12 @@ export NONINTERACTIVE=1
 export HOMEBREW_NO_ASK=1
 export GIT_TERMINAL_PROMPT=0
 export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=10"
-unset INTERACTIVE HOMEBREW_ASK
+unset INTERACTIVE HOMEBREW_ASK HOMEBREW_NO_INSTALL_FROM_API
 set -e
 set -o pipefail
 
 source "$PROFILE_DIR/tools/common.sh"
+source "$PROFILE_DIR/tools/macos_helpers.sh"
 trap 'handle_error $LINENO' ERR
 
 # Prompt for sudo once, then keep the timestamp warm for the whole install.
@@ -51,19 +52,15 @@ install_command_line_tools() {
 	if [ -z "$developer_dir" ]; then
 		clt_missing=true
 		clt_update_required=true
-	elif ! /usr/sbin/pkgutil --pkg-info=com.apple.pkg.CLTools_Executables &>/dev/null; then
-		# Prefer a current standalone CLT when softwareupdate offers one. A full
-		# Xcode toolchain is still a valid fallback when it does not.
-		log "Command Line Tools receipt is missing; checking for the current package..."
-		clt_update_required=true
-	elif command -v brew >/dev/null 2>&1; then
-		local brew_doctor_output
-		brew_doctor_output="$(brew doctor 2>&1 || true)"
-		if printf '%s\n' "$brew_doctor_output" |
-			grep -qiE 'newer Command Line Tools release is available|Command Line Tools are too outdated|outdated Command Line Tools'; then
+	elif command_line_tools_update_required "$full_xcode_available"; then
+		if ! clt_receipt_exists; then
+			# Prefer a current standalone CLT when softwareupdate offers one. A full
+			# Xcode toolchain is still a valid fallback when it does not.
+			log "Command Line Tools receipt is missing; checking for the current package..."
+		else
 			log "Command Line Tools are outdated; checking for the current package..."
-			clt_update_required=true
 		fi
+		clt_update_required=true
 	fi
 
 	if [ "$clt_update_required" = true ]; then
@@ -71,34 +68,20 @@ install_command_line_tools() {
 		# This marker makes softwareupdate include the standalone CLT package even
 		# when Xcode or an older CLT is already selected.
 		/usr/bin/sudo -n /usr/bin/touch "$clt_placeholder"
-	fi
-
-	clt_label=$(
-		/usr/sbin/softwareupdate --list 2>&1 |
-			grep -B 1 -E 'Command Line Tools' |
-			awk -F'*' '/^ *\*/ {print $2}' |
-			sed -e 's/^ *Label: //' -e 's/^ *//' |
-			sort -V |
-			tail -n 1
-	) || true
-
-	if [ "$clt_update_required" = true ]; then
+		clt_label="$(command_line_tools_label_if_required "$clt_update_required")" || true
 		/usr/bin/sudo -n /bin/rm -f "$clt_placeholder"
+
+		if [ -n "$clt_label" ]; then
+			log "Installing $clt_label..."
+			if ! /usr/bin/sudo -n /usr/sbin/softwareupdate --install "$clt_label" --agree-to-license; then
+				log "softwareupdate did not install $clt_label; validating the active toolchain."
+			fi
+		fi
 	fi
 
-	if [ -n "$clt_label" ]; then
-		log "Installing $clt_label..."
-		/usr/bin/sudo -n /usr/sbin/softwareupdate --install "$clt_label" --agree-to-license
-	elif [ "$clt_update_required" = true ] && [ "$full_xcode_available" = true ]; then
-		if [ -d /Library/Developer/CommandLineTools ]; then
-			local stale_clt_backup
-			stale_clt_backup="/Library/Developer/CommandLineTools.stale-$(date '+%Y%m%d%H%M%S')"
-			log "Moving stale standalone Command Line Tools to $stale_clt_backup"
-			/usr/bin/sudo -n /bin/mv /Library/Developer/CommandLineTools "$stale_clt_backup"
-		fi
-		log "softwareupdate did not offer standalone Command Line Tools; using the active full Xcode toolchain."
-	elif [ "$clt_update_required" = true ]; then
-		log "A current Command Line Tools package is required but softwareupdate did not offer one."
+	if [ "$clt_update_required" = true ] &&
+		! use_full_xcode_for_invalid_command_line_tools "$full_xcode_available"; then
+		log "A current Command Line Tools package is required but softwareupdate did not install one."
 		return 1
 	fi
 
@@ -201,9 +184,6 @@ install_homebrew() {
 	# Set HOMEBREW_NO_AUTO_UPDATE to prevent brew from running git updates
 	# during individual installs (we handle updates explicitly)
 	export HOMEBREW_NO_AUTO_UPDATE=1
-
-	# Ensure Homebrew's git uses the credential helper
-	export HOMEBREW_NO_INSTALL_FROM_API=0
 }
 
 cask_app_artifact_paths() {
@@ -292,9 +272,11 @@ install_packages() {
 	done
 
 	# Remove old/unwanted packages
-	local unwanted=("python@3.8" "python@3.9" "pkg-config" "speedtest-cli")
+	local unwanted=("python@3.8" "python@3.9" "pkgconf" "speedtest-cli")
+	local installed_formulae
+	installed_formulae="$(brew list --formula 2>/dev/null || true)"
 	for pkg in "${unwanted[@]}"; do
-		if brew list "$pkg" &>/dev/null; then
+		if printf '%s\n' "$installed_formulae" | grep -Fxq "$pkg"; then
 			log "Removing unwanted package: $pkg"
 			brew uninstall --ignore-dependencies "$pkg" 2>/dev/null || true
 		fi
@@ -675,6 +657,7 @@ main() {
 	if ! xcode-select -p &>/dev/null; then
 		clt_was_missing=true
 		run_functions "${preflight_steps[@]}"
+		setup_progress_clear
 		# Git cannot read the existing identity until this required preflight succeeds.
 		if [ ${#failed_functions[@]} -ne 0 ]; then
 			return 1
@@ -687,11 +670,11 @@ main() {
 		before_brew_steps=("${preflight_steps[@]}" "${before_brew_steps[@]}")
 	fi
 	run_functions "${before_brew_steps[@]}"
+	setup_progress_clear
 	# run_function isolates each step so errors are reliable. Refresh the
 	# environment changes made by install_homebrew in the parent shell.
 	brew_shellenv
 	export HOMEBREW_NO_AUTO_UPDATE=1
-	export HOMEBREW_NO_INSTALL_FROM_API=0
 	run_functions "${after_brew_steps[@]}"
 
 	# Report failures if any
