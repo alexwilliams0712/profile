@@ -19,8 +19,8 @@
 - [x] Removed existing Git email and phone values from the persisted prompts.
 - [x] Defined the platform function plans once, then used them for both
 	  execution and shared progress totals: macOS 21 and Ubuntu 43.
-- [x] Added Nova-coloured Unicode progress for interactive UTF-8 terminals and
-      stable ASCII/no-colour output for non-interactive runs.
+- [x] Added bright-green Rich-style Unicode progress for interactive UTF-8
+      terminals and stable ASCII/no-colour output for non-interactive runs.
 - [x] Verified executed, Bash-sourced, and Zsh-sourced logging; stdout/stderr,
       failure status, modes, sequential logs, latest pointer, and caller state.
 - [x] Verified progress phases, success/failure advancement, final setup status,

@@ -71,6 +71,17 @@ if [ "$setup_status" -ne 1 ]; then
 	exit 1
 fi
 
+unset NO_COLOR
+export TERM=xterm-256color
+failed_functions=()
+setup_progress_start first_step
+colour_output="$(run_function first_step 2>&1)"
+if [[ "$colour_output" != *$'\033[1;92m'"━"* ]] ||
+	[[ "$colour_output" == *$'\033[38;2;'* ]]; then
+	printf 'FAIL: interactive progress is not Rich-style bright green\n%s\n' "$colour_output"
+	exit 1
+fi
+
 export PROFILE_SETUP_OUTPUT_TTY=0
 export LC_ALL=C
 failed_functions=()

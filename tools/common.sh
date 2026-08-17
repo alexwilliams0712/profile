@@ -85,10 +85,10 @@ setup_progress_advance() {
 	local remaining_bar=""
 	local head=""
 	local symbol="OK"
-	local nova_accent=""
-	local nova_grid=""
-	local nova_status=""
-	local nova_reset=""
+	local bar_colour=""
+	local remaining_colour=""
+	local status_colour=""
+	local colour_reset=""
 	local output_tty="${PROFILE_SETUP_OUTPUT_TTY:-}"
 	local locale="${LC_ALL:-${LC_CTYPE:-${LANG:-}}}"
 	local completed_char="="
@@ -145,20 +145,20 @@ setup_progress_advance() {
 		fi
 	fi
 	if [ "$output_tty" -eq 1 ] && [ "${TERM:-dumb}" != dumb ] && [ -z "${NO_COLOR:-}" ]; then
-		nova_accent=$'\033[38;2;108;142;168m'
-		nova_grid=$'\033[38;2;188;191;185m'
-		nova_reset=$'\033[0m'
+		bar_colour=$'\033[1;92m'
+		remaining_colour=$'\033[90m'
+		colour_reset=$'\033[0m'
 		if [ "$exit_code" -eq 0 ]; then
-			nova_status=$'\033[38;2;155;179;150m'
+			status_colour="$bar_colour"
 		else
-			nova_status=$'\033[38;2;237;158;152m'
+			status_colour=$'\033[1;91m'
 		fi
 	fi
 
 	printf '  %b%s%s%b%s%b %3d%% %d/%d %b%s%b %s\n' \
-		"$nova_accent" "$completed_bar" "$head" "$nova_grid" "$remaining_bar" \
-		"$nova_reset" "$percent" "$SETUP_PROGRESS_CURRENT" "$SETUP_PROGRESS_TOTAL" \
-		"$nova_status" "$symbol" "$nova_reset" "$label"
+		"$bar_colour" "$completed_bar" "$head" "$remaining_colour" "$remaining_bar" \
+		"$colour_reset" "$percent" "$SETUP_PROGRESS_CURRENT" "$SETUP_PROGRESS_TOTAL" \
+		"$status_colour" "$symbol" "$colour_reset" "$label"
 }
 
 # Evaluate the Homebrew shellenv matching the current architecture.
