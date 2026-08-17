@@ -7,9 +7,9 @@ handle_error() {
 	echo "An error occurred on line $1"
 }
 
-# Prime the sudo timestamp once, then keep it warm in the background. Homebrew
-# 6 deliberately resets the timestamp when it starts, so privileged steps that
-# run after Homebrew use run_sudo and can re-prompt when necessary.
+# Prime the sudo timestamp once, then keep it warm in the background on Linux.
+# Homebrew deliberately resets the timestamp, so macOS uses foreground
+# run_sudo calls that can re-prompt when necessary.
 # - Idempotent: a second call is a no-op while a loop is already running.
 # - set -e / pipefail safe: the priming `sudo -v` is guarded with `|| return`,
 #   and the background loop's commands can't abort the parent shell.
@@ -17,31 +17,53 @@ handle_error() {
 #   the EXIT trap on error/early-exit paths, and is killed explicitly by
 #   exit_script before it returns or replaces the setup process.
 SUDO_KEEPALIVE_PID=""
+sudo_command() {
+	/usr/bin/sudo "$@"
+}
+
 keep_sudo_alive() {
+	local parent_pid=$$
+
 	# Already running? Do nothing.
 	if [ -n "$SUDO_KEEPALIVE_PID" ] && kill -0 "$SUDO_KEEPALIVE_PID" 2>/dev/null; then
 		return 0
 	fi
 	# Prompt for the password once (non-fatal under set -e if the user aborts).
-	sudo -v || return 1
+	sudo_command -v || return 1
 	# Explicitly extend the cached credentials until this script exits. Running
 	# an arbitrary sudo command does not reliably refresh the timestamp on macOS.
-	local parent_pid=$$
-	while true; do
-		/usr/bin/sudo -n -v 2>/dev/null || true
-		sleep 30
-		kill -0 "$parent_pid" 2>/dev/null || exit 0
-	done &
+	(
+		local sleep_pid=""
+		trap '[ -n "$sleep_pid" ] && kill "$sleep_pid" 2>/dev/null || true; exit 0' HUP INT TERM
+		while true; do
+			sudo_command -n -v 2>/dev/null || true
+			sleep 30 &
+			sleep_pid=$!
+			wait "$sleep_pid" 2>/dev/null || exit 0
+			sleep_pid=""
+			kill -0 "$parent_pid" 2>/dev/null || exit 0
+		done
+	) </dev/null >/dev/null 2>&1 9>&- &
 	SUDO_KEEPALIVE_PID=$!
 	# Reap the loop when the script exits (without clobbering the ERR trap).
-	trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
+	trap 'setup_progress_restore_terminal; stop_sudo_keepalive' EXIT
+}
+
+stop_sudo_keepalive() {
+	if [ -z "$SUDO_KEEPALIVE_PID" ]; then
+		return
+	fi
+	kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+	wait "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+	SUDO_KEEPALIVE_PID=""
 }
 
 run_sudo() {
-	if /usr/bin/sudo -n -v 2>/dev/null; then
-		/usr/bin/sudo -n "$@"
+	if sudo_command -n -v 2>/dev/null; then
+		sudo_command -n "$@"
 	else
-		/usr/bin/sudo "$@"
+		log "Administrator approval is required to continue."
+		sudo_command "$@"
 	fi
 }
 
@@ -59,22 +81,187 @@ ensure_directory() {
 
 SETUP_PROGRESS_CURRENT=0
 SETUP_PROGRESS_TOTAL=0
-SETUP_PROGRESS_VISIBLE=0
 SETUP_PROGRESS_FAILED=0
+SETUP_PROGRESS_PINNED=0
+SETUP_PROGRESS_ROWS=0
+SETUP_PROGRESS_COLUMNS=0
+SETUP_PROGRESS_LABEL=""
+SETUP_PROGRESS_STATE="RUN"
+SETUP_PROGRESS_LINE=""
+SETUP_PROGRESS_DEFER_FINISH=0
+SETUP_PROGRESS_CSR_PIN=""
+SETUP_PROGRESS_CSR_FULL=""
+SETUP_PROGRESS_CUP_OUTPUT=""
+SETUP_PROGRESS_CUP_FOOTER=""
+SETUP_PROGRESS_EL=""
+SETUP_PROGRESS_SC=""
+SETUP_PROGRESS_RC=""
 
 setup_progress_start() {
 	SETUP_PROGRESS_CURRENT=0
 	SETUP_PROGRESS_TOTAL="$#"
-	SETUP_PROGRESS_VISIBLE=0
 	SETUP_PROGRESS_FAILED=0
+	SETUP_PROGRESS_PINNED=0
+	SETUP_PROGRESS_LABEL=""
+	SETUP_PROGRESS_STATE="RUN"
+	SETUP_PROGRESS_LINE=""
+	SETUP_PROGRESS_DEFER_FINISH=0
 }
 
-setup_progress_clear() {
-	if [ "$SETUP_PROGRESS_VISIBLE" -ne 1 ]; then
+setup_progress_has_terminal() {
+	if [ "${PROFILE_SETUP_OUTPUT_TTY:-}" = 1 ] &&
+		[ "${PROFILE_SETUP_PROGRESS_FD:-}" = 9 ] &&
+		(: >&9) 2>/dev/null; then
+		return 0
+	fi
+	[ -z "${PROFILE_SETUP_OUTPUT_TTY:-}" ] && [ -t 1 ]
+}
+
+setup_progress_write() {
+	if [ "${PROFILE_SETUP_PROGRESS_FD:-}" = 9 ]; then
+		printf '%s' "$1" >&9 2>/dev/null || true
 		return
 	fi
-	printf '\r\033[2K'
-	SETUP_PROGRESS_VISIBLE=0
+	printf '%s' "$1" || true
+}
+
+setup_progress_read_dimensions() {
+	local size=""
+	local rows=""
+	local columns=""
+
+	if [ "${PROFILE_SETUP_PROGRESS_FD:-}" = 9 ]; then
+		size="$(stty size <&9 2>/dev/null || true)"
+	else
+		size="$(stty size 2>/dev/null || true)"
+	fi
+	rows="${size%% *}"
+	columns="${size##* }"
+	case "$rows" in
+	'' | *[!0-9]* | 0) rows="${LINES:-24}" ;;
+	esac
+	case "$columns" in
+	'' | *[!0-9]* | 0) columns="${COLUMNS:-80}" ;;
+	esac
+	case "$rows" in
+	'' | *[!0-9]*) rows=24 ;;
+	esac
+	case "$columns" in
+	'' | *[!0-9]*) columns=80 ;;
+	esac
+	SETUP_PROGRESS_ROWS="$rows"
+	SETUP_PROGRESS_COLUMNS="$columns"
+	if [ "$rows" -lt 3 ] || [ "$columns" -lt 12 ]; then
+		return 1
+	fi
+}
+
+setup_progress_read_capabilities() {
+	SETUP_PROGRESS_CSR_PIN="$(tput csr 0 "$((SETUP_PROGRESS_ROWS - 2))" 2>/dev/null)" || return 1
+	SETUP_PROGRESS_CSR_FULL="$(tput csr 0 "$((SETUP_PROGRESS_ROWS - 1))" 2>/dev/null)" || return 1
+	SETUP_PROGRESS_CUP_OUTPUT="$(tput cup "$((SETUP_PROGRESS_ROWS - 2))" 0 2>/dev/null)" || return 1
+	SETUP_PROGRESS_CUP_FOOTER="$(tput cup "$((SETUP_PROGRESS_ROWS - 1))" 0 2>/dev/null)" || return 1
+	SETUP_PROGRESS_EL="$(tput el 2>/dev/null)" || return 1
+	SETUP_PROGRESS_SC="$(tput sc 2>/dev/null)" || return 1
+	SETUP_PROGRESS_RC="$(tput rc 2>/dev/null)" || return 1
+}
+
+setup_progress_pin() {
+	local sequence
+
+	if [ "$SETUP_PROGRESS_PINNED" -eq 1 ]; then
+		return 0
+	fi
+	setup_progress_has_terminal || return 1
+	setup_progress_read_dimensions || return 1
+	[ "${TERM:-dumb}" != dumb ] || return 1
+	setup_progress_read_capabilities || return 1
+	sequence="${SETUP_PROGRESS_CSR_PIN}${SETUP_PROGRESS_CUP_OUTPUT}${SETUP_PROGRESS_EL}"
+	setup_progress_write "$sequence"
+	SETUP_PROGRESS_PINNED=1
+	trap 'setup_progress_handle_resize' WINCH
+}
+
+setup_progress_restore_terminal() {
+	local sequence
+
+	if [ "$SETUP_PROGRESS_PINNED" -ne 1 ]; then
+		return
+	fi
+	if [ -n "${PROFILE_SETUP_PROGRESS_STATE_FILE:-}" ] &&
+		[ "$SETUP_PROGRESS_DEFER_FINISH" -eq 1 ] && [ "${1:-}" != force ]; then
+		return
+	fi
+	sequence="${SETUP_PROGRESS_SC}${SETUP_PROGRESS_CUP_FOOTER}${SETUP_PROGRESS_EL}${SETUP_PROGRESS_CSR_FULL}${SETUP_PROGRESS_RC}"
+	setup_progress_write "$sequence"
+	SETUP_PROGRESS_PINNED=0
+	setup_progress_clear_recorded_state
+}
+
+setup_progress_finish() {
+	local sequence
+
+	if [ "$SETUP_PROGRESS_PINNED" -eq 1 ]; then
+		if [ -n "${PROFILE_SETUP_PROGRESS_STATE_FILE:-}" ]; then
+			SETUP_PROGRESS_DEFER_FINISH=1
+			return
+		fi
+		sequence="${SETUP_PROGRESS_CSR_FULL}${SETUP_PROGRESS_CUP_FOOTER}${SETUP_PROGRESS_EL}${SETUP_PROGRESS_LINE}"$'\n'
+		setup_progress_write "$sequence"
+		SETUP_PROGRESS_PINNED=0
+	fi
+	trap - WINCH
+}
+
+setup_progress_handle_resize() {
+	local label="$SETUP_PROGRESS_LABEL"
+	local state="$SETUP_PROGRESS_STATE"
+	local old_cup_footer="$SETUP_PROGRESS_CUP_FOOTER"
+	local sequence
+
+	if ! setup_progress_read_dimensions || ! setup_progress_read_capabilities; then
+		sequence=$'\033[r'"${old_cup_footer}${SETUP_PROGRESS_EL}"
+		setup_progress_write "$sequence"
+		SETUP_PROGRESS_PINNED=0
+		setup_progress_clear_recorded_state
+		trap - WINCH
+		return
+	fi
+	sequence="${SETUP_PROGRESS_CSR_FULL}${old_cup_footer}${SETUP_PROGRESS_EL}${SETUP_PROGRESS_CUP_FOOTER}${SETUP_PROGRESS_EL}${SETUP_PROGRESS_CSR_PIN}${SETUP_PROGRESS_CUP_OUTPUT}"
+	setup_progress_write "$sequence"
+	setup_progress_render "$label" "$state"
+}
+
+setup_progress_clear_recorded_state() {
+	if [ -z "${PROFILE_SETUP_PROGRESS_STATE_FILE:-}" ]; then
+		return
+	fi
+	if ! : >|"$PROFILE_SETUP_PROGRESS_STATE_FILE" 2>/dev/null; then
+		PROFILE_SETUP_PROGRESS_STATE_FILE=""
+	fi
+}
+
+setup_progress_record_state() {
+	local summary_state="OK"
+	local summary
+
+	if [ -z "${PROFILE_SETUP_PROGRESS_STATE_FILE:-}" ]; then
+		return
+	fi
+	if [ "$SETUP_PROGRESS_STATE" = RUN ] && [ "$SETUP_PROGRESS_FAILED" -eq 0 ]; then
+		summary_state="RUN"
+	elif [ "$SETUP_PROGRESS_FAILED" -ne 0 ]; then
+		summary_state="FAIL"
+	fi
+	summary="$SETUP_PROGRESS_CURRENT/$SETUP_PROGRESS_TOTAL $summary_state $SETUP_PROGRESS_LABEL"
+	if ! {
+		printf '%s\n' "$SETUP_PROGRESS_ROWS"
+		printf '%s\n' "$SETUP_PROGRESS_COLUMNS"
+		printf '%s\n' "$SETUP_PROGRESS_LINE"
+		printf '%s\n' "$summary"
+	} 2>/dev/null >|"$PROFILE_SETUP_PROGRESS_STATE_FILE"; then
+		PROFILE_SETUP_PROGRESS_STATE_FILE=""
+	fi
 }
 
 run_functions() {
@@ -85,9 +272,9 @@ run_functions() {
 	done
 }
 
-setup_progress_advance() {
+setup_progress_build_line() {
 	local label="$1"
-	local exit_code="$2"
+	local state="$2"
 	local width=28
 	local filled
 	local remaining
@@ -96,18 +283,17 @@ setup_progress_advance() {
 	local completed_bar=""
 	local remaining_bar=""
 	local head=""
-	local symbol="OK"
+	local symbol="RUN"
 	local bar_colour=""
 	local remaining_colour=""
 	local status_colour=""
 	local colour_reset=""
-	local output_tty="${PROFILE_SETUP_OUTPUT_TTY:-}"
 	local locale="${LC_ALL:-${LC_CTYPE:-${LANG:-}}}"
 	local completed_char="="
 	local remaining_char="-"
 	local head_char=">"
 	local unicode_output=0
-	local live_output=0
+	local live_output="$SETUP_PROGRESS_PINNED"
 	local live_label="$label"
 	local compact_output=0
 	local display_status
@@ -117,28 +303,11 @@ setup_progress_advance() {
 	local terminal_columns
 	local progress_line
 
-	if [ "$SETUP_PROGRESS_TOTAL" -le 0 ]; then
-		return
-	fi
-	SETUP_PROGRESS_CURRENT=$((SETUP_PROGRESS_CURRENT + 1))
 	percent=$((SETUP_PROGRESS_CURRENT * 100 / SETUP_PROGRESS_TOTAL))
 	count="${SETUP_PROGRESS_CURRENT}/${SETUP_PROGRESS_TOTAL}"
-	if [ "$exit_code" -ne 0 ]; then
-		SETUP_PROGRESS_FAILED=1
-	fi
-	if [ -z "$output_tty" ]; then
-		if [ -t 1 ]; then
-			output_tty=1
-		else
-			output_tty=0
-		fi
-	fi
-	if [ "$output_tty" -eq 1 ] && [ "${TERM:-dumb}" != dumb ]; then
-		live_output=1
-	fi
 	case "$locale" in
 	*[Uu][Tt][Ff]-8* | *[Uu][Tt][Ff]8*)
-		if [ "$output_tty" -eq 1 ]; then
+		if [ "$live_output" -eq 1 ]; then
 			unicode_output=1
 			completed_char="━"
 			remaining_char="━"
@@ -146,26 +315,32 @@ setup_progress_advance() {
 		fi
 		;;
 	esac
-	display_status="$exit_code"
-	if [ "$live_output" -eq 1 ]; then
-		display_status="$SETUP_PROGRESS_FAILED"
-	fi
-	if [ "$display_status" -ne 0 ]; then
+	display_status="$SETUP_PROGRESS_FAILED"
+	if [ "$state" = RUN ] && [ "$display_status" -eq 0 ]; then
+		symbol="RUN"
+	elif [ "$display_status" -ne 0 ]; then
 		symbol="FAIL"
+	else
+		symbol="OK"
 	fi
 	if [ "$unicode_output" -eq 1 ]; then
-		if [ "$display_status" -eq 0 ]; then
+		if [ "$state" = RUN ] && [ "$display_status" -eq 0 ]; then
+			symbol="•"
+		elif [ "$display_status" -eq 0 ]; then
 			symbol="✓"
 		else
 			symbol="✗"
 		fi
 	fi
-	if [ "$live_output" -eq 1 ]; then
-		terminal_columns="${COLUMNS:-}"
-		case "$terminal_columns" in
-		'' | *[!0-9]* | 0) terminal_columns="$(tput cols 2>/dev/null || printf '80')" ;;
-		esac
-		fixed_width=$((9 + ${#count} + ${#symbol}))
+	if [ "$live_output" -eq 1 ] ||
+		{ [ "${PROFILE_SETUP_OUTPUT_TTY:-}" = 1 ] && [ "$SETUP_PROGRESS_COLUMNS" -gt 0 ]; } ||
+		{ [ -z "${PROFILE_SETUP_OUTPUT_TTY:-}" ] && [ -t 1 ] && [ "$SETUP_PROGRESS_COLUMNS" -gt 0 ]; }; then
+		terminal_columns="$SETUP_PROGRESS_COLUMNS"
+		if [ "$terminal_columns" -le "${#count}" ]; then
+			SETUP_PROGRESS_LINE="${count:0:terminal_columns}"
+			return
+		fi
+		fixed_width=$((10 + ${#count} + ${#symbol}))
 		if [ "$terminal_columns" -lt $((fixed_width + width + 1 + ${#live_label})) ]; then
 			live_label=""
 		fi
@@ -194,7 +369,7 @@ setup_progress_advance() {
 		remaining_bar+="$remaining_char"
 	done
 
-	if [ "$output_tty" -eq 1 ] && [ "${TERM:-dumb}" != dumb ] && [ -z "${NO_COLOR:-}" ]; then
+	if [ "$live_output" -eq 1 ] && [ -z "${NO_COLOR:-}" ]; then
 		bar_colour=$'\033[1;92m'
 		remaining_colour=$'\033[90m'
 		colour_reset=$'\033[0m'
@@ -218,17 +393,49 @@ setup_progress_advance() {
 			"$colour_reset" "$percent" "$count" "$status_colour" "$symbol" "$colour_reset" \
 			"$live_label"
 	fi
-	if [ "$live_output" -eq 0 ]; then
-		printf '%s\n' "$progress_line"
+	SETUP_PROGRESS_LINE="$progress_line"
+}
+
+setup_progress_render() {
+	local sequence
+
+	SETUP_PROGRESS_LABEL="$1"
+	SETUP_PROGRESS_STATE="$2"
+	setup_progress_build_line "$1" "$2"
+	sequence="${SETUP_PROGRESS_SC}${SETUP_PROGRESS_CUP_FOOTER}${SETUP_PROGRESS_EL}${SETUP_PROGRESS_LINE}${SETUP_PROGRESS_RC}"
+	setup_progress_write "$sequence"
+	setup_progress_record_state
+}
+
+setup_progress_begin() {
+	if [ "$SETUP_PROGRESS_TOTAL" -le 0 ]; then
 		return
 	fi
-	if [ "$SETUP_PROGRESS_CURRENT" -eq "$SETUP_PROGRESS_TOTAL" ]; then
-		printf '\r\033[2K%s\n' "$progress_line"
-		SETUP_PROGRESS_VISIBLE=0
+	if setup_progress_pin; then
+		setup_progress_render "$1" RUN
+	fi
+}
+
+setup_progress_advance() {
+	local label="$1"
+	local exit_code="$2"
+
+	if [ "$SETUP_PROGRESS_TOTAL" -le 0 ]; then
 		return
 	fi
-	printf '\r\033[2K%s' "$progress_line"
-	SETUP_PROGRESS_VISIBLE=1
+	SETUP_PROGRESS_CURRENT=$((SETUP_PROGRESS_CURRENT + 1))
+	if [ "$exit_code" -ne 0 ]; then
+		SETUP_PROGRESS_FAILED=1
+	fi
+	if [ "$SETUP_PROGRESS_PINNED" -eq 1 ]; then
+		setup_progress_render "$label" OK
+		if [ "$SETUP_PROGRESS_CURRENT" -eq "$SETUP_PROGRESS_TOTAL" ]; then
+			setup_progress_finish
+		fi
+		return
+	fi
+	setup_progress_build_line "$label" OK
+	printf '%s\n' "$SETUP_PROGRESS_LINE"
 }
 
 # Evaluate the Homebrew shellenv matching the current architecture.
@@ -243,7 +450,7 @@ brew_shellenv() {
 }
 
 collect_user_input() {
-	# Gather all interactive input upfront so the rest of the setup is unattended
+	# Gather optional profile values before package installation.
 	GIT_USER_NAME=$(git config --global user.name 2>/dev/null) || GIT_USER_NAME=""
 	GIT_USER_EMAIL=$(git config --global user.email 2>/dev/null) || GIT_USER_EMAIL=""
 	GIT_USER_PHONE=$(git config --global user.phonenumber 2>/dev/null) || GIT_USER_PHONE=""
@@ -260,7 +467,7 @@ collect_user_input() {
 		GIT_USER_PHONE="$input"
 	fi
 	echo ""
-	log "All input collected. Setup will now run unattended."
+	log "All profile input collected. Setup will continue."
 }
 
 run_function() {
@@ -276,7 +483,7 @@ run_function() {
 	*e*) had_errexit=1 ;;
 	esac
 
-	setup_progress_clear
+	setup_progress_begin "$func_name"
 	if command -v gum >/dev/null 2>&1; then
 		gum style --foreground 212 --bold ">>> $func_name"
 	else
@@ -289,7 +496,11 @@ run_function() {
 		set -e
 		set -o pipefail
 		trap 'handle_error $LINENO' ERR
-		"$func_name"
+		if [ "${PROFILE_SETUP_PROGRESS_FD:-}" = 9 ]; then
+			"$func_name" 9>&-
+		else
+			"$func_name"
+		fi
 	)
 	exit_code=$?
 	if [ "$had_errexit" -eq 1 ]; then
@@ -529,7 +740,7 @@ exit_script() {
 	print_function_name
 	local setup_status=0
 	# Stop the sudo keepalive explicitly before returning or replacing this process.
-	[ -n "$SUDO_KEEPALIVE_PID" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+	stop_sudo_keepalive
 	ensure_directory
 	if [ ${#failed_functions[@]} -eq 0 ]; then
 		echo "==============================="

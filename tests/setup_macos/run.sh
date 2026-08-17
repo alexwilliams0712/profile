@@ -16,7 +16,13 @@ mkdir -p "$tmp/bin"
 # shellcheck disable=SC2016
 printf '%s\n' \
 	'#!/bin/bash' \
-	'if [ "${PROFILE_TEST_BREW_OUTDATED:-0}" = 1 ]; then' \
+	'if [ "$*" = "info --cask self-updating" ]; then' \
+	'  printf "==> self-updating: 1.0 (auto_updates)\\n"' \
+	'elif [ "$*" = "info --cask incomplete-self-updating" ]; then' \
+	'  printf "==> incomplete-self-updating: 1.0 (auto_updates)\\n"' \
+	'elif [ "$*" = "info --cask managed-update" ]; then' \
+	'  printf "==> managed-update: 1.0\\n"' \
+	'elif [ "${PROFILE_TEST_BREW_OUTDATED:-0}" = 1 ]; then' \
 	'  printf "Warning: Your Command Line Tools are too outdated.\\n"' \
 	'elif [ "${PROFILE_TEST_BREW_OUTDATED:-0}" = 2 ]; then' \
 	'  printf "Warning: A newer Command Line Tools release is available.\\n"' \
@@ -52,6 +58,35 @@ fi
 if grep -REq 'PROFILE_SETUP_(CLT|PKGUTIL|SUDO)' \
 	"$repo_root/tools/setup_macos.sh" "$repo_root/tools/macos_helpers.sh"; then
 	printf '%s\n' 'FAIL: privileged CLT targets are environment-selectable'
+	exit 1
+fi
+if grep -Eq '/usr/bin/sudo +-n' "$repo_root/tools/setup_macos.sh" \
+	"$repo_root/tools/macos_helpers.sh"; then
+	printf '%s\n' 'FAIL: macOS CLT recovery still assumes a valid sudo timestamp'
+	exit 1
+fi
+if ! cask_auto_updates self-updating || cask_auto_updates managed-update; then
+	printf '%s\n' 'FAIL: self-updating cask detection is incorrect'
+	exit 1
+fi
+cask_has_missing_app_artifact() {
+	[ "$1" = incomplete-self-updating ]
+}
+selected_casks="$(casks_managed_by_own_updater \
+	self-updating managed-update incomplete-self-updating)"
+# shellcheck disable=SC2016 # The production variable reference is intentional.
+if [ "$selected_casks" != self-updating ] ||
+	! grep -Fq 'HOMEBREW_BUNDLE_CASK_SKIP="$installed_auto_update_casks"' \
+		"$repo_root/tools/setup_macos.sh"; then
+	printf '%s\n' 'FAIL: cask bundle skip does not contain exactly valid self-updating apps'
+	exit 1
+fi
+fallback_line="$(grep -n 'use_full_xcode_for_invalid_command_line_tools' \
+	"$repo_root/tools/setup_macos.sh" | head -n 1 | cut -d: -f1)"
+update_line="$(grep -n 'Searching for Xcode Command Line Tools' \
+	"$repo_root/tools/setup_macos.sh" | cut -d: -f1)"
+if [ -z "$fallback_line" ] || [ -z "$update_line" ] || [ "$fallback_line" -ge "$update_line" ]; then
+	printf '%s\n' 'FAIL: valid full Xcode is not preferred before standalone CLT updates'
 	exit 1
 fi
 # shellcheck disable=SC2016
@@ -168,6 +203,18 @@ if use_full_xcode_for_invalid_command_line_tools true; then
 fi
 if [ "$(wc -l <"$tmp/sudo.log")" -ne "$before_sudo_calls" ]; then
 	printf '%s\n' 'FAIL: mandatory standalone CLT state moved files before failing'
+	exit 1
+fi
+
+sudo_command() {
+	printf '%s\n' "$*" >>"$tmp/foreground-sudo.log"
+	[ "$*" != '-n -v' ]
+}
+run_sudo_output="$(run_sudo /bin/mv source target)"
+if ! grep -Fxq -- '-n -v' "$tmp/foreground-sudo.log" ||
+	! grep -Fxq -- '/bin/mv source target' "$tmp/foreground-sudo.log" ||
+	[[ "$run_sudo_output" != *'Administrator approval is required to continue.'* ]]; then
+	printf '%s\n' 'FAIL: invalidated sudo credentials did not fall back visibly'
 	exit 1
 fi
 

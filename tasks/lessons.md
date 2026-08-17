@@ -6,9 +6,11 @@ Update this file whenever a correction reveals a rule worth keeping.
 ## Progress presentation
 
 Use one in-place, bright-green Rich-style bar for shared interactive terminal
-setup progress on both platforms. Do not emit a new bar line after every step,
-and do not apply the Nova UI palette unless Alex explicitly asks for it. Keep
-newline-based output for non-interactive runs.
+setup progress on both platforms. The bar must remain visible at the bottom
+while the current function emits output, not disappear until that function
+finishes. Do not emit a new bar line after every step, and do not apply the
+Nova UI palette unless Alex explicitly asks for it. Keep newline-based output
+for non-interactive runs.
 
 ## Where a new install goes
 
@@ -53,6 +55,16 @@ Homebrew's negative boolean environment flags are enabled by their presence,
 including when set to `0`. Unset `HOMEBREW_NO_INSTALL_FROM_API` to use the JSON
 API. After untapping `homebrew/core`, inspect installed formulae with one
 unnamed `brew list --formula`; a named lookup can clone the tap again.
+
+Homebrew invalidates macOS sudo timestamps on every invocation. macOS setup
+cannot safely guarantee a single password prompt with a timestamp keepalive.
+Do not cache or broker the administrator password: Homebrew children could use
+that credential to authorise arbitrary root commands. Use visible foreground
+sudo for explicit recovery and accept Homebrew's own security boundary.
+
+After validating application artefacts, exclude installed casks marked
+`auto_updates` from `brew bundle` upgrades. Their own updater owns freshness,
+and an upstream download outage must not block unrelated Brewfile installs.
 
 ## General conventions (enforced)
 

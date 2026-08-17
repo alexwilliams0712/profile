@@ -9,9 +9,10 @@ export PATH="/usr/local/sbin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export PROFILE_DIR=$(pwd)
 export ARCHITECTURE=$(uname -m)
-# Upstream installers should use the sudo ticket primed below and must not stop
-# for their own confirmation prompts. Homebrew CLI ask mode is now the default;
-# HOMEBREW_NO_ASK disables it, while NONINTERACTIVE covers its bootstrap script.
+# Upstream installers must not stop for their own confirmation prompts.
+# Homebrew may still request administrator approval after it deliberately
+# invalidates sudo. HOMEBREW_NO_ASK disables its CLI ask mode, while
+# NONINTERACTIVE covers its bootstrap script.
 export NONINTERACTIVE=1
 export HOMEBREW_NO_ASK=1
 export GIT_TERMINAL_PROMPT=0
@@ -23,11 +24,10 @@ set -o pipefail
 source "$PROFILE_DIR/tools/common.sh"
 source "$PROFILE_DIR/tools/macos_helpers.sh"
 trap 'handle_error $LINENO' ERR
+trap 'setup_progress_restore_terminal' EXIT
 
-# Prompt for sudo once, then keep the timestamp warm for the whole install.
-keep_sudo_alive
-
-# Use the Homebrew matching the current architecture
+# Use the Homebrew matching the current architecture. Privileged steps request
+# approval only when needed because Homebrew invalidates cached sudo tickets.
 brew_shellenv
 
 install_command_line_tools() {
@@ -63,17 +63,24 @@ install_command_line_tools() {
 		clt_update_required=true
 	fi
 
+	# A valid full Xcode is preferable to reinstalling optional standalone tools.
+	# Validate that Homebrew accepts it, then remove only the stale CLT directory.
+	if [ "$clt_update_required" = true ] && [ "$full_xcode_available" = true ] &&
+		use_full_xcode_for_invalid_command_line_tools "$full_xcode_available"; then
+		clt_update_required=false
+	fi
+
 	if [ "$clt_update_required" = true ]; then
 		log "Searching for Xcode Command Line Tools..."
 		# This marker makes softwareupdate include the standalone CLT package even
 		# when Xcode or an older CLT is already selected.
-		/usr/bin/sudo -n /usr/bin/touch "$clt_placeholder"
+		run_sudo /usr/bin/touch "$clt_placeholder"
 		clt_label="$(command_line_tools_label_if_required "$clt_update_required")" || true
-		/usr/bin/sudo -n /bin/rm -f "$clt_placeholder"
+		run_sudo /bin/rm -f "$clt_placeholder"
 
 		if [ -n "$clt_label" ]; then
 			log "Installing $clt_label..."
-			if ! /usr/bin/sudo -n /usr/sbin/softwareupdate --install "$clt_label" --agree-to-license; then
+			if ! run_sudo /usr/sbin/softwareupdate --install "$clt_label" --agree-to-license; then
 				log "softwareupdate did not install $clt_label; validating the active toolchain."
 			fi
 		fi
@@ -87,7 +94,7 @@ install_command_line_tools() {
 
 	# Select the standalone CLT directory after a first-time headless install.
 	if [ "$clt_missing" = true ] && [ -d /Library/Developer/CommandLineTools ]; then
-		/usr/bin/sudo -n /usr/bin/xcode-select --switch /Library/Developer/CommandLineTools
+		run_sudo /usr/bin/xcode-select --switch /Library/Developer/CommandLineTools
 	fi
 
 	if ! xcode-select -p &>/dev/null; then
@@ -282,13 +289,14 @@ install_packages() {
 		fi
 	done
 	local unwanted_casks=("julia-app" "julia")
-	local caskroom="$(brew --prefix)/Caskroom"
+	local caskroom
+	caskroom="$(brew --prefix)/Caskroom"
 	for cask in "${unwanted_casks[@]}"; do
 		if brew uninstall --cask --force "$cask" 2>/dev/null; then
 			log "Removed unwanted cask: $cask"
 		elif [ -d "$caskroom/$cask" ]; then
 			log "Removing stale cask metadata: $cask"
-			rm -rf "$caskroom/$cask"
+			rm -rf "${caskroom:?}/$cask"
 		fi
 	done
 
@@ -315,7 +323,9 @@ install_packages() {
 	taps="$(brew bundle list --file="$brewfile" --tap | tr '\n' ' ')"
 	local bundle_failed=0
 	local cask
+	local installed_auto_update_casks=""
 
+	log "Homebrew may request administrator approval for privileged cask installers."
 	# Repair incomplete installations that Homebrew's receipt-only checks miss.
 	for cask in $casks; do
 		if brew list --versions --cask "$cask" &>/dev/null; then
@@ -343,6 +353,7 @@ install_packages() {
 			fi
 		fi
 	done
+	installed_auto_update_casks="$(casks_managed_by_own_updater $casks)"
 
 	if ! HOMEBREW_BUNDLE_CASK_SKIP="$casks" HOMEBREW_BUNDLE_MAS_SKIP="$mas_apps" \
 		brew bundle --file="$brewfile"; then
@@ -350,7 +361,8 @@ install_packages() {
 		bundle_failed=1
 	fi
 	if ! HOMEBREW_BUNDLE_BREW_SKIP="$formulae" HOMEBREW_BUNDLE_MAS_SKIP="$mas_apps" \
-		HOMEBREW_BUNDLE_TAP_SKIP="$taps" brew bundle --file="$brewfile"; then
+		HOMEBREW_BUNDLE_TAP_SKIP="$taps" HOMEBREW_BUNDLE_CASK_SKIP="$installed_auto_update_casks" \
+		brew bundle --file="$brewfile"; then
 		log "Warning: Homebrew cask installation reported errors; continuing..."
 		bundle_failed=1
 	fi
@@ -657,9 +669,9 @@ main() {
 	if ! xcode-select -p &>/dev/null; then
 		clt_was_missing=true
 		run_functions "${preflight_steps[@]}"
-		setup_progress_clear
 		# Git cannot read the existing identity until this required preflight succeeds.
 		if [ ${#failed_functions[@]} -ne 0 ]; then
+			setup_progress_finish
 			return 1
 		fi
 	fi
@@ -670,7 +682,6 @@ main() {
 		before_brew_steps=("${preflight_steps[@]}" "${before_brew_steps[@]}")
 	fi
 	run_functions "${before_brew_steps[@]}"
-	setup_progress_clear
 	# run_function isolates each step so errors are reliable. Refresh the
 	# environment changes made by install_homebrew in the parent shell.
 	brew_shellenv
