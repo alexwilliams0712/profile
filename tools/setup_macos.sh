@@ -206,7 +206,7 @@ install_homebrew() {
 	export HOMEBREW_NO_INSTALL_FROM_API=0
 }
 
-cask_has_existing_app_artifact() {
+cask_app_artifact_paths() {
 	local cask="$1"
 	local applications_dir="${APPLICATIONS_DIR:-/Applications}"
 	local artifact
@@ -221,9 +221,7 @@ cask_has_existing_app_artifact() {
 		/*) artifact_path="$artifact" ;;
 		*) artifact_path="$applications_dir/${artifact##*/}" ;;
 		esac
-		if [ -e "$artifact_path" ]; then
-			return 0
-		fi
+		printf '%s\n' "$artifact_path"
 	done < <(
 		brew info --cask "$cask" 2>/dev/null |
 			awk '
@@ -232,6 +230,30 @@ cask_has_existing_app_artifact() {
 				in_artifacts && / \(App\)$/ { print }
 			'
 	)
+}
+
+cask_has_existing_app_artifact() {
+	local cask="$1"
+	local artifact_path
+
+	while IFS= read -r artifact_path; do
+		if [ -e "$artifact_path" ]; then
+			return 0
+		fi
+	done < <(cask_app_artifact_paths "$cask")
+
+	return 1
+}
+
+cask_has_missing_app_artifact() {
+	local cask="$1"
+	local artifact_path
+
+	while IFS= read -r artifact_path; do
+		if [ ! -e "$artifact_path" ]; then
+			return 0
+		fi
+	done < <(cask_app_artifact_paths "$cask")
 
 	return 1
 }
@@ -312,11 +334,17 @@ install_packages() {
 	local bundle_failed=0
 	local cask
 
-	# Older setup versions removed legacy `.rb` cask receipts. Homebrew sees the
-	# app but cannot manage or upgrade it until the receipt is rebuilt. Repair
-	# both partial Caskroom entries and app-only installs left in /Applications.
+	# Repair incomplete installations that Homebrew's receipt-only checks miss.
 	for cask in $casks; do
 		if brew list --versions --cask "$cask" &>/dev/null; then
+			if ! cask_has_missing_app_artifact "$cask"; then
+				continue
+			fi
+			log "Reinstalling cask with missing application artifact: $cask"
+			if ! brew reinstall --cask --force "$cask"; then
+				log "Warning: Could not restore application artifact for $cask; continuing..."
+				bundle_failed=1
+			fi
 			continue
 		fi
 		if [ -d "$caskroom/$cask" ]; then

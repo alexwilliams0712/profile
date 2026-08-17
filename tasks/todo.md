@@ -1,3 +1,29 @@
+# Repair missing Homebrew cask applications
+
+- [x] Reproduce the stale-receipt state where Homebrew reports a cask installed
+      but its declared application artifact is absent.
+- [x] Repair installed casks whose application artifacts are missing without
+      repeatedly reinstalling non-application casks such as fonts.
+- [x] Verify the focused behaviour and run `shellcheck` and `shfmt -d`.
+- [x] Restore 1Password on the current Mac and confirm its application exists.
+- [x] Obtain an independent review and resolve any material findings.
+
+## Review
+
+- [x] Added a shared application-artifact path resolver and completeness check;
+      installed casks are reinstalled when any declared app is absent.
+- [x] Covered present, missing, partial multi-app, font-only, renamed, absolute,
+      unmanaged-app, and invalid-receipt cases with stubbed Homebrew responses.
+- [x] Confirmed the live 1Password state was detected as incomplete, reinstalled
+      8.12.33, verified its code signature, and confirmed the receipt and app.
+- [x] `bash -n` and `shfmt -d` pass. The changed script adds no ShellCheck
+      findings relative to `origin/main`; the repository-wide command retains
+      unrelated pre-existing findings.
+- [x] Existing `carclean` and `formatter` tests pass. The formatter test needs
+      the native `/opt/homebrew` toolchain before the broken Intel Python.
+- [x] Independent review found no material correctness, scope, or verification
+      concerns.
+
 # Fix espanso so it actually works (Ubuntu/Wayland)
 
 ## Environment (verified live)
