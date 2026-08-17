@@ -6,7 +6,7 @@
 - [x] Delete the obsolete Julia cask migration.
 - [x] Run focused and repository checks.
 - [x] Obtain an independent final review.
-- [ ] Raise the follow-up pull request.
+- [x] Raise the follow-up pull request.
 
 ## Review
 
@@ -25,7 +25,7 @@
       Bash syntax, formatting, focused lint, and repository regressions.
 - [x] Independent review found no remaining production or test defects after
       Linux dispatch/log and EXIT-trap keepalive coverage were added.
-- [ ] Record the follow-up pull request.
+- [x] Raised pull request #218; left merging to a human.
 
 # Render one interactive setup progress bar
 
