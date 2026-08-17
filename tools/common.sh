@@ -15,7 +15,7 @@ handle_error() {
 #   and the background loop's commands can't abort the parent shell.
 # - The loop exits on its own once the parent script ($$) is gone, is killed by
 #   the EXIT trap on error/early-exit paths, and is killed explicitly by
-#   exit_script before its `exec bash -l` (which would otherwise bypass EXIT).
+#   exit_script before it returns or replaces the setup process.
 SUDO_KEEPALIVE_PID=""
 keep_sudo_alive() {
 	# Already running? Do nothing.
@@ -57,6 +57,110 @@ ensure_directory() {
 	cd $PROFILE_DIR
 }
 
+SETUP_PROGRESS_CURRENT=0
+SETUP_PROGRESS_TOTAL=0
+
+setup_progress_start() {
+	SETUP_PROGRESS_CURRENT=0
+	SETUP_PROGRESS_TOTAL="$#"
+}
+
+run_functions() {
+	local func_name
+
+	for func_name in "$@"; do
+		run_function "$func_name"
+	done
+}
+
+setup_progress_advance() {
+	local label="$1"
+	local exit_code="$2"
+	local width=28
+	local filled
+	local remaining
+	local percent
+	local ix
+	local completed_bar=""
+	local remaining_bar=""
+	local head=""
+	local symbol="OK"
+	local bar_colour=""
+	local remaining_colour=""
+	local status_colour=""
+	local colour_reset=""
+	local output_tty="${PROFILE_SETUP_OUTPUT_TTY:-}"
+	local locale="${LC_ALL:-${LC_CTYPE:-${LANG:-}}}"
+	local completed_char="="
+	local remaining_char="-"
+	local head_char=">"
+	local unicode_output=0
+
+	if [ "$SETUP_PROGRESS_TOTAL" -le 0 ]; then
+		return
+	fi
+	SETUP_PROGRESS_CURRENT=$((SETUP_PROGRESS_CURRENT + 1))
+	filled=$((SETUP_PROGRESS_CURRENT * width / SETUP_PROGRESS_TOTAL))
+	percent=$((SETUP_PROGRESS_CURRENT * 100 / SETUP_PROGRESS_TOTAL))
+	remaining=$((width - filled))
+	if [ "$SETUP_PROGRESS_CURRENT" -lt "$SETUP_PROGRESS_TOTAL" ]; then
+		head="$head_char"
+		remaining=$((remaining - 1))
+	fi
+	if [ -z "$output_tty" ]; then
+		if [ -t 1 ]; then
+			output_tty=1
+		else
+			output_tty=0
+		fi
+	fi
+	case "$locale" in
+	*[Uu][Tt][Ff]-8* | *[Uu][Tt][Ff]8*)
+		if [ "$output_tty" -eq 1 ]; then
+			unicode_output=1
+			completed_char="━"
+			remaining_char="━"
+			head_char="╺"
+			if [ "$SETUP_PROGRESS_CURRENT" -lt "$SETUP_PROGRESS_TOTAL" ]; then
+				head="$head_char"
+			fi
+		fi
+		;;
+	esac
+	for ((ix = 0; ix < filled; ix++)); do
+		completed_bar+="$completed_char"
+	done
+	for ((ix = 0; ix < remaining; ix++)); do
+		remaining_bar+="$remaining_char"
+	done
+
+	if [ "$exit_code" -ne 0 ]; then
+		symbol="FAIL"
+	fi
+	if [ "$unicode_output" -eq 1 ]; then
+		if [ "$exit_code" -eq 0 ]; then
+			symbol="✓"
+		else
+			symbol="✗"
+		fi
+	fi
+	if [ "$output_tty" -eq 1 ] && [ "${TERM:-dumb}" != dumb ] && [ -z "${NO_COLOR:-}" ]; then
+		bar_colour=$'\033[1;92m'
+		remaining_colour=$'\033[90m'
+		colour_reset=$'\033[0m'
+		if [ "$exit_code" -eq 0 ]; then
+			status_colour="$bar_colour"
+		else
+			status_colour=$'\033[1;91m'
+		fi
+	fi
+
+	printf '  %b%s%s%b%s%b %3d%% %d/%d %b%s%b %s\n' \
+		"$bar_colour" "$completed_bar" "$head" "$remaining_colour" "$remaining_bar" \
+		"$colour_reset" "$percent" "$SETUP_PROGRESS_CURRENT" "$SETUP_PROGRESS_TOTAL" \
+		"$status_colour" "$symbol" "$colour_reset" "$label"
+}
+
 # Evaluate the Homebrew shellenv matching the current architecture.
 # Apple Silicon native uses /opt/homebrew, Rosetta/Intel uses /usr/local;
 # fall back to the other prefix if the preferred one isn't present.
@@ -75,13 +179,13 @@ collect_user_input() {
 	GIT_USER_PHONE=$(git config --global user.phonenumber 2>/dev/null) || GIT_USER_PHONE=""
 
 	if [ -z "$GIT_USER_NAME" ]; then
-		read -p "Enter github username: " GIT_USER_NAME
+		read -r -p "Enter github username: " GIT_USER_NAME
 	fi
-	read -p "Enter github email address (leave blank to keep '$GIT_USER_EMAIL'): " input
+	read -r -p "Enter github email address (leave blank to keep the existing value): " input
 	if [ ! -z "$input" ]; then
 		GIT_USER_EMAIL="$input"
 	fi
-	read -p "Enter phone number (leave blank to keep '$GIT_USER_PHONE'): " input
+	read -r -p "Enter phone number (leave blank to keep the existing value): " input
 	if [ ! -z "$input" ]; then
 		GIT_USER_PHONE="$input"
 	fi
@@ -133,6 +237,7 @@ run_function() {
 	else
 		echo "<<< $func_name done"
 	fi
+	setup_progress_advance "$func_name" "$exit_code"
 }
 
 set_git_config() {
@@ -351,8 +456,8 @@ install_ai() {
 
 exit_script() {
 	print_function_name
-	# Stop the sudo keepalive explicitly: the `exec bash -l` below replaces this
-	# process, so the EXIT trap would never fire to reap it otherwise.
+	local setup_status=0
+	# Stop the sudo keepalive explicitly before returning or replacing this process.
 	[ -n "$SUDO_KEEPALIVE_PID" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
 	ensure_directory
 	if [ ${#failed_functions[@]} -eq 0 ]; then
@@ -363,6 +468,13 @@ exit_script() {
 		echo "==============================="
 		echo "       Setup Failed            "
 		echo "==============================="
+		setup_status=1
+	fi
+	if [ "${PROFILE_SETUP_NO_LOGIN_SHELL:-0}" = 1 ]; then
+		return "$setup_status"
+	fi
+	if [ "$setup_status" -ne 0 ]; then
+		return "$setup_status"
 	fi
 	exec bash -l
 }

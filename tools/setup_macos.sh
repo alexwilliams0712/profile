@@ -645,43 +645,54 @@ main() {
 	# A fresh mac needs CLT before git can read the existing identity. On a
 	# configured mac, collect the two optional values first, then check updates.
 	local clt_was_missing=false
+	local preflight_steps=(install_command_line_tools)
+	local before_brew_steps=(
+		copy_dotfiles
+		set_git_config
+		install_homebrew
+	)
+	local after_brew_steps=(
+		install_packages
+		setup_bash
+		install_ruby
+		install_pyenv
+		install_rust
+		install_foundry
+		install_node
+		install_go
+		setup_docker
+		setup_vscode
+		install_espanso
+		install_tailscale
+		install_terraform
+		install_starship
+		install_webtools
+		install_syncthing
+		install_ai
+	)
+	failed_functions=()
+	setup_progress_start "${preflight_steps[@]}" "${before_brew_steps[@]}" "${after_brew_steps[@]}"
 	if ! xcode-select -p &>/dev/null; then
 		clt_was_missing=true
-		install_command_line_tools
+		run_functions "${preflight_steps[@]}"
+		# Git cannot read the existing identity until this required preflight succeeds.
+		if [ ${#failed_functions[@]} -ne 0 ]; then
+			return 1
+		fi
 	fi
 
 	collect_user_input
 
-	failed_functions=()
 	if [ "$clt_was_missing" = false ]; then
-		run_function install_command_line_tools
+		before_brew_steps=("${preflight_steps[@]}" "${before_brew_steps[@]}")
 	fi
-
-	run_function copy_dotfiles
-	run_function set_git_config
-	run_function install_homebrew
+	run_functions "${before_brew_steps[@]}"
 	# run_function isolates each step so errors are reliable. Refresh the
 	# environment changes made by install_homebrew in the parent shell.
 	brew_shellenv
 	export HOMEBREW_NO_AUTO_UPDATE=1
 	export HOMEBREW_NO_INSTALL_FROM_API=0
-	run_function install_packages
-	run_function setup_bash
-	run_function install_ruby
-	run_function install_pyenv
-	run_function install_rust
-	run_function install_foundry
-	run_function install_node
-	run_function install_go
-	run_function setup_docker
-	run_function setup_vscode
-	run_function install_espanso
-	run_function install_tailscale
-	run_function install_terraform
-	run_function install_starship
-	run_function install_webtools
-	run_function install_syncthing
-	run_function install_ai
+	run_functions "${after_brew_steps[@]}"
 
 	# Report failures if any
 	if [ ${#failed_functions[@]} -ne 0 ]; then

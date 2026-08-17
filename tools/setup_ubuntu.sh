@@ -981,61 +981,66 @@ main() {
 	collect_user_input
 
 	failed_functions=()
+	local bootstrap_steps=(copy_dotfiles)
+	local remaining_steps=(
+		set_git_config
+		install_apt_packages
+		ssh_stuff
+		configure_remote_unlock
+		install_pyenv
+		install_pg_formatter
+		install_browser
+		install_vscode
+		install_flatpaks
+		install_rust
+		install_foundry
+		install_and_setup_docker
+		install_github_cli
+		install_syncthing
+		install_espanso
+		install_clam_av
+		install_1password
+		install_jetbrains_toolbox
+		install_font
+		btop_install
+		install_slack
+		install_node
+		install_go
+		install_tailscale
+		install_aws_cli
+		install_terraform
+		install_speedtest
+		# install_k3s
+		# install_helm
+		# install_coolercontrol
+		# install_open_rgb_rules
+		webinstalls
+		# install_burpsuite
+		install_starship
+		install_carapace
+		install_viddy
+		install_duf
+		install_gum
+		install_ghostty
+		configure_gnome
+		install_delta
+		install_lazygit
+		install_lazydocker
+		install_dust
+		install_redis_insight
+		install_ai
+		apt_upgrader
+	)
+	setup_progress_start "${bootstrap_steps[@]}" "${remaining_steps[@]}"
 
 	# copy_dotfiles must run first — it sources .bash_aliases which defines apt_upgrader
-	run_function copy_dotfiles
+	run_functions "${bootstrap_steps[@]}"
 	# run_function isolates setup steps so failures cannot be masked. Source the
 	# copied aliases in the parent as well because later steps use apt_upgrader.
 	if [ -f "$HOME/.bash_aliases" ]; then
 		source "$HOME/.bash_aliases"
 	fi
-	run_function set_git_config
-	run_function install_apt_packages
-	run_function ssh_stuff
-	run_function configure_remote_unlock
-	run_function install_pyenv
-	run_function install_pg_formatter
-	run_function install_browser
-	run_function install_vscode
-	run_function install_flatpaks
-	run_function install_rust
-	run_function install_foundry
-	run_function install_and_setup_docker
-	run_function install_github_cli
-	run_function install_syncthing
-	run_function install_espanso
-	run_function install_clam_av
-	run_function install_1password
-	run_function install_jetbrains_toolbox
-	run_function install_font
-	run_function btop_install
-	run_function install_slack
-	run_function install_node
-	run_function install_go
-	run_function install_tailscale
-	run_function install_aws_cli
-	run_function install_terraform
-	run_function install_speedtest
-	# run_function install_k3s
-	# run_function install_helm
-	# run_function install_coolercontrol
-	# run_function install_open_rgb_rules
-	run_function webinstalls
-	# run_function install_burpsuite
-	run_function install_starship
-	run_function install_carapace
-	run_function install_viddy
-	run_function install_duf
-	run_function install_gum
-	run_function install_ghostty
-	run_function configure_gnome
-	run_function install_delta
-	run_function install_lazygit
-	run_function install_lazydocker
-	run_function install_dust
-	run_function install_redis_insight
-	run_function install_ai
-	run_function apt_upgrader
+	run_functions "${remaining_steps[@]}"
 
 	# Report failures if any
 	if [ ${#failed_functions[@]} -ne 0 ]; then

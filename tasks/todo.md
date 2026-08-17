@@ -1,3 +1,34 @@
+# Persist setup logs for diagnostics
+
+- [x] Capture the complete entry-point and platform setup output without
+      redirecting the caller after `source setup_entry.sh` returns.
+- [x] Store private timestamped logs under the XDG state directory and maintain
+      a stable `latest.log` symlink.
+- [x] End logging before the platform setup hands off to a login shell.
+- [x] Document the log location and override for users and future agents.
+- [x] Show shared Rich-style progress for the actual macOS and Ubuntu setup
+      functions, including completed count, total, and percentage.
+- [x] Add focused source/execute, stream, status, permission, and symlink tests.
+- [x] Add focused progress counting, rendering, and success/failure tests.
+- [x] Run shell checks and obtain an independent review.
+
+## Review
+
+- [x] Added private timestamped logs with an atomic `latest.log` pointer,
+      exact producer status capture, and a login-shell hand-off after logging.
+- [x] Removed existing Git email and phone values from the persisted prompts.
+- [x] Defined the platform function plans once, then used them for both
+	  execution and shared progress totals: macOS 21 and Ubuntu 43.
+- [x] Added bright-green Rich-style Unicode progress for interactive UTF-8
+      terminals and stable ASCII/no-colour output for non-interactive runs.
+- [x] Verified executed, Bash-sourced, and Zsh-sourced logging; stdout/stderr,
+      failure status, modes, sequential logs, latest pointer, and caller state.
+- [x] Verified progress phases, success/failure advancement, final setup status,
+      Unicode/ASCII rendering, syntax, formatting, and existing focused tests.
+- [x] Independent review found and verified fixes for completed-bar rendering,
+      directory-shaped latest pointers, inherited shell options, and the fresh
+      macOS preflight count. The final review reported no remaining findings.
+
 # Repair missing Homebrew cask applications
 
 - [x] Reproduce the stale-receipt state where Homebrew reports a cask installed

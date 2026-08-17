@@ -3,6 +3,12 @@
 Patterns to follow (and mistakes to avoid) when editing the setup scripts.
 Update this file whenever a correction reveals a rule worth keeping.
 
+## Progress presentation
+
+Use a bright-green Rich-style bar for shared terminal setup progress on both
+platforms. Do not apply the Nova UI palette to this terminal output unless Alex
+explicitly asks for it.
+
 ## Where a new install goes
 
 Decide by whether the *exact same commands* work on both macOS and Ubuntu:
