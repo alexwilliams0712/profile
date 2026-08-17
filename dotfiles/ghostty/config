@@ -8,7 +8,7 @@ foreground = b8ccd6
 cursor-color = b8ccd6
 cursor-style = bar
 
-background-opacity = 0.75
+background-opacity = 1
 
 palette = 0=#001a22
 palette = 1=#ec5d6f
