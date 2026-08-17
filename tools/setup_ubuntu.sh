@@ -1031,7 +1031,6 @@ main() {
 		install_ai
 		apt_upgrader
 	)
-	setup_progress_start "${bootstrap_steps[@]}" "${remaining_steps[@]}"
 
 	# copy_dotfiles must run first — it sources .bash_aliases which defines apt_upgrader
 	run_functions "${bootstrap_steps[@]}"

@@ -81,6 +81,12 @@ if [ "$selected_casks" != self-updating ] ||
 	printf '%s\n' 'FAIL: cask bundle skip does not contain exactly valid self-updating apps'
 	exit 1
 fi
+if grep -Eqi 'julia' "$repo_root/tools/setup_macos.sh" \
+	"$repo_root/tools/macos_helpers.sh" "$repo_root/tools/Brewfile"; then
+	printf '%s\n' 'FAIL: obsolete Julia cleanup is still part of macOS setup'
+	exit 1
+fi
+
 fallback_line="$(grep -n 'use_full_xcode_for_invalid_command_line_tools' \
 	"$repo_root/tools/setup_macos.sh" | head -n 1 | cut -d: -f1)"
 update_line="$(grep -n 'Searching for Xcode Command Line Tools' \
