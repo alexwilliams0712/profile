@@ -1,3 +1,28 @@
+# Keep live setup progress visible and repair sudo recovery
+
+- [x] Pin one bright-green progress bar to the interactive terminal footer.
+- [x] Keep raw logs free of cursor controls and retain non-interactive progress.
+- [x] Restore the terminal on completion, failure, interruption, and resize.
+- [x] Re-prompt visibly when Homebrew invalidates macOS sudo credentials.
+- [x] Prefer valid full Xcode and isolate installed self-updating casks.
+- [x] Add focused regressions and run the repository shell checks.
+- [x] Obtain an independent review and prepare a follow-up pull request.
+
+## Review
+
+- [x] The monitored macOS run attempted all 21 functions. Command Line Tools
+      recovery failed after Homebrew invalidated sudo, and an upstream WhatsApp
+      HTTP 500 made the cask bundle report failure; later functions completed.
+- [x] macOS and Ubuntu now keep one progress bar pinned below live output while
+      logs remain chronological and free of terminal cursor controls.
+- [x] macOS recovery uses visible foreground sudo without caching a password,
+      prefers a valid full Xcode toolchain, and skips upgrades for installed
+      self-updating casks after validating their application artefacts.
+- [x] Verified focused progress, logging/PTY, macOS recovery, Bash 3.2 syntax,
+      formatting, focused lint, and diff checks.
+- [x] Independent review found no remaining material correctness, security, or
+      user-experience issues.
+
 # Render one interactive setup progress bar
 
 - [x] Replace per-step interactive progress lines with one in-place bar.

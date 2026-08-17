@@ -1,16 +1,19 @@
 #!/bin/bash
 
 profile_setup_run() {
+	local os_name
+	os_name="$(uname)"
 	export PROFILE_SETUP_NO_LOGIN_SHELL=1
 
-	sudo -v
-
-	if [ "$(uname)" = "Darwin" ]; then
-		# setup_macos installs/updates the Command Line Tools after starting the
-		# sudo keepalive. Running softwareupdate here used to happen before that
-		# keepalive and could cause another password prompt later in the setup.
+	if [ "$os_name" = "Darwin" ]; then
+		# Homebrew revokes cached sudo tickets, so setup_macos requests visible
+		# foreground approval only when a privileged step actually needs it.
 		:
-	elif ! command -v git >/dev/null 2>&1; then
+	else
+		sudo -v
+	fi
+
+	if [ "$os_name" != "Darwin" ] && ! command -v git >/dev/null 2>&1; then
 		echo "git is not installed, installing git."
 		sudo apt-get update
 		sudo apt-get install -y git
@@ -18,16 +21,13 @@ profile_setup_run() {
 
 	# Pull latest version of this repo (non-fatal on first run / auth issues).
 	# Apple's /usr/bin/git is only a launcher until the Command Line Tools exist.
-	if { [ "$(uname)" != "Darwin" ] || xcode-select -p &>/dev/null; } && GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' git fetch origin 2>/dev/null; then
+	if { [ "$os_name" != "Darwin" ] || xcode-select -p &>/dev/null; } && GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' git fetch origin 2>/dev/null; then
 		git reset --hard origin/main
 		git checkout main
 		GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' git pull
 	else
 		echo "Warning: could not fetch from remote, continuing with local copy."
 	fi
-
-	local os_name
-	os_name="$(uname)"
 
 	if [ "$os_name" = "Darwin" ]; then
 		bash tools/setup_macos.sh
@@ -44,12 +44,24 @@ profile_setup_main() {
 	local log_dir
 	local log_file
 	local status_file
+	local progress_file
 	local latest_link
 	local timestamp
 	local setup_status
 	local tee_status
 	local had_pipefail=0
 	local output_tty=0
+	local progress_rows
+	local progress_columns
+	local progress_line
+	local progress_summary
+	local saved_progress_rows
+	local terminal_size
+	local terminal_columns
+	local progress_csr
+	local progress_old_cup
+	local progress_cup
+	local progress_el
 
 	case "${XDG_STATE_HOME:-}" in
 	/*) state_home="$XDG_STATE_HOME" ;;
@@ -107,6 +119,13 @@ profile_setup_main() {
 		unset -f profile_setup_run profile_setup_main
 		return 1
 	fi
+	if ! progress_file="$(umask 077 && mktemp "$log_dir/.setup-progress.XXXXXX")" ||
+		[ -z "$progress_file" ] || ! chmod 600 "$progress_file"; then
+		printf 'Error: could not create setup progress state under: %s\n' "$log_dir" >&2
+		rm -f "$status_file"
+		unset -f profile_setup_run profile_setup_main
+		return 1
+	fi
 	if [ -t 1 ]; then
 		output_tty=1
 	fi
@@ -117,9 +136,13 @@ profile_setup_main() {
 	if (
 		set +e
 		export PROFILE_SETUP_OUTPUT_TTY="$output_tty"
+		if [ "$output_tty" -eq 1 ]; then
+			export PROFILE_SETUP_PROGRESS_FD=9
+			export PROFILE_SETUP_PROGRESS_STATE_FILE="$progress_file"
+		fi
 		profile_setup_run
 		setup_status=$?
-		printf '%s\n' "$setup_status" >"$status_file"
+		printf '%s\n' "$setup_status" >|"$status_file"
 		exit "$setup_status"
 	) 2>&1 | tee -a "$log_file"; then
 		tee_status=0
@@ -149,6 +172,52 @@ profile_setup_main() {
 			setup_status=1
 		fi
 	fi
+	if [ "$output_tty" -eq 1 ] && [ -s "$progress_file" ]; then
+		progress_rows=""
+		progress_columns=""
+		progress_line=""
+		progress_summary=""
+		{
+			IFS= read -r progress_rows || true
+			IFS= read -r progress_columns || true
+			IFS= read -r progress_line || true
+			IFS= read -r progress_summary || true
+		} <"$progress_file"
+		saved_progress_rows="$progress_rows"
+		terminal_size="$(stty size <&9 2>/dev/null || true)"
+		case "$terminal_size" in
+		[0-9]*' '[0-9]*)
+			progress_rows="${terminal_size%% *}"
+			terminal_columns="${terminal_size##* }"
+			;;
+		esac
+		case "$progress_rows" in
+		'' | *[!0-9]* | 0) progress_rows=24 ;;
+		esac
+		case "$saved_progress_rows" in
+		'' | *[!0-9]* | 0) saved_progress_rows="$progress_rows" ;;
+		esac
+		case "$progress_columns" in
+		'' | *[!0-9]* | 0) progress_columns=80 ;;
+		esac
+		case "${terminal_columns:-}" in
+		'' | *[!0-9]* | 0) terminal_columns="$progress_columns" ;;
+		esac
+		if [ "$terminal_columns" -lt "$progress_columns" ]; then
+			progress_line="$(printf '%.*s' "$terminal_columns" "$progress_summary")"
+		fi
+		if progress_csr="$(tput csr 0 "$((progress_rows - 1))" 2>/dev/null)" &&
+			progress_old_cup="$(tput cup "$((saved_progress_rows - 1))" 0 2>/dev/null)" &&
+			progress_cup="$(tput cup "$((progress_rows - 1))" 0 2>/dev/null)" &&
+			progress_el="$(tput el 2>/dev/null)"; then
+			printf '%s%s%s%s%s%s\n' \
+				"$progress_csr" "$progress_old_cup" "$progress_el" \
+				"$progress_cup" "$progress_el" "$progress_line" >&9 || true
+		else
+			printf '\033[r' >&9 || true
+		fi
+	fi
+	rm -f "$progress_file"
 
 	unset -f profile_setup_run profile_setup_main
 	if [ "$setup_status" -ne 0 ]; then
@@ -156,7 +225,7 @@ profile_setup_main() {
 	fi
 
 	# Start the replacement login shell only after tee has closed the log.
-	bash -l
+	bash -l 9>&-
 }
 
-profile_setup_main
+profile_setup_main 9>&1

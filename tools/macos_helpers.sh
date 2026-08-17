@@ -1,5 +1,22 @@
 #!/bin/bash
-# macOS system-tool validation helpers, isolated for focused tests.
+# macOS helpers isolated for focused tests.
+
+cask_auto_updates() {
+	brew info --cask "$1" 2>/dev/null | sed -n '1p' | grep -q '(auto_updates)'
+}
+
+casks_managed_by_own_updater() {
+	local cask
+	local selected=""
+
+	for cask in "$@"; do
+		if brew list --versions --cask "$cask" &>/dev/null &&
+			cask_auto_updates "$cask" && ! cask_has_missing_app_artifact "$cask"; then
+			selected="${selected:+$selected }$cask"
+		fi
+	done
+	printf '%s\n' "$selected"
+}
 
 clt_receipt_exists() {
 	/usr/sbin/pkgutil --pkg-info=com.apple.pkg.CLTools_Executables &>/dev/null
@@ -31,7 +48,7 @@ move_stale_command_line_tools() {
 
 	stale_clt_backup="${clt_dir}.stale-$(date '+%Y%m%d%H%M%S').$$"
 	log "Moving stale standalone Command Line Tools to $stale_clt_backup"
-	/usr/bin/sudo -n /bin/mv "$clt_dir" "$stale_clt_backup"
+	run_sudo /bin/mv "$clt_dir" "$stale_clt_backup"
 }
 
 command_line_tools_are_current() {

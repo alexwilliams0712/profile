@@ -28,8 +28,12 @@ Logs and their parent directory are mode `600` and `700` respectively.
 Treat them as private and never commit them.
 
 Each platform's `main` defines its executable function plan. The shared runner
-uses that plan as the progress total and renders a Rich-style bar after each
-setup step.
+uses that plan as the progress total and pins one Rich-style bar below the live
+terminal output. Cursor controls bypass the raw setup log.
+
+Ubuntu retains its sudo timestamp keepalive. Homebrew deliberately invalidates
+macOS sudo timestamps, so later privileged cask operations may request approval
+again; never cache or broker the administrator password in setup code.
 
 ## Linting Shell Scripts
 
