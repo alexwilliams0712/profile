@@ -1,27 +1,31 @@
-# Keep live setup progress visible and repair sudo recovery
+# Simplify setup output and remove Julia cleanup
 
-- [x] Pin one bright-green progress bar to the interactive terminal footer.
-- [x] Keep raw logs free of cursor controls and retain non-interactive progress.
-- [x] Restore the terminal on completion, failure, interruption, and resize.
-- [x] Re-prompt visibly when Homebrew invalidates macOS sudo credentials.
-- [x] Prefer valid full Xcode and isolate installed self-updating casks.
-- [x] Add focused regressions and run the repository shell checks.
-- [x] Obtain an independent review and prepare a follow-up pull request.
+- [x] Remove loading and progress output from macOS and Ubuntu.
+- [x] Preserve private logs, exact statuses, and function failure aggregation.
+- [x] Keep safe macOS sudo and Command Line Tools recovery.
+- [x] Delete the obsolete Julia cask migration.
+- [x] Run focused and repository checks.
+- [x] Obtain an independent final review.
+- [ ] Raise the follow-up pull request.
 
 ## Review
 
 - [x] The monitored macOS run attempted all 21 functions. Command Line Tools
       recovery failed after Homebrew invalidated sudo, and an upstream WhatsApp
       HTTP 500 made the cask bundle report failure; later functions completed.
-- [x] macOS and Ubuntu now keep one progress bar pinned below live output while
-      logs remain chronological and free of terminal cursor controls.
+- [x] Removed the progress renderer and its terminal/state-file plumbing while
+      retaining chronological private logs on both platforms.
 - [x] macOS recovery uses visible foreground sudo without caching a password,
       prefers a valid full Xcode toolchain, and skips upgrades for installed
       self-updating casks after validating their application artefacts.
-- [x] Verified focused progress, logging/PTY, macOS recovery, Bash 3.2 syntax,
-      formatting, focused lint, and diff checks.
-- [x] Independent review found no remaining material correctness, security, or
-      user-experience issues.
+- [x] Confirmed `julia` aliases `julia-app` and forced Homebrew uninstall
+      succeeds even when absent, which caused both false removal messages.
+- [x] Verified macOS and Linux logging paths, Bash and Zsh sourcing, exact
+      failure status, runner continuation, keepalive reaping, cask decisions,
+      Bash syntax, formatting, focused lint, and repository regressions.
+- [x] Independent review found no remaining production or test defects after
+      Linux dispatch/log and EXIT-trap keepalive coverage were added.
+- [ ] Record the follow-up pull request.
 
 # Render one interactive setup progress bar
 

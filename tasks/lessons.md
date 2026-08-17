@@ -3,14 +3,10 @@
 Patterns to follow (and mistakes to avoid) when editing the setup scripts.
 Update this file whenever a correction reveals a rule worth keeping.
 
-## Progress presentation
+## Setup output
 
-Use one in-place, bright-green Rich-style bar for shared interactive terminal
-setup progress on both platforms. The bar must remain visible at the bottom
-while the current function emits output, not disappear until that function
-finishes. Do not emit a new bar line after every step, and do not apply the
-Nova UI palette unless Alex explicitly asks for it. Keep newline-based output
-for non-interactive runs.
+Do not add a loading or progress bar. Keep plain newline-delimited function
+boundaries so terminal output and persisted logs remain readable and reliable.
 
 ## Where a new install goes
 
@@ -65,6 +61,10 @@ sudo for explicit recovery and accept Homebrew's own security boundary.
 After validating application artefacts, exclude installed casks marked
 `auto_updates` from `brew bundle` upgrades. Their own updater owns freshness,
 and an upstream download outage must not block unrelated Brewfile installs.
+
+Do not use `brew uninstall --cask --force` as an installation check: it succeeds
+for absent casks, and aliases can target the same canonical cask twice. Snapshot
+`brew list --cask` and match exact installed tokens before uninstalling.
 
 ## General conventions (enforced)
 

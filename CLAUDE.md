@@ -28,8 +28,7 @@ Logs and their parent directory are mode `600` and `700` respectively.
 Treat them as private and never commit them.
 
 Each platform's `main` defines its executable function plan. The shared runner
-uses that plan as the progress total and pins one Rich-style bar below the live
-terminal output. Cursor controls bypass the raw setup log.
+records failed functions and continues with the remaining steps.
 
 Ubuntu retains its sudo timestamp keepalive. Homebrew deliberately invalidates
 macOS sudo timestamps, so later privileged cask operations may request approval
@@ -42,7 +41,7 @@ shellcheck tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh tools/maco
 shfmt -d tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh tools/macos_helpers.sh setup_entry.sh
 bash tests/setup_logging/run.sh
 bash tests/setup_macos/run.sh
-bash tests/setup_progress/run.sh
+bash tests/setup_runner/run.sh
 ```
 
 Other focused regression scripts are available under `tests/`.
