@@ -49,6 +49,11 @@ For macOS, add the package to `tools/Brewfile` (formula or cask) so
 extra wiring (start a service, link a CLI, copy config). Don't shell out to a
 manual installer on macOS when a maintained formula/cask exists.
 
+Homebrew's negative boolean environment flags are enabled by their presence,
+including when set to `0`. Unset `HOMEBREW_NO_INSTALL_FROM_API` to use the JSON
+API. After untapping `homebrew/core`, inspect installed formulae with one
+unnamed `brew list --formula`; a named lookup can clone the tap again.
+
 ## General conventions (enforced)
 
 - Tabs for indentation in shell scripts (not spaces).
