@@ -18,10 +18,16 @@ second_step() {
 	return 7
 }
 
+fail_first() {
+	return 9
+}
+
 export NO_COLOR=1
 export PATH="/usr/bin:/bin"
 export PROFILE_SETUP_OUTPUT_TTY=1
 export LC_ALL="C.UTF-8"
+export TERM=xterm-256color
+export COLUMNS=80
 failed_functions=()
 first_phase=(first_step)
 second_phase=(second_step)
@@ -29,6 +35,7 @@ setup_progress_start "${first_phase[@]}" "${second_phase[@]}"
 output_file="$tmp/progress-output"
 {
 	run_functions "${first_phase[@]}"
+	setup_progress_clear
 	printf '%s\n' 'PARENT_HOOK'
 	run_functions "${second_phase[@]}"
 } >"$output_file" 2>&1
@@ -51,6 +58,10 @@ if [[ "$output" != *"━"* ]]; then
 	printf 'FAIL: Rich-style progress bar is missing\n%s\n' "$output"
 	exit 1
 fi
+if [[ "$output" != *"50% 1/2 ✓ first_step"$'\r\033[2K'"PARENT_HOOK"* ]]; then
+	printf 'FAIL: incomplete progress did not redraw in place\n%s\n' "$output"
+	exit 1
+fi
 if [[ "$output" != *"first_step"*"PARENT_HOOK"*"second_step"* ]]; then
 	printf 'FAIL: phased execution order changed\n%s\n' "$output"
 	exit 1
@@ -71,8 +82,46 @@ if [ "$setup_status" -ne 1 ]; then
 	exit 1
 fi
 
+failed_functions=()
+setup_progress_start first_step first_step
+adjacent_output="$(run_functions first_step first_step 2>&1)"
+if [[ "$adjacent_output" != *"50% 1/2 ✓ first_step"$'\r\033[2K'">>> first_step"* ]]; then
+	printf 'FAIL: adjacent function did not clear the live bar\n%s\n' "$adjacent_output"
+	exit 1
+fi
+
+failed_functions=()
+setup_progress_start fail_first first_step
+aggregate_output="$(run_functions fail_first first_step 2>&1)"
+if [[ "$aggregate_output" != *"100% 2/2 ✗ first_step"* ]]; then
+	printf 'FAIL: final progress lost an earlier failure\n%s\n' "$aggregate_output"
+	exit 1
+fi
+
+export COLUMNS=24
+failed_functions=()
+setup_progress_start first_step
+narrow_output="$(run_function first_step 2>&1)"
+narrow_line="$(printf '%s\n' "$narrow_output" | tail -n 1 | LC_ALL=C sed $'s/\033\\[[0-9;]*[A-Za-z]//g; s/\r//g')"
+if [ "${#narrow_line}" -gt "$COLUMNS" ]; then
+	printf 'FAIL: narrow-terminal progress is %d columns wide\n%s\n' "${#narrow_line}" "$narrow_line"
+	exit 1
+fi
+
+export LC_ALL=C
+failed_functions=()
+setup_progress_start second_step
+narrow_ascii_output="$(run_function second_step 2>&1)"
+narrow_ascii_line="$(printf '%s\n' "$narrow_ascii_output" | tail -n 1 | LC_ALL=C sed $'s/\033\\[[0-9;]*[A-Za-z]//g; s/\r//g')"
+if [ "${#narrow_ascii_line}" -gt "$COLUMNS" ]; then
+	printf 'FAIL: narrow ASCII failure progress is %d columns wide\n%s\n' \
+		"${#narrow_ascii_line}" "$narrow_ascii_line"
+	exit 1
+fi
+export COLUMNS=80
+export LC_ALL="C.UTF-8"
+
 unset NO_COLOR
-export TERM=xterm-256color
 failed_functions=()
 setup_progress_start first_step
 colour_output="$(run_function first_step 2>&1)"

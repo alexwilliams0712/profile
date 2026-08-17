@@ -675,6 +675,7 @@ main() {
 	if ! xcode-select -p &>/dev/null; then
 		clt_was_missing=true
 		run_functions "${preflight_steps[@]}"
+		setup_progress_clear
 		# Git cannot read the existing identity until this required preflight succeeds.
 		if [ ${#failed_functions[@]} -ne 0 ]; then
 			return 1
@@ -687,6 +688,7 @@ main() {
 		before_brew_steps=("${preflight_steps[@]}" "${before_brew_steps[@]}")
 	fi
 	run_functions "${before_brew_steps[@]}"
+	setup_progress_clear
 	# run_function isolates each step so errors are reliable. Refresh the
 	# environment changes made by install_homebrew in the parent shell.
 	brew_shellenv

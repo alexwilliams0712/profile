@@ -59,10 +59,22 @@ ensure_directory() {
 
 SETUP_PROGRESS_CURRENT=0
 SETUP_PROGRESS_TOTAL=0
+SETUP_PROGRESS_VISIBLE=0
+SETUP_PROGRESS_FAILED=0
 
 setup_progress_start() {
 	SETUP_PROGRESS_CURRENT=0
 	SETUP_PROGRESS_TOTAL="$#"
+	SETUP_PROGRESS_VISIBLE=0
+	SETUP_PROGRESS_FAILED=0
+}
+
+setup_progress_clear() {
+	if [ "$SETUP_PROGRESS_VISIBLE" -ne 1 ]; then
+		return
+	fi
+	printf '\r\033[2K'
+	SETUP_PROGRESS_VISIBLE=0
 }
 
 run_functions() {
@@ -95,17 +107,24 @@ setup_progress_advance() {
 	local remaining_char="-"
 	local head_char=">"
 	local unicode_output=0
+	local live_output=0
+	local live_label="$label"
+	local compact_output=0
+	local display_status
+	local count
+	local fixed_width
+	local available_width
+	local terminal_columns
+	local progress_line
 
 	if [ "$SETUP_PROGRESS_TOTAL" -le 0 ]; then
 		return
 	fi
 	SETUP_PROGRESS_CURRENT=$((SETUP_PROGRESS_CURRENT + 1))
-	filled=$((SETUP_PROGRESS_CURRENT * width / SETUP_PROGRESS_TOTAL))
 	percent=$((SETUP_PROGRESS_CURRENT * 100 / SETUP_PROGRESS_TOTAL))
-	remaining=$((width - filled))
-	if [ "$SETUP_PROGRESS_CURRENT" -lt "$SETUP_PROGRESS_TOTAL" ]; then
-		head="$head_char"
-		remaining=$((remaining - 1))
+	count="${SETUP_PROGRESS_CURRENT}/${SETUP_PROGRESS_TOTAL}"
+	if [ "$exit_code" -ne 0 ]; then
+		SETUP_PROGRESS_FAILED=1
 	fi
 	if [ -z "$output_tty" ]; then
 		if [ -t 1 ]; then
@@ -114,6 +133,9 @@ setup_progress_advance() {
 			output_tty=0
 		fi
 	fi
+	if [ "$output_tty" -eq 1 ] && [ "${TERM:-dumb}" != dumb ]; then
+		live_output=1
+	fi
 	case "$locale" in
 	*[Uu][Tt][Ff]-8* | *[Uu][Tt][Ff]8*)
 		if [ "$output_tty" -eq 1 ]; then
@@ -121,12 +143,50 @@ setup_progress_advance() {
 			completed_char="━"
 			remaining_char="━"
 			head_char="╺"
-			if [ "$SETUP_PROGRESS_CURRENT" -lt "$SETUP_PROGRESS_TOTAL" ]; then
-				head="$head_char"
-			fi
 		fi
 		;;
 	esac
+	display_status="$exit_code"
+	if [ "$live_output" -eq 1 ]; then
+		display_status="$SETUP_PROGRESS_FAILED"
+	fi
+	if [ "$display_status" -ne 0 ]; then
+		symbol="FAIL"
+	fi
+	if [ "$unicode_output" -eq 1 ]; then
+		if [ "$display_status" -eq 0 ]; then
+			symbol="✓"
+		else
+			symbol="✗"
+		fi
+	fi
+	if [ "$live_output" -eq 1 ]; then
+		terminal_columns="${COLUMNS:-}"
+		case "$terminal_columns" in
+		'' | *[!0-9]* | 0) terminal_columns="$(tput cols 2>/dev/null || printf '80')" ;;
+		esac
+		fixed_width=$((9 + ${#count} + ${#symbol}))
+		if [ "$terminal_columns" -lt $((fixed_width + width + 1 + ${#live_label})) ]; then
+			live_label=""
+		fi
+		available_width=$((terminal_columns - fixed_width))
+		if [ -z "$live_label" ] && [ "$available_width" -lt "$width" ]; then
+			width="$available_width"
+		fi
+		if [ "$width" -lt 1 ]; then
+			compact_output=1
+			width=$((terminal_columns - ${#count} - 1))
+			if [ "$width" -lt 1 ]; then
+				width=1
+			fi
+		fi
+	fi
+	filled=$((SETUP_PROGRESS_CURRENT * width / SETUP_PROGRESS_TOTAL))
+	remaining=$((width - filled))
+	if [ "$SETUP_PROGRESS_CURRENT" -lt "$SETUP_PROGRESS_TOTAL" ]; then
+		head="$head_char"
+		remaining=$((remaining - 1))
+	fi
 	for ((ix = 0; ix < filled; ix++)); do
 		completed_bar+="$completed_char"
 	done
@@ -134,31 +194,41 @@ setup_progress_advance() {
 		remaining_bar+="$remaining_char"
 	done
 
-	if [ "$exit_code" -ne 0 ]; then
-		symbol="FAIL"
-	fi
-	if [ "$unicode_output" -eq 1 ]; then
-		if [ "$exit_code" -eq 0 ]; then
-			symbol="✓"
-		else
-			symbol="✗"
-		fi
-	fi
 	if [ "$output_tty" -eq 1 ] && [ "${TERM:-dumb}" != dumb ] && [ -z "${NO_COLOR:-}" ]; then
 		bar_colour=$'\033[1;92m'
 		remaining_colour=$'\033[90m'
 		colour_reset=$'\033[0m'
-		if [ "$exit_code" -eq 0 ]; then
+		if [ "$display_status" -eq 0 ]; then
 			status_colour="$bar_colour"
 		else
 			status_colour=$'\033[1;91m'
 		fi
 	fi
-
-	printf '  %b%s%s%b%s%b %3d%% %d/%d %b%s%b %s\n' \
-		"$bar_colour" "$completed_bar" "$head" "$remaining_colour" "$remaining_bar" \
-		"$colour_reset" "$percent" "$SETUP_PROGRESS_CURRENT" "$SETUP_PROGRESS_TOTAL" \
-		"$status_colour" "$symbol" "$colour_reset" "$label"
+	if [ "$compact_output" -eq 1 ]; then
+		printf -v progress_line '%b%s%s%b%s%b %s' \
+			"$bar_colour" "$completed_bar" "$head" "$remaining_colour" "$remaining_bar" \
+			"$colour_reset" "$count"
+	elif [ "$live_output" -eq 1 ] && [ -z "$live_label" ]; then
+		printf -v progress_line '  %b%s%s%b%s%b %3d%% %s %b%s%b' \
+			"$bar_colour" "$completed_bar" "$head" "$remaining_colour" "$remaining_bar" \
+			"$colour_reset" "$percent" "$count" "$status_colour" "$symbol" "$colour_reset"
+	else
+		printf -v progress_line '  %b%s%s%b%s%b %3d%% %s %b%s%b %s' \
+			"$bar_colour" "$completed_bar" "$head" "$remaining_colour" "$remaining_bar" \
+			"$colour_reset" "$percent" "$count" "$status_colour" "$symbol" "$colour_reset" \
+			"$live_label"
+	fi
+	if [ "$live_output" -eq 0 ]; then
+		printf '%s\n' "$progress_line"
+		return
+	fi
+	if [ "$SETUP_PROGRESS_CURRENT" -eq "$SETUP_PROGRESS_TOTAL" ]; then
+		printf '\r\033[2K%s\n' "$progress_line"
+		SETUP_PROGRESS_VISIBLE=0
+		return
+	fi
+	printf '\r\033[2K%s' "$progress_line"
+	SETUP_PROGRESS_VISIBLE=1
 }
 
 # Evaluate the Homebrew shellenv matching the current architecture.
@@ -206,6 +276,7 @@ run_function() {
 	*e*) had_errexit=1 ;;
 	esac
 
+	setup_progress_clear
 	if command -v gum >/dev/null 2>&1; then
 		gum style --foreground 212 --bold ">>> $func_name"
 	else

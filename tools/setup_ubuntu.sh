@@ -1035,6 +1035,7 @@ main() {
 
 	# copy_dotfiles must run first — it sources .bash_aliases which defines apt_upgrader
 	run_functions "${bootstrap_steps[@]}"
+	setup_progress_clear
 	# run_function isolates setup steps so failures cannot be masked. Source the
 	# copied aliases in the parent as well because later steps use apt_upgrader.
 	if [ -f "$HOME/.bash_aliases" ]; then

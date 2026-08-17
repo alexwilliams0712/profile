@@ -1,3 +1,21 @@
+# Render one interactive setup progress bar
+
+- [x] Replace per-step interactive progress lines with one in-place bar.
+- [x] Clear the live bar before setup output and finish it with a newline.
+- [x] Preserve newline-based ASCII progress for non-interactive runs.
+- [x] Add focused rendering regressions and run the shell checks.
+- [x] Obtain an independent review and prepare a follow-up pull request.
+
+## Review
+
+- [x] Interactive progress now redraws one bright-green line, preserves an
+      aggregate failure state, and adapts to narrow UTF-8 and ASCII terminals.
+- [x] Verified adjacent functions, parent-shell hooks, final newlines,
+      non-interactive output, failure ordering, syntax, formatting, and lint.
+- [x] The monitored run completed 20 of 21 functions. `install_packages` failed
+      for separately diagnosed Homebrew API and stale CLT reasons.
+- [x] Independent final review reported no remaining findings.
+
 # Persist setup logs for diagnostics
 
 - [x] Capture the complete entry-point and platform setup output without
