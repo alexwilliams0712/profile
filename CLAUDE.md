@@ -14,20 +14,42 @@ source setup_entry.sh
 
 This detects the OS (`uname`), pulls the latest from `origin/main`, then dispatches to `tools/setup_macos.sh` or `tools/setup_ubuntu.sh`.
 
+Every run writes a private log and prints its path. For diagnostics, inspect the
+latest run first:
+
+```bash
+less -R "${XDG_STATE_HOME:-$HOME/.local/state}/profile/setup/latest.log"
+# During a run:
+tail -f "${XDG_STATE_HOME:-$HOME/.local/state}/profile/setup/latest.log"
+```
+
+Set `PROFILE_SETUP_LOG_DIR` to an absolute path to override the directory.
+Logs and their parent directory are mode `600` and `700` respectively.
+Treat them as private and never commit them.
+
+Each platform's `main` defines its executable function plan. The shared runner
+uses that plan as the progress total and renders a Rich-style bar after each
+setup step.
+
 ## Linting Shell Scripts
 
 ```bash
 shellcheck tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh setup_entry.sh
 shfmt -d tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh setup_entry.sh
+bash tests/setup_logging/run.sh
+bash tests/setup_progress/run.sh
 ```
 
-There is no test suite.
+Other focused regression scripts are available under `tests/`.
 
 ## Architecture
 
 ### Entry Point Flow
 
-`setup_entry.sh` → OS detection → `tools/setup_macos.sh` or `tools/setup_ubuntu.sh` → both source `tools/common.sh` for shared utilities.
+`setup_entry.sh` → private setup log → OS detection → `tools/setup_macos.sh`
+or `tools/setup_ubuntu.sh` → both source `tools/common.sh` for shared
+utilities. The platform script returns before `setup_entry.sh` closes the log,
+then the entry point starts the replacement login shell.
 
 ### Key Components
 
