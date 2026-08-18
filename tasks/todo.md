@@ -6,7 +6,7 @@
 - [x] Add and run focused regression coverage.
 - [x] Run repository shell checks.
 - [x] Obtain an independent review and resolve its findings.
-- [ ] Raise a pull request.
+- [x] Raise a pull request.
 
 ## Review
 
@@ -21,6 +21,7 @@
       portability failure in this Linux environment.
 - [x] Independent review found no correctness, scope, idempotence,
       cross-platform Readline, GNOME, test-quality, or prose issues.
+- [x] Raised pull request #219 and left merging to a human.
 
 # Simplify setup output and remove Julia cleanup
 
