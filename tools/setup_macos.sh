@@ -112,6 +112,7 @@ copy_dotfiles() {
 	cp "$PROFILE_DIR/dotfiles/.bashrc" "$HOME/.bashrc"
 	cp "$PROFILE_DIR/dotfiles/.prettierrc" "$HOME/.prettierrc"
 	cp "$PROFILE_DIR/dotfiles/.bash_aliases" "$HOME/.bash_aliases"
+	cp "$PROFILE_DIR/dotfiles/.inputrc" "$HOME/.inputrc"
 
 	# Helper scripts that .bash_aliases shells out to (keeps the sourced
 	# .bash_aliases small/fast). Same path is used on macOS and Linux.
@@ -166,10 +167,6 @@ copy_dotfiles() {
 	mkdir -p "$iterm2_profiles_dir"
 	cp "$PROFILE_DIR/dotfiles/iterm2/terminator-style.json" "$iterm2_profiles_dir/terminator-style.json"
 
-	# Case-insensitive tab completion
-	if [ ! -f "$HOME/.inputrc" ] || ! grep -q 'completion-ignore-case' "$HOME/.inputrc" 2>/dev/null; then
-		echo 'set completion-ignore-case On' >>"$HOME/.inputrc"
-	fi
 }
 
 install_homebrew() {
