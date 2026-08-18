@@ -1,3 +1,27 @@
+# Configure terminal input preferences
+
+- [x] Confirm the working case-insensitive completion setting on this machine.
+- [x] Manage the Readline preference consistently on Ubuntu and macOS.
+- [x] Enable GNOME primary-selection paste during Ubuntu setup.
+- [x] Add and run focused regression coverage.
+- [x] Run repository shell checks.
+- [x] Obtain an independent review and resolve its findings.
+- [ ] Raise a pull request.
+
+## Review
+
+- [x] Added one managed Readline file for both platforms and removed Ubuntu's
+      ineffective system-wide mutation.
+- [x] Added primary-selection paste to the existing idempotent GNOME settings.
+- [x] Verified the focused preference regression, Readline's loaded value,
+      Bash syntax, shell formatting, and all relevant existing tests.
+- [x] Confirmed the changed scripts introduce no new ShellCheck finding codes;
+      repository-wide lint retains unrelated existing findings.
+- [x] `tests/setup_logging/run.sh` retains an unrelated GNU `stat -f`
+      portability failure in this Linux environment.
+- [x] Independent review found no correctness, scope, idempotence,
+      cross-platform Readline, GNOME, test-quality, or prose issues.
+
 # Simplify setup output and remove Julia cleanup
 
 - [x] Remove loading and progress output from macOS and Ubuntu.

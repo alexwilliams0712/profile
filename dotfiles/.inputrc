@@ -1,0 +1,4 @@
+$include /etc/inputrc
+
+# Complete paths without requiring matching letter case.
+set completion-ignore-case on

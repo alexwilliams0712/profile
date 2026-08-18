@@ -33,6 +33,7 @@ copy_dotfiles() {
 	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
 	cp $PROFILE_DIR/dotfiles/.prettierrc $HOME/.prettierrc
 	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
+	cp "$PROFILE_DIR/dotfiles/.inputrc" "$HOME/.inputrc"
 
 	# Helper scripts that .bash_aliases shells out to (keeps the sourced
 	# .bash_aliases small/fast). Same path is used on macOS and Linux.
@@ -43,10 +44,6 @@ copy_dotfiles() {
 	chmod +x "$HOME/.local/bin/work-proxy"
 
 	copy_btop_config
-	# Case-insensitive tab completion (idempotent)
-	if ! grep -q 'completion-ignore-case' /etc/inputrc 2>/dev/null; then
-		echo 'set completion-ignore-case On' | sudo tee -a /etc/inputrc
-	fi
 	# Source .bash_aliases so apt_upgrader (defined there) is available to later functions
 	source $HOME/.bash_aliases
 }
@@ -684,6 +681,7 @@ configure_gnome() {
 	if command -v gsettings >/dev/null 2>&1; then
 		gsettings set org.gnome.desktop.interface text-scaling-factor 0.95
 		gsettings set org.gnome.desktop.interface cursor-size 24
+		gsettings set org.gnome.desktop.interface gtk-enable-primary-paste true
 	fi
 }
 
