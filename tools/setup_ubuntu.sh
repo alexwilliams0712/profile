@@ -66,6 +66,7 @@ install_apt_packages() {
 		gnuplot \
 		imagemagick \
 		libbz2-dev \
+		libdbus-1-dev \
 		libffi-dev \
 		liblzma-dev \
 		libncursesw5-dev \
@@ -81,6 +82,7 @@ install_apt_packages() {
 		m4 \
 		moreutils \
 		openssh-server \
+		pkg-config \
 		python3-pip \
 		shellcheck \
 		tk-dev \
