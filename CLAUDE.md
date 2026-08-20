@@ -39,6 +39,7 @@ again; never cache or broker the administrator password in setup code.
 ```bash
 shellcheck tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh tools/macos_helpers.sh setup_entry.sh
 shfmt -d tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh tools/macos_helpers.sh setup_entry.sh
+bash tests/setup_preferences/run.sh
 bash tests/setup_logging/run.sh
 bash tests/setup_macos/run.sh
 bash tests/setup_runner/run.sh

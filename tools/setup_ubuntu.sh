@@ -687,6 +687,17 @@ configure_gnome() {
 	fi
 }
 
+configure_locale() {
+	print_function_name
+	if ! locale -a | grep -Eiq '^en_GB\.utf-?8$'; then
+		sudo locale-gen en_GB.UTF-8
+	fi
+	sudo update-locale LANG=en_GB.UTF-8
+	if command -v gsettings >/dev/null 2>&1; then
+		gsettings set org.gnome.system.locale region 'en_GB.UTF-8'
+	fi
+}
+
 install_ghostty() {
 	print_function_name
 	# Install / upgrade Ghostty via the mkasberg community .deb, which tracks
@@ -1022,6 +1033,7 @@ main() {
 		install_duf
 		install_gum
 		install_ghostty
+		configure_locale
 		configure_gnome
 		install_delta
 		install_lazygit
