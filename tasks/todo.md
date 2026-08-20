@@ -5,7 +5,7 @@
 - [x] Add focused regression coverage.
 - [x] Run repository shell checks and focused tests.
 - [x] Obtain an independent review and resolve its findings.
-- [ ] Raise a pull request.
+- [x] Raise a pull request.
 
 ## Review
 
@@ -17,6 +17,7 @@
       The logging suite retains its documented GNU `stat -f` portability failure.
 - [x] Independent review found no correctness or idempotency issues. Added the
       focused preference regression to the repository's documented checks.
+- [x] Raised pull request #221 and left merging to a human.
 
 # Configure terminal input preferences
 
