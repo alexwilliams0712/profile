@@ -1,3 +1,23 @@
+# Use British date formatting on Ubuntu
+
+- [x] Inspect the existing Ubuntu locale and GNOME preference setup.
+- [x] Persist the British system locale and GNOME region during setup.
+- [x] Add focused regression coverage.
+- [x] Run repository shell checks and focused tests.
+- [x] Obtain an independent review and resolve its findings.
+- [ ] Raise a pull request.
+
+## Review
+
+- [x] Added an idempotent Ubuntu setup step that generates `en_GB.UTF-8` only
+      when absent, persists it with `update-locale`, and sets the GNOME region.
+- [x] Verified the focused preference regression, Bash syntax, shell formatting,
+      the British `%d/%m/%y` locale pattern, and the macOS and runner suites.
+- [x] The repository-wide ShellCheck command retains unrelated existing findings.
+      The logging suite retains its documented GNU `stat -f` portability failure.
+- [x] Independent review found no correctness or idempotency issues. Added the
+      focused preference regression to the repository's documented checks.
+
 # Configure terminal input preferences
 
 - [x] Confirm the working case-insensitive completion setting on this machine.

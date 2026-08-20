@@ -33,4 +33,19 @@ if ! grep -Fq \
 	exit 1
 fi
 
-printf '%s\n' 'PASS: terminal input preferences are configured'
+for locale_setting in \
+	'sudo locale-gen en_GB.UTF-8' \
+	'sudo update-locale LANG=en_GB.UTF-8' \
+	"gsettings set org.gnome.system.locale region 'en_GB.UTF-8'"; do
+	if ! grep -Fq "$locale_setting" "$ubuntu_setup"; then
+		printf 'FAIL: Ubuntu setup is missing locale setting: %s\n' "$locale_setting"
+		exit 1
+	fi
+done
+
+if ! grep -Fqx $'\t\tconfigure_locale' "$ubuntu_setup"; then
+	printf '%s\n' 'FAIL: Ubuntu setup does not run locale configuration'
+	exit 1
+fi
+
+printf '%s\n' 'PASS: terminal input and locale preferences are configured'
