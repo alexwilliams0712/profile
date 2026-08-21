@@ -76,9 +76,56 @@ selected_casks="$(casks_managed_by_own_updater \
 	self-updating managed-update incomplete-self-updating)"
 # shellcheck disable=SC2016 # The production variable reference is intentional.
 if [ "$selected_casks" != self-updating ] ||
-	! grep -Fq 'HOMEBREW_BUNDLE_CASK_SKIP="$installed_auto_update_casks"' \
+	! grep -Fq 'HOMEBREW_BUNDLE_CASK_SKIP="$bundle_skipped_casks"' \
 		"$repo_root/tools/setup_macos.sh"; then
 	printf '%s\n' 'FAIL: cask bundle skip does not contain exactly valid self-updating apps'
+	exit 1
+fi
+
+# shellcheck disable=SC2329 # Invoked indirectly by the cask skip helper.
+tailscale_is_installed() {
+	return 1
+}
+TAILSCALE_UPGRADE_REQUESTED=false
+selected_casks="$(casks_skipped_from_bundle self-updating tailscale-app managed-update)"
+if [ "$selected_casks" != self-updating ]; then
+	printf '%s\n' 'FAIL: an absent Tailscale app was excluded from fresh installation'
+	exit 1
+fi
+# shellcheck disable=SC2329 # Invoked indirectly by the cask skip helper.
+tailscale_is_installed() {
+	return 0
+}
+selected_casks="$(casks_skipped_from_bundle self-updating tailscale-app managed-update)"
+if [ "$selected_casks" != 'self-updating tailscale-app' ]; then
+	printf '%s\n' 'FAIL: an installed Tailscale app was not protected from bundle upgrades'
+	exit 1
+fi
+# shellcheck disable=SC2034 # Read by the sourced macOS helper.
+TAILSCALE_UPGRADE_REQUESTED=true
+selected_casks="$(casks_skipped_from_bundle self-updating tailscale-app managed-update)"
+if [ "$selected_casks" != self-updating ]; then
+	printf '%s\n' 'FAIL: an approved Tailscale upgrade remained excluded from Homebrew Bundle'
+	exit 1
+fi
+
+prompt_line="$(awk '/^main\(\) \{/ { in_main = 1 } in_main && /collect_tailscale_upgrade_preference/ { print NR; exit }' \
+	"$repo_root/tools/setup_macos.sh")"
+first_step_line="$(awk '/^main\(\) \{/ { in_main = 1 } in_main && /run_functions/ { print NR; exit }' \
+	"$repo_root/tools/setup_macos.sh")"
+# shellcheck disable=SC2016 # The production variable reference is intentional.
+repair_guard_line="$(grep -nF '[ "$cask" = tailscale-app ] && tailscale_upgrade_is_declined' \
+	"$repo_root/tools/setup_macos.sh" | cut -d: -f1)"
+# shellcheck disable=SC2016 # The production variable reference is intentional.
+repair_action_line="$(grep -nF 'brew reinstall --cask --force "$cask"' \
+	"$repo_root/tools/setup_macos.sh" | head -n 1 | cut -d: -f1)"
+if [ -z "$prompt_line" ] || [ -z "$first_step_line" ] || [ "$prompt_line" -ge "$first_step_line" ]; then
+	printf '%s\n' 'FAIL: the Tailscale upgrade choice is not collected before macOS setup steps'
+	exit 1
+fi
+if [ -z "$repair_guard_line" ] || [ -z "$repair_action_line" ] ||
+	[ "$repair_guard_line" -ge "$repair_action_line" ]; then
+	printf '%s\n' 'FAIL: declined Tailscale upgrades are not protected from cask repairs'
 	exit 1
 fi
 if grep -Eqi 'julia' "$repo_root/tools/setup_macos.sh" \

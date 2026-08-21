@@ -98,6 +98,38 @@ brew_shellenv() {
 	fi
 }
 
+TAILSCALE_UPGRADE_REQUESTED=false
+
+tailscale_is_installed() {
+	if command -v tailscale >/dev/null 2>&1; then
+		return 0
+	fi
+	if command -v dpkg-query >/dev/null 2>&1 &&
+		dpkg-query -W -f='${db:Status-Abbrev}\n' tailscale 2>/dev/null | grep -q '^ii '; then
+		return 0
+	fi
+	return 1
+}
+
+tailscale_upgrade_is_declined() {
+	tailscale_is_installed && [ "$TAILSCALE_UPGRADE_REQUESTED" != true ]
+}
+
+collect_tailscale_upgrade_preference() {
+	local input=""
+
+	TAILSCALE_UPGRADE_REQUESTED=false
+	if ! tailscale_is_installed; then
+		return 0
+	fi
+	read -r -p \
+		"Tailscale is already installed. Upgrade it during setup? This may interrupt SSH connections. [y/N] " \
+		input || input=""
+	case "$input" in
+	[yY] | [yY][eE][sS]) TAILSCALE_UPGRADE_REQUESTED=true ;;
+	esac
+}
+
 collect_user_input() {
 	# Gather optional profile values before package installation.
 	GIT_USER_NAME=$(git config --global user.name 2>/dev/null) || GIT_USER_NAME=""
@@ -265,7 +297,11 @@ install_pyenv() {
 		export CPPFLAGS="-I$(brew --prefix openssl)/include -I$(brew --prefix readline)/include -I$(brew --prefix sqlite3)/include -I$(brew --prefix zlib)/include"
 		export PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig:$(brew --prefix readline)/lib/pkgconfig:$(brew --prefix sqlite3)/lib/pkgconfig:$(brew --prefix zlib)/lib/pkgconfig"
 	else
-		apt_upgrader
+		if declare -F run_apt_upgrader >/dev/null 2>&1; then
+			run_apt_upgrader
+		else
+			apt_upgrader
+		fi
 		sudo apt install -y software-properties-common
 	fi
 

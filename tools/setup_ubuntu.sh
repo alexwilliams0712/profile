@@ -15,8 +15,47 @@ set -o pipefail
 source "$PROFILE_DIR/tools/common.sh"
 trap 'handle_error $LINENO' ERR
 
-# Prompt for sudo once, then keep the timestamp warm for the whole install.
-keep_sudo_alive
+tailscale_apt_package_is_installed() {
+	dpkg-query -W -f='${db:Status-Abbrev}\n' tailscale 2>/dev/null | grep -q '^ii '
+}
+
+tailscale_apt_upgrade_is_held() {
+	apt-mark showhold 2>/dev/null | grep -Fxq tailscale
+}
+
+run_apt_upgrader() {
+	if ! tailscale_upgrade_is_declined || ! tailscale_apt_package_is_installed; then
+		apt_upgrader
+		return
+	fi
+	if tailscale_apt_upgrade_is_held; then
+		log "Tailscale is already held; leaving its apt state unchanged."
+		apt_upgrader
+		return
+	fi
+
+	(
+		# shellcheck disable=SC2329 # Invoked by the EXIT trap.
+		restore_tailscale_apt_hold() {
+			local upgrade_status=$?
+			local restore_status=0
+
+			trap - EXIT
+			sudo apt-mark unhold tailscale >/dev/null || restore_status=$?
+			if [ "$upgrade_status" -ne 0 ]; then
+				exit "$upgrade_status"
+			fi
+			exit "$restore_status"
+		}
+
+		log "Holding Tailscale during general apt upgrades."
+		if ! sudo apt-mark hold tailscale; then
+			return 1
+		fi
+		trap restore_tailscale_apt_hold EXIT
+		apt_upgrader
+	)
+}
 
 copy_dotfiles() {
 	print_function_name
@@ -49,7 +88,7 @@ copy_dotfiles() {
 }
 install_apt_packages() {
 	print_function_name
-	apt_upgrader
+	run_apt_upgrader
 	log "Running installs"
 	sudo apt-get install -y software-properties-common
 	sudo add-apt-repository -y universe
@@ -331,7 +370,7 @@ install_vscode() {
 		https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
 
 	# Update package lists and install/upgrade VS Code
-	apt_upgrader
+	run_apt_upgrader
 	sudo apt-get install -y code
 
 	# Clean up
@@ -535,7 +574,7 @@ install_and_setup_docker() {
 		"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
       $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 	sudo chmod a+r /etc/apt/keyrings/docker.gpg
-	apt_upgrader
+	run_apt_upgrader
 	sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
 		docker-ce \
 		docker-ce-cli \
@@ -566,7 +605,7 @@ install_syncthing() {
 	sudo curl -fsSL -o /etc/apt/keyrings/syncthing-archive-keyring.gpg https://syncthing.net/release-key.gpg
 	echo "deb [signed-by=/etc/apt/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable" |
 		sudo tee /etc/apt/sources.list.d/syncthing.list >/dev/null
-	apt_upgrader
+	run_apt_upgrader
 	sudo apt-get -o DPkg::Lock::Timeout=60 install -y syncthing
 
 	# Run as a per-user service and keep it alive across logouts/reboots so
@@ -590,7 +629,7 @@ install_github_cli() {
 	sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
 	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] \
 		https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
-	apt_upgrader
+	run_apt_upgrader
 	sudo apt -o DPkg::Lock::Timeout=60 install gh -y
 }
 
@@ -889,9 +928,50 @@ install_node() {
 	sudo rm -rf node_modules
 }
 
+upgrade_tailscale() {
+	if ! tailscale_apt_upgrade_is_held; then
+		curl -fsSL https://tailscale.com/install.sh | sh
+		return
+	fi
+
+	(
+		# shellcheck disable=SC2329 # Invoked by the EXIT trap.
+		restore_tailscale_apt_hold() {
+			local upgrade_status=$?
+			local restore_status=0
+
+			trap - EXIT
+			sudo apt-mark hold tailscale >/dev/null || restore_status=$?
+			if [ "$upgrade_status" -ne 0 ]; then
+				exit "$upgrade_status"
+			fi
+			exit "$restore_status"
+		}
+
+		log "Temporarily releasing the existing Tailscale apt hold."
+		if ! sudo apt-mark unhold tailscale; then
+			return 1
+		fi
+		trap restore_tailscale_apt_hold EXIT
+		curl -fsSL https://tailscale.com/install.sh | sh
+	)
+}
+
 install_tailscale() {
 	print_function_name
-	curl -fsSL https://tailscale.com/install.sh | sh
+	if ! tailscale_is_installed; then
+		log "Installing Tailscale..."
+		curl -fsSL https://tailscale.com/install.sh | sh || return
+	elif [ "$TAILSCALE_UPGRADE_REQUESTED" = true ]; then
+		log "Upgrading Tailscale as requested..."
+		upgrade_tailscale || return
+	else
+		log "Tailscale is already installed; skipping its installer."
+	fi
+	if ! command -v tailscale >/dev/null 2>&1; then
+		log "Tailscale is unavailable after installation."
+		return 1
+	fi
 	sudo tailscale up --ssh --stateful-filtering
 	sudo ufw deny ssh
 }
@@ -989,7 +1069,10 @@ pip_installs() {
 }
 
 main() {
+	collect_tailscale_upgrade_preference
 	collect_user_input
+	# Prompt for sudo once, then keep the timestamp warm for the whole install.
+	keep_sudo_alive
 
 	failed_functions=()
 	local bootstrap_steps=(copy_dotfiles)
@@ -1041,10 +1124,10 @@ main() {
 		install_dust
 		install_redis_insight
 		install_ai
-		apt_upgrader
+		run_apt_upgrader
 	)
 
-	# copy_dotfiles must run first — it sources .bash_aliases which defines apt_upgrader
+	# copy_dotfiles must run first — it sources .bash_aliases which defines apt_upgrader.
 	run_functions "${bootstrap_steps[@]}"
 	# run_function isolates setup steps so failures cannot be masked. Source the
 	# copied aliases in the parent as well because later steps use apt_upgrader.

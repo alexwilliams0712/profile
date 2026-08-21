@@ -314,11 +314,15 @@ install_packages() {
 	taps="$(brew bundle list --file="$brewfile" --tap | tr '\n' ' ')"
 	local bundle_failed=0
 	local cask
-	local installed_auto_update_casks=""
+	local bundle_skipped_casks=""
 
 	log "Homebrew may request administrator approval for privileged cask installers."
 	# Repair incomplete installations that Homebrew's receipt-only checks miss.
 	for cask in $casks; do
+		if [ "$cask" = tailscale-app ] && tailscale_upgrade_is_declined; then
+			log "Skipping the installed Tailscale cask; its upgrade was not requested."
+			continue
+		fi
 		if brew list --versions --cask "$cask" &>/dev/null; then
 			if ! cask_has_missing_app_artifact "$cask"; then
 				continue
@@ -345,7 +349,7 @@ install_packages() {
 		fi
 	done
 	# shellcheck disable=SC2086 # Split the Brewfile cask list into arguments.
-	installed_auto_update_casks="$(casks_managed_by_own_updater $casks)"
+	bundle_skipped_casks="$(casks_skipped_from_bundle $casks)"
 
 	if ! HOMEBREW_BUNDLE_CASK_SKIP="$casks" HOMEBREW_BUNDLE_MAS_SKIP="$mas_apps" \
 		brew bundle --file="$brewfile"; then
@@ -353,7 +357,7 @@ install_packages() {
 		bundle_failed=1
 	fi
 	if ! HOMEBREW_BUNDLE_BREW_SKIP="$formulae" HOMEBREW_BUNDLE_MAS_SKIP="$mas_apps" \
-		HOMEBREW_BUNDLE_TAP_SKIP="$taps" HOMEBREW_BUNDLE_CASK_SKIP="$installed_auto_update_casks" \
+		HOMEBREW_BUNDLE_TAP_SKIP="$taps" HOMEBREW_BUNDLE_CASK_SKIP="$bundle_skipped_casks" \
 		brew bundle --file="$brewfile"; then
 		log "Warning: Homebrew cask installation reported errors; continuing..."
 		bundle_failed=1
@@ -628,6 +632,8 @@ install_syncthing() {
 }
 
 main() {
+	collect_tailscale_upgrade_preference
+
 	# A fresh mac needs CLT before git can read the existing identity. On a
 	# configured mac, collect the two optional values first, then check updates.
 	local clt_was_missing=false

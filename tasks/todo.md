@@ -1,3 +1,30 @@
+# Make Tailscale upgrades opt-in
+
+- [x] Trace direct and package-manager Tailscale upgrade paths on both platforms.
+- [x] Ask before package installation when an existing Tailscale is detected.
+- [x] Install Tailscale automatically only when it is absent.
+- [x] Prevent declined upgrades through Homebrew and broad apt upgrades.
+- [x] Add focused prompt, install, skip, and upgrade regression coverage.
+- [x] Run shell formatting, lint, focused tests, and relevant regression suites.
+- [x] Obtain an independent review and resolve any material findings.
+
+## Review
+
+- [x] Existing installations now prompt first and default to no; absent
+      installations proceed without prompting on macOS and Ubuntu.
+- [x] Ubuntu protects declined upgrades across all seven normal setup apt paths,
+      preserves existing holds, and temporarily releases a hold only for an
+      explicitly approved Tailscale upgrade.
+- [x] macOS protects declined upgrades from Homebrew Bundle and every cask
+      repair path while retaining fresh installs and approved upgrades.
+- [x] The focused Tailscale and macOS tests, preference, logging, and runner
+      suites pass, as do Bash syntax, formatting, changed-test ShellCheck, and
+      `git diff --check`.
+- [x] Repository-wide ShellCheck retains unrelated existing findings, including
+      the Ubuntu `inline=false` error; the changed paths add no findings.
+- [x] Independent final review found no remaining material issues after
+      approved upgrades were made to preserve a pre-existing apt hold.
+
 # Enable Ghostty copy-on-select on macOS
 
 - [x] Confirm Ghostty's macOS clipboard setting and effective configuration.

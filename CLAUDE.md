@@ -43,6 +43,7 @@ bash tests/setup_preferences/run.sh
 bash tests/setup_logging/run.sh
 bash tests/setup_macos/run.sh
 bash tests/setup_runner/run.sh
+bash tests/setup_tailscale/run.sh
 ```
 
 Other focused regression scripts are available under `tests/`.

@@ -1,6 +1,10 @@
 #!/bin/bash
 # macOS helpers isolated for focused tests.
 
+tailscale_is_installed() {
+	[ -d /Applications/Tailscale.app ]
+}
+
 cask_auto_updates() {
 	brew info --cask "$1" 2>/dev/null | sed -n '1p' | grep -q '(auto_updates)'
 }
@@ -15,6 +19,24 @@ casks_managed_by_own_updater() {
 			selected="${selected:+$selected }$cask"
 		fi
 	done
+	printf '%s\n' "$selected"
+}
+
+casks_skipped_from_bundle() {
+	local cask
+	local managed_casks=()
+	local selected=""
+
+	for cask in "$@"; do
+		if [ "$cask" = tailscale-app ] && tailscale_is_installed; then
+			if tailscale_upgrade_is_declined; then
+				selected="${selected:+$selected }tailscale-app"
+			fi
+			continue
+		fi
+		managed_casks+=("$cask")
+	done
+	selected="$(casks_managed_by_own_updater "${managed_casks[@]}")${selected:+ $selected}"
 	printf '%s\n' "$selected"
 }
 
