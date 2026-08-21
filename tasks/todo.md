@@ -1,3 +1,25 @@
+# Enable Ghostty copy-on-select on macOS
+
+- [x] Confirm Ghostty's macOS clipboard setting and effective configuration.
+- [x] Install the shared config at Ghostty's canonical macOS path.
+- [x] Add focused regression coverage for both platform destinations.
+- [x] Apply and validate the managed config on the current Mac.
+- [x] Run shell checks and obtain an independent review.
+
+## Review
+
+- [x] macOS setup writes `config.ghostty` to Ghostty's higher-precedence
+      Application Support directory, then removes only the old profile-managed
+      XDG file so stale or additive settings are not loaded twice.
+- [x] The current Mac uses the canonical file, validates it successfully, and
+      resolves one config with `copy-on-select = clipboard`.
+- [x] The preference, logging, macOS, and runner suites pass, as do Bash syntax,
+      formatting, the changed-test ShellCheck, and `git diff --check`.
+- [x] Repository-wide ShellCheck retains unrelated existing findings, including
+      the Ubuntu `inline=false` error.
+- [x] Independent review's migration and missing-file test findings were fixed;
+      the final review found no remaining material issues.
+
 # Use British date formatting on Ubuntu
 
 - [x] Inspect the existing Ubuntu locale and GNOME preference setup.

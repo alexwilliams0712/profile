@@ -124,9 +124,12 @@ copy_dotfiles() {
 
 	copy_btop_config
 
-	# Ghostty config (shared between macOS and Linux)
-	mkdir -p "$HOME/.config/ghostty"
-	cp "$PROFILE_DIR/dotfiles/ghostty/config" "$HOME/.config/ghostty/config"
+	# Ghostty loads this macOS-specific location after its XDG config.
+	local ghostty_config_dir="$HOME/Library/Application Support/com.mitchellh.ghostty"
+	mkdir -p "$ghostty_config_dir"
+	cp "$PROFILE_DIR/dotfiles/ghostty/config" "$ghostty_config_dir/config.ghostty"
+	# Do not load the legacy file previously managed by this profile as well.
+	rm -f "$HOME/.config/ghostty/config"
 
 	# Disable custom prefs folder (fragile — breaks if repo path changes)
 	defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool false
