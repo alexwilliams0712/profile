@@ -24,7 +24,7 @@ tailscale_apt_upgrade_is_held() {
 }
 
 run_apt_upgrader() {
-	if ! tailscale_upgrade_is_declined || ! tailscale_apt_package_is_installed; then
+	if ! profile_is_running_over_ssh || ! tailscale_apt_package_is_installed; then
 		apt_upgrader
 		return
 	fi
@@ -48,7 +48,7 @@ run_apt_upgrader() {
 			exit "$restore_status"
 		}
 
-		log "Holding Tailscale during general apt upgrades."
+		log "Holding Tailscale during general apt upgrades over SSH."
 		if ! sudo apt-mark hold tailscale; then
 			return 1
 		fi
@@ -928,46 +928,13 @@ install_node() {
 	sudo rm -rf node_modules
 }
 
-upgrade_tailscale() {
-	if ! tailscale_apt_upgrade_is_held; then
-		curl -fsSL https://tailscale.com/install.sh | sh
-		return
-	fi
-
-	(
-		# shellcheck disable=SC2329 # Invoked by the EXIT trap.
-		restore_tailscale_apt_hold() {
-			local upgrade_status=$?
-			local restore_status=0
-
-			trap - EXIT
-			sudo apt-mark hold tailscale >/dev/null || restore_status=$?
-			if [ "$upgrade_status" -ne 0 ]; then
-				exit "$upgrade_status"
-			fi
-			exit "$restore_status"
-		}
-
-		log "Temporarily releasing the existing Tailscale apt hold."
-		if ! sudo apt-mark unhold tailscale; then
-			return 1
-		fi
-		trap restore_tailscale_apt_hold EXIT
-		curl -fsSL https://tailscale.com/install.sh | sh
-	)
-}
-
 install_tailscale() {
 	print_function_name
-	if ! tailscale_is_installed; then
-		log "Installing Tailscale..."
-		curl -fsSL https://tailscale.com/install.sh | sh || return
-	elif [ "$TAILSCALE_UPGRADE_REQUESTED" = true ]; then
-		log "Upgrading Tailscale as requested..."
-		upgrade_tailscale || return
-	else
-		log "Tailscale is already installed; skipping its installer."
+	if profile_is_running_over_ssh; then
+		log "Skipping Tailscale setup over SSH."
+		return 0
 	fi
+	curl -fsSL https://tailscale.com/install.sh | sh
 	if ! command -v tailscale >/dev/null 2>&1; then
 		log "Tailscale is unavailable after installation."
 		return 1
@@ -1069,7 +1036,6 @@ pip_installs() {
 }
 
 main() {
-	collect_tailscale_upgrade_preference
 	collect_user_input
 	# Prompt for sudo once, then keep the timestamp warm for the whole install.
 	keep_sudo_alive

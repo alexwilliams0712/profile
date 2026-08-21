@@ -98,36 +98,8 @@ brew_shellenv() {
 	fi
 }
 
-TAILSCALE_UPGRADE_REQUESTED=false
-
-tailscale_is_installed() {
-	if command -v tailscale >/dev/null 2>&1; then
-		return 0
-	fi
-	if command -v dpkg-query >/dev/null 2>&1 &&
-		dpkg-query -W -f='${db:Status-Abbrev}\n' tailscale 2>/dev/null | grep -q '^ii '; then
-		return 0
-	fi
-	return 1
-}
-
-tailscale_upgrade_is_declined() {
-	tailscale_is_installed && [ "$TAILSCALE_UPGRADE_REQUESTED" != true ]
-}
-
-collect_tailscale_upgrade_preference() {
-	local input=""
-
-	TAILSCALE_UPGRADE_REQUESTED=false
-	if ! tailscale_is_installed; then
-		return 0
-	fi
-	read -r -p \
-		"Tailscale is already installed. Upgrade it during setup? This may interrupt SSH connections. [y/N] " \
-		input || input=""
-	case "$input" in
-	[yY] | [yY][eE][sS]) TAILSCALE_UPGRADE_REQUESTED=true ;;
-	esac
+profile_is_running_over_ssh() {
+	[ -n "${SSH_CONNECTION:-}" ] || [ -n "${SSH_CLIENT:-}" ] || [ -n "${SSH_TTY:-}" ]
 }
 
 collect_user_input() {

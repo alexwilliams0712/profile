@@ -8,6 +8,13 @@ Update this file whenever a correction reveals a rule worth keeping.
 Do not add a loading or progress bar. Keep plain newline-delimited function
 boundaries so terminal output and persisted logs remain readable and reliable.
 
+## Connection-disrupting installers
+
+When installing or upgrading a package can restart the transport used to run
+setup, prefer a deterministic session-context guard over another prompt. Under
+SSH, skip both the direct installer and indirect package-manager changes for
+that package while leaving local setup behaviour unchanged.
+
 ## Where a new install goes
 
 Decide by whether the *exact same commands* work on both macOS and Ubuntu:

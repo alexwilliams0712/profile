@@ -4,7 +4,6 @@ set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$here/../.." && pwd)"
 ubuntu_setup="$repo_root/tools/setup_ubuntu.sh"
-macos_setup="$repo_root/tools/setup_macos.sh"
 
 # shellcheck disable=SC1091
 source "$repo_root/tools/common.sh"
@@ -14,36 +13,17 @@ fail() {
 	exit 1
 }
 
-# shellcheck disable=SC2329 # Invoked indirectly by the preference collector.
-tailscale_is_installed() {
-	return 1
-}
-TAILSCALE_UPGRADE_REQUESTED=true
-exec 3<<<"unread input"
-collect_tailscale_upgrade_preference <&3
-IFS= read -r remaining_input <&3
-exec 3<&-
-if [ "$TAILSCALE_UPGRADE_REQUESTED" != false ] || [ "$remaining_input" != 'unread input' ]; then
-	fail 'an absent Tailscale installation prompted for an upgrade'
+unset SSH_CONNECTION SSH_CLIENT SSH_TTY
+if profile_is_running_over_ssh; then
+	fail 'a local session was mistaken for SSH'
 fi
-
-# shellcheck disable=SC2329 # Invoked indirectly by the preference collector.
-tailscale_is_installed() {
-	return 0
-}
-TAILSCALE_UPGRADE_REQUESTED=true
-collect_tailscale_upgrade_preference </dev/null
-if [ "$TAILSCALE_UPGRADE_REQUESTED" != false ]; then
-	fail 'EOF did not default the Tailscale upgrade choice to no'
-fi
-collect_tailscale_upgrade_preference <<<"YES"
-if [ "$TAILSCALE_UPGRADE_REQUESTED" != true ]; then
-	fail 'an explicit Tailscale upgrade was not accepted'
-fi
-collect_tailscale_upgrade_preference <<<"no"
-if [ "$TAILSCALE_UPGRADE_REQUESTED" != false ]; then
-	fail 'a declined Tailscale upgrade was accepted'
-fi
+for ssh_variable in SSH_CONNECTION SSH_CLIENT SSH_TTY; do
+	printf -v "$ssh_variable" '%s' fixture
+	if ! profile_is_running_over_ssh; then
+		fail "$ssh_variable did not identify an SSH session"
+	fi
+	unset "$ssh_variable"
+done
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -52,7 +32,6 @@ for function_name in \
 	tailscale_apt_package_is_installed \
 	tailscale_apt_upgrade_is_held \
 	run_apt_upgrader \
-	upgrade_tailscale \
 	install_tailscale; do
 	sed -n "/^${function_name}() {$/,/^}$/p" "$ubuntu_setup" >>"$function_fixture"
 done
@@ -95,8 +74,8 @@ apt_upgrader() {
 	return "${PROFILE_TEST_UPGRADER_STATUS:-0}"
 }
 
-tailscale_upgrade_is_declined() {
-	[ "${PROFILE_TEST_UPGRADE_DECLINED:-0}" = 1 ]
+profile_is_running_over_ssh() {
+	[ "${PROFILE_TEST_REMOTE:-0}" = 1 ]
 }
 
 tailscale_apt_package_is_installed() {
@@ -107,7 +86,7 @@ tailscale_apt_upgrade_is_held() {
 	[ "${PROFILE_TEST_APT_HELD:-0}" = 1 ]
 }
 
-export PROFILE_TEST_UPGRADE_DECLINED=1
+export PROFILE_TEST_REMOTE=1
 export PROFILE_TEST_APT_INSTALLED=1
 export PROFILE_TEST_APT_HELD=0
 export PROFILE_TEST_HOLD_STATUS=0
@@ -117,7 +96,7 @@ export PROFILE_TEST_UPGRADER_STATUS=0
 run_apt_upgrader
 if [ "$(tr '\n' '|' <"$events")" != \
 	'sudo apt-mark hold tailscale|apt-upgrader|sudo apt-mark unhold tailscale|' ]; then
-	fail 'a declined upgrade was not protected by a temporary apt hold'
+	fail 'an SSH apt upgrade did not protect installed Tailscale'
 fi
 
 export PROFILE_TEST_UPGRADER_STATUS=17
@@ -128,7 +107,7 @@ upgrade_status=$?
 set -e
 if [ "$upgrade_status" -ne 17 ] ||
 	[ "$(tail -n 1 "$events")" != 'sudo apt-mark unhold tailscale' ]; then
-	fail 'a failed apt upgrade did not restore the temporary hold and its status'
+	fail 'a failed apt upgrade did not restore the temporary hold and status'
 fi
 
 export PROFILE_TEST_UPGRADER_STATUS=0
@@ -162,14 +141,14 @@ if [ "$(<"$events")" != apt-upgrader ]; then
 fi
 
 export PROFILE_TEST_APT_HELD=0
-export PROFILE_TEST_UPGRADE_DECLINED=0
+export PROFILE_TEST_REMOTE=0
 : >"$events"
 run_apt_upgrader
 if [ "$(<"$events")" != apt-upgrader ]; then
-	fail 'an approved Tailscale upgrade was held back'
+	fail 'a local apt upgrade unnecessarily held Tailscale'
 fi
 
-export PROFILE_TEST_UPGRADE_DECLINED=1
+export PROFILE_TEST_REMOTE=1
 export PROFILE_TEST_APT_INSTALLED=0
 : >"$events"
 run_apt_upgrader
@@ -183,79 +162,36 @@ print_function_name() {
 
 curl() {
 	printf '%s\n' installer >>"$events"
-	return "${PROFILE_TEST_INSTALLER_STATUS:-0}"
 }
 
 sh() {
 	while IFS= read -r _; do :; done
 }
 
-tailscale_is_installed() {
-	[ "${PROFILE_TEST_TAILSCALE_INSTALLED:-0}" = 1 ]
-}
-
-export PROFILE_TEST_TAILSCALE_INSTALLED=0
-export PROFILE_TEST_INSTALLER_STATUS=0
-TAILSCALE_UPGRADE_REQUESTED=false
+export PROFILE_TEST_REMOTE=1
 : >"$events"
 install_tailscale
-if [ "$(grep -c '^installer$' "$events")" -ne 1 ]; then
-	fail 'an absent Tailscale installation was not installed exactly once'
+if [ -s "$events" ]; then
+	fail 'Tailscale setup changed the system over SSH'
 fi
 
-export PROFILE_TEST_TAILSCALE_INSTALLED=1
-TAILSCALE_UPGRADE_REQUESTED=false
-: >"$events"
-install_tailscale
-if grep -q '^installer$' "$events"; then
-	fail 'an installed Tailscale package ran its installer after a declined upgrade'
-fi
-if [ "$(tr '\n' '|' <"$events")" != \
-	'sudo tailscale up --ssh --stateful-filtering|sudo ufw deny ssh|' ]; then
-	fail 'a skipped installer no longer applied the existing Tailscale configuration'
-fi
-
-TAILSCALE_UPGRADE_REQUESTED=true
-: >"$events"
-install_tailscale
-if [ "$(grep -c '^installer$' "$events")" -ne 1 ]; then
-	fail 'an approved Tailscale upgrade did not run its installer exactly once'
-fi
-
-export PROFILE_TEST_APT_HELD=1
+export PROFILE_TEST_REMOTE=0
 : >"$events"
 install_tailscale
 if [ "$(tr '\n' '|' <"$events")" != \
-	'sudo apt-mark unhold tailscale|installer|sudo apt-mark hold tailscale|sudo tailscale up --ssh --stateful-filtering|sudo ufw deny ssh|' ]; then
-	fail 'an approved upgrade did not restore the existing Tailscale apt hold'
+	'installer|sudo tailscale up --ssh --stateful-filtering|sudo ufw deny ssh|' ]; then
+	fail 'local Tailscale installation and configuration changed'
 fi
-
-export PROFILE_TEST_INSTALLER_STATUS=29
-: >"$events"
-set +e
-install_tailscale
-installer_status=$?
-set -e
-if [ "$installer_status" -ne 29 ] ||
-	[ "$(tail -n 1 "$events")" != 'sudo apt-mark hold tailscale' ]; then
-	fail 'a failed approved upgrade did not restore the apt hold and installer status'
-fi
-
-for setup in "$macos_setup" "$ubuntu_setup"; do
-	prompt_line="$(awk '/^main\(\) \{/ { in_main = 1 } in_main && /collect_tailscale_upgrade_preference/ { print NR; exit }' \
-		"$setup")"
-	first_step_line="$(awk '/^main\(\) \{/ { in_main = 1 } in_main && /run_functions|keep_sudo_alive/ { print NR; exit }' \
-		"$setup")"
-	if [ -z "$prompt_line" ] || [ -z "$first_step_line" ] || [ "$prompt_line" -ge "$first_step_line" ]; then
-		fail "$setup does not collect the Tailscale upgrade choice before setup actions"
-	fi
-done
 
 if ! grep -Fq 'declare -F run_apt_upgrader' "$repo_root/tools/common.sh"; then
 	fail 'the shared pyenv prerequisites bypass the protected apt upgrader'
 fi
 if [ "$(grep -Ec '^[[:space:]]+run_apt_upgrader$' "$ubuntu_setup")" -ne 6 ]; then
-	fail 'a normal Ubuntu setup apt upgrade bypasses the Tailscale protection'
+	fail 'a normal Ubuntu setup apt upgrade bypasses the SSH protection'
+fi
+if grep -REq 'TAILSCALE_UPGRADE_REQUESTED|collect_tailscale_upgrade_preference' \
+	"$repo_root/tools"; then
+	fail 'the old Tailscale upgrade prompt remains in setup'
 fi
 
-printf '%s\n' 'PASS: Tailscale installs and upgrades are explicit and SSH-safe by default'
+printf '%s\n' 'PASS: Tailscale changes are skipped over SSH'

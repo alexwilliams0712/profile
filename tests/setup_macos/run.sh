@@ -83,49 +83,50 @@ if [ "$selected_casks" != self-updating ] ||
 fi
 
 # shellcheck disable=SC2329 # Invoked indirectly by the cask skip helper.
-tailscale_is_installed() {
+profile_is_running_over_ssh() {
 	return 1
 }
-TAILSCALE_UPGRADE_REQUESTED=false
 selected_casks="$(casks_skipped_from_bundle self-updating tailscale-app managed-update)"
 if [ "$selected_casks" != self-updating ]; then
-	printf '%s\n' 'FAIL: an absent Tailscale app was excluded from fresh installation'
+	printf '%s\n' 'FAIL: a local Tailscale install was excluded from Homebrew Bundle'
 	exit 1
 fi
 # shellcheck disable=SC2329 # Invoked indirectly by the cask skip helper.
-tailscale_is_installed() {
+profile_is_running_over_ssh() {
 	return 0
 }
 selected_casks="$(casks_skipped_from_bundle self-updating tailscale-app managed-update)"
 if [ "$selected_casks" != 'self-updating tailscale-app' ]; then
-	printf '%s\n' 'FAIL: an installed Tailscale app was not protected from bundle upgrades'
-	exit 1
-fi
-# shellcheck disable=SC2034 # Read by the sourced macOS helper.
-TAILSCALE_UPGRADE_REQUESTED=true
-selected_casks="$(casks_skipped_from_bundle self-updating tailscale-app managed-update)"
-if [ "$selected_casks" != self-updating ]; then
-	printf '%s\n' 'FAIL: an approved Tailscale upgrade remained excluded from Homebrew Bundle'
+	printf '%s\n' 'FAIL: Tailscale was not excluded from Homebrew Bundle over SSH'
 	exit 1
 fi
 
-prompt_line="$(awk '/^main\(\) \{/ { in_main = 1 } in_main && /collect_tailscale_upgrade_preference/ { print NR; exit }' \
-	"$repo_root/tools/setup_macos.sh")"
-first_step_line="$(awk '/^main\(\) \{/ { in_main = 1 } in_main && /run_functions/ { print NR; exit }' \
-	"$repo_root/tools/setup_macos.sh")"
+tailscale_fixture="$tmp/install-tailscale.sh"
+sed -n '/^install_tailscale() {$/,/^}$/p' \
+	"$repo_root/tools/setup_macos.sh" >"$tailscale_fixture"
+# shellcheck disable=SC1090 # Function is extracted without running setup.
+source "$tailscale_fixture"
+tailscale_events="$tmp/tailscale-events"
+# shellcheck disable=SC2329 # Would be invoked if the SSH guard regressed.
+open() {
+	printf 'open %s\n' "$*" >>"$tailscale_events"
+}
+: >"$tailscale_events"
+install_tailscale >/dev/null
+if [ -s "$tailscale_events" ]; then
+	printf '%s\n' 'FAIL: macOS Tailscale setup launched the app over SSH'
+	exit 1
+fi
+
 # shellcheck disable=SC2016 # The production variable reference is intentional.
-repair_guard_line="$(grep -nF '[ "$cask" = tailscale-app ] && tailscale_upgrade_is_declined' \
+repair_guard_line="$(grep -nF '[ "$cask" = tailscale-app ] && profile_is_running_over_ssh' \
 	"$repo_root/tools/setup_macos.sh" | cut -d: -f1)"
 # shellcheck disable=SC2016 # The production variable reference is intentional.
 repair_action_line="$(grep -nF 'brew reinstall --cask --force "$cask"' \
 	"$repo_root/tools/setup_macos.sh" | head -n 1 | cut -d: -f1)"
-if [ -z "$prompt_line" ] || [ -z "$first_step_line" ] || [ "$prompt_line" -ge "$first_step_line" ]; then
-	printf '%s\n' 'FAIL: the Tailscale upgrade choice is not collected before macOS setup steps'
-	exit 1
-fi
 if [ -z "$repair_guard_line" ] || [ -z "$repair_action_line" ] ||
 	[ "$repair_guard_line" -ge "$repair_action_line" ]; then
-	printf '%s\n' 'FAIL: declined Tailscale upgrades are not protected from cask repairs'
+	printf '%s\n' 'FAIL: SSH sessions are not protected from Tailscale cask repairs'
 	exit 1
 fi
 if grep -Eqi 'julia' "$repo_root/tools/setup_macos.sh" \

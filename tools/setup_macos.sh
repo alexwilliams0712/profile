@@ -319,8 +319,8 @@ install_packages() {
 	log "Homebrew may request administrator approval for privileged cask installers."
 	# Repair incomplete installations that Homebrew's receipt-only checks miss.
 	for cask in $casks; do
-		if [ "$cask" = tailscale-app ] && tailscale_upgrade_is_declined; then
-			log "Skipping the installed Tailscale cask; its upgrade was not requested."
+		if [ "$cask" = tailscale-app ] && profile_is_running_over_ssh; then
+			log "Skipping the Tailscale cask because setup is running over SSH."
 			continue
 		fi
 		if brew list --versions --cask "$cask" &>/dev/null; then
@@ -533,6 +533,10 @@ install_espanso() {
 
 install_tailscale() {
 	print_function_name
+	if profile_is_running_over_ssh; then
+		log "Skipping Tailscale setup over SSH."
+		return 0
+	fi
 	# Tailscale is installed via Homebrew cask. The cask installs the GUI app
 	# but does not put the CLI on PATH. A symlink doesn't work because the
 	# binary checks its bundle path, so we use a wrapper script instead.
@@ -632,8 +636,6 @@ install_syncthing() {
 }
 
 main() {
-	collect_tailscale_upgrade_preference
-
 	# A fresh mac needs CLT before git can read the existing identity. On a
 	# configured mac, collect the two optional values first, then check updates.
 	local clt_was_missing=false

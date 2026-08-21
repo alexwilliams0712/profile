@@ -1,29 +1,30 @@
-# Make Tailscale upgrades opt-in
+# Skip Tailscale changes over SSH
 
 - [x] Trace direct and package-manager Tailscale upgrade paths on both platforms.
-- [x] Ask before package installation when an existing Tailscale is detected.
-- [x] Install Tailscale automatically only when it is absent.
-- [x] Prevent declined upgrades through Homebrew and broad apt upgrades.
-- [x] Add focused prompt, install, skip, and upgrade regression coverage.
+- [x] Replace the upgrade prompt with shared SSH-session detection.
+- [x] Skip direct Tailscale installation and configuration over SSH.
+- [x] Protect installed Tailscale from broad Ubuntu apt upgrades over SSH.
+- [x] Exclude Tailscale from macOS Homebrew Bundle and cask repairs over SSH.
+- [x] Simplify focused local and SSH regression coverage.
 - [x] Run shell formatting, lint, focused tests, and relevant regression suites.
 - [x] Obtain an independent review and resolve any material findings.
 
 ## Review
 
-- [x] Existing installations now prompt first and default to no; absent
-      installations proceed without prompting on macOS and Ubuntu.
-- [x] Ubuntu protects declined upgrades across all seven normal setup apt paths,
-      preserves existing holds, and temporarily releases a hold only for an
-      explicitly approved Tailscale upgrade.
-- [x] macOS protects declined upgrades from Homebrew Bundle and every cask
-      repair path while retaining fresh installs and approved upgrades.
+- [x] Any standard SSH marker now suppresses direct Tailscale setup on macOS
+      and Ubuntu; local behaviour remains unchanged and no prompt is added.
+- [x] Ubuntu temporarily holds an installed Tailscale package around every
+      broad apt upgrade over SSH, restores the prior state on success or
+      failure, and leaves a pre-existing hold untouched.
+- [x] macOS excludes Tailscale from Homebrew Bundle and every cask repair path
+      over SSH, then returns before opening the app or changing its CLI wrapper.
 - [x] The focused Tailscale and macOS tests, preference, logging, and runner
       suites pass, as do Bash syntax, formatting, changed-test ShellCheck, and
       `git diff --check`.
 - [x] Repository-wide ShellCheck retains unrelated existing findings, including
       the Ubuntu `inline=false` error; the changed paths add no findings.
-- [x] Independent final review found no remaining material issues after
-      approved upgrades were made to preserve a pre-existing apt hold.
+- [x] Independent reviews found no material issues; both low-severity cleanup
+      and macOS early-return coverage gaps were resolved.
 
 # Enable Ghostty copy-on-select on macOS
 
