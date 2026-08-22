@@ -1,3 +1,25 @@
+# Repair pyenv setup on externally managed Python hosts
+
+- [x] Detect and replace an incomplete pinned pyenv installation.
+- [x] Install base packages into the pinned pyenv interpreter, not `/usr`.
+- [x] Verify complete, incomplete, macOS, and failure paths locally.
+- [x] Run Bash syntax, formatting, focused ShellCheck, and diff checks.
+- [x] Review the final diff and record the outcome.
+
+## Review
+
+- [x] Setup now removes only the pinned pyenv version when its required
+      `bin/python` is missing, reinstalls it, and rejects another incomplete
+      result before changing the global version.
+- [x] `uv` receives the pinned interpreter explicitly, avoiding Ubuntu's
+      externally managed `/usr` Python and any unrelated active virtualenv.
+- [x] A remote dry run on `alex-work-old` confirmed the explicit interpreter
+      target. Throwaway complete, partial, failed-install, and macOS scenarios
+      pass locally.
+- [x] Bash 3.2 and current Bash syntax, shfmt, repository error-level
+      ShellCheck, and `git diff --check` pass. Warning-level ShellCheck retains
+      the same six existing findings as `main`.
+
 # Show setup progress on the first post-update run
 
 - [x] Confirm `ssh_current` allocates a terminal and diagnose the Ubuntu path.

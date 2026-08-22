@@ -632,14 +632,20 @@ install_pyenv() {
 		source ~/.bashrc 2>/dev/null || true
 	fi
 
+	local pyenv_version_dir="$PYENV_ROOT/versions/$DEFAULT_PYTHON_VERSION"
+	local python_bin="$pyenv_version_dir/bin/python"
+	if [ -d "$pyenv_version_dir" ] && [ ! -x "$python_bin" ]; then
+		log "Removing incomplete Python $DEFAULT_PYTHON_VERSION installation"
+		pyenv uninstall -f "$DEFAULT_PYTHON_VERSION"
+	fi
+
 	# Install Python versions
 	if [ "$os_type" = "Darwin" ]; then
-		pyenv install -s $DEFAULT_PYTHON_VERSION
+		pyenv install -s "$DEFAULT_PYTHON_VERSION"
 
 		# Verify the installed Python matches the native architecture
 		local expected_arch
 		expected_arch="$(uname -m)"
-		local python_bin="$PYENV_ROOT/versions/$DEFAULT_PYTHON_VERSION/bin/python3"
 		if [ -f "$python_bin" ]; then
 			local binary_arch
 			binary_arch="$(file "$python_bin" | grep -o 'arm64\|x86_64' | head -1)"
@@ -657,6 +663,10 @@ install_pyenv() {
 		# Only one version is installed on purpose — extra minor versions slow
 		# down pyenv shim resolution (and the prompt) without much benefit.
 		pyenv install -s "$DEFAULT_PYTHON_VERSION"
+	fi
+	if [ ! -x "$python_bin" ]; then
+		log "ERROR: Python $DEFAULT_PYTHON_VERSION installation is incomplete"
+		return 1
 	fi
 	pyenv global "$DEFAULT_PYTHON_VERSION"
 
@@ -681,7 +691,8 @@ install_pyenv() {
 
 	# Install base Python packages
 	if command -v uv >/dev/null 2>&1; then
-		uv pip install --system pip-tools psutil
+		# `--system` selects Ubuntu's externally managed `/usr` interpreter.
+		uv pip install --python "$python_bin" pip-tools psutil
 	fi
 
 	# Create a default venv if needed (macOS convention)
