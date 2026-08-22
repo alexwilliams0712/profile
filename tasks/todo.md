@@ -14,6 +14,28 @@
 - [x] Independent review found no production issue; inherited SSH variables
       are cleared so each marker is tested in isolation.
 
+# Streamline the profile and add `ssh_current`
+
+- [x] Inventory the tracked repository and identify clear duplication or dead code.
+- [x] Add a small `ssh_current <host>` helper and verify its path quoting locally.
+- [x] Consolidate exact cross-platform setup duplication.
+- [x] Remove setup functions that are unreachable from the executable plans.
+- [x] Run focused tests, shell formatting, lint, and repository regressions.
+- [x] Obtain an independent review and resolve its findings.
+- [x] Include the changes in pull request #223.
+
+## Review
+
+- [x] `ssh_current` maps paths beneath the local home to the remote home, while
+      retaining absolute paths elsewhere, then starts the remote login shell.
+- [x] Shared dotfiles now have one installer; macOS no longer installs
+      Brewfile-owned tools twice; Ubuntu installs one deduplicated package list.
+- [x] Removed unreachable installers, redundant setup logging and service calls,
+      unused shell code, one stray public key, and other single-use wrappers.
+- [x] Verified Bash syntax, shell formatting, error-level ShellCheck, every
+      existing regression suite, special-character path handling, and a clean
+      temporary-home dotfile copy. Independent final reviews found no issues.
+
 # Enable Ghostty copy-on-select on macOS
 
 - [x] Confirm Ghostty's macOS clipboard setting and effective configuration.

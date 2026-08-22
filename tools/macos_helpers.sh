@@ -35,13 +35,6 @@ available_command_line_tools_label() {
 		tail -n 1
 }
 
-command_line_tools_label_if_required() {
-	if [ "$1" != true ]; then
-		return 1
-	fi
-	available_command_line_tools_label
-}
-
 move_stale_command_line_tools() {
 	local clt_dir="/Library/Developer/CommandLineTools"
 	local stale_clt_backup

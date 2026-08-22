@@ -128,17 +128,9 @@ if ! command_line_tools_are_current; then
 	exit 1
 fi
 
-if command_line_tools_label_if_required false >/dev/null; then
-	printf '%s\n' 'FAIL: optional CLT update unexpectedly returned a label'
-	exit 1
-fi
-if [ -e "$tmp/softwareupdate.log" ]; then
-	printf '%s\n' 'FAIL: optional CLT state invoked softwareupdate listing'
-	exit 1
-fi
-if [ "$(command_line_tools_label_if_required true)" != 'Command Line Tools fixture' ] ||
+if [ "$(available_command_line_tools_label)" != 'Command Line Tools fixture' ] ||
 	[ "$(wc -l <"$tmp/softwareupdate.log")" -ne 1 ]; then
-	printf '%s\n' 'FAIL: required CLT state did not list updates exactly once'
+	printf '%s\n' 'FAIL: available CLT label was not listed exactly once'
 	exit 1
 fi
 

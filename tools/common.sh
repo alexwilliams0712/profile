@@ -67,16 +67,8 @@ run_sudo() {
 	fi
 }
 
-print_function_name() {
-	log "\033[1;36mExecuting function: ${FUNCNAME[1]}\033[0m"
-}
-
 log() {
 	echo -e "$(date '+%Y-%m-%d %H:%M:%S') - $1"
-}
-
-ensure_directory() {
-	cd $PROFILE_DIR
 }
 
 run_functions() {
@@ -167,7 +159,6 @@ run_function() {
 }
 
 set_git_config() {
-	print_function_name
 	git config --global core.autocrlf false
 	git config --global pull.rebase false
 	git config --global diff.tool bc3
@@ -202,14 +193,23 @@ set_git_config() {
 	if [ -n "$GIT_USER_PHONE" ]; then git config --global user.phonenumber "$GIT_USER_PHONE"; fi
 }
 
-copy_btop_config() {
-	mkdir -p "$HOME/.config/btop/themes"
+copy_shared_dotfiles() {
+	mkdir -p "$HOME/.config/btop/themes" "$HOME/.local/bin"
+	cp "$PROFILE_DIR/dotfiles/starship.toml" "$HOME/.config/starship.toml"
 	cp "$PROFILE_DIR/dotfiles/btop/themes/armada-deep.theme" "$HOME/.config/btop/themes/armada-deep.theme"
 	cp "$PROFILE_DIR/dotfiles/btop/btop.conf" "$HOME/.config/btop/btop.conf"
+	cp "$PROFILE_DIR/dotfiles/.profile" "$HOME/.profile"
+	cp "$PROFILE_DIR/VERSION" "$HOME/BASH_PROFILE_VERSION"
+	cp "$PROFILE_DIR/dotfiles/.bashrc" "$HOME/.bashrc"
+	cp "$PROFILE_DIR/dotfiles/.prettierrc" "$HOME/.prettierrc"
+	cp "$PROFILE_DIR/dotfiles/.bash_aliases" "$HOME/.bash_aliases"
+	cp "$PROFILE_DIR/dotfiles/.inputrc" "$HOME/.inputrc"
+	cp "$PROFILE_DIR/dotfiles/bin/json_formatter.py" "$HOME/.local/bin/json_formatter.py"
+	cp "$PROFILE_DIR/dotfiles/bin/work-proxy" "$HOME/.local/bin/work-proxy"
+	chmod +x "$HOME/.local/bin/json_formatter.py" "$HOME/.local/bin/work-proxy"
 }
 
 install_starship() {
-	print_function_name
 	curl -sS https://starship.rs/install.sh | sh -s -- -y
 	if command -v starship >/dev/null 2>&1; then
 		starship --version
@@ -217,7 +217,6 @@ install_starship() {
 }
 
 install_foundry() {
-	print_function_name
 	# Foundry (forge, cast, anvil, chisel) via the official installer — NOT snap.
 	# foundryup installs to ~/.foundry/bin (added to PATH in .bashrc).
 	curl -L https://foundry.paradigm.xyz | bash
@@ -226,7 +225,6 @@ install_foundry() {
 }
 
 install_rust() {
-	print_function_name
 	# Rust via the official rustup installer (NOT Homebrew/apt). This keeps the
 	# real rustup binary and its cargo/rustc proxies in ~/.cargo/bin. Installing
 	# rustup from Homebrew puts the binary under /opt/homebrew and leaves the
@@ -242,7 +240,6 @@ install_rust() {
 }
 
 install_pyenv() {
-	print_function_name
 	local os_type
 	os_type="$(uname -s)"
 
@@ -348,12 +345,9 @@ install_pyenv() {
 		uv venv "$HOME/.venv"
 	fi
 
-	ensure_directory
 }
 
 install_ai() {
-	print_function_name
-
 	# Claude Code — official native installer. Self-contained binary, no Node
 	# required; auto-detects arch (darwin/linux × arm64/x64) and self-updates.
 	curl -fsSL https://claude.ai/install.sh | bash
@@ -381,11 +375,10 @@ install_ai() {
 }
 
 exit_script() {
-	print_function_name
 	local setup_status=0
 	# Stop the sudo keepalive explicitly before returning or replacing this process.
 	stop_sudo_keepalive
-	ensure_directory
+	cd "$PROFILE_DIR"
 	if [ ${#failed_functions[@]} -eq 0 ]; then
 		echo "==============================="
 		echo "       Setup Complete          "
@@ -408,7 +401,6 @@ exit_script() {
 configure_vscode() {
 	# Copy VS Code settings and keybindings, install extensions.
 	# Expects $VSCODE_USER_DIR to be set by the caller (platform-specific path).
-	print_function_name
 
 	if ! command -v code >/dev/null 2>&1; then
 		log "code CLI not found, skipping VS Code configuration"

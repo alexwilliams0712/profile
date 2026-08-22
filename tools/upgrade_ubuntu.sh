@@ -17,7 +17,7 @@ arrow_menu() {
 		# Clear previous menu
 		echo -en "\033[${#options[@]}A"
 
-		for i in ${!options[@]}; do
+		for i in "${!options[@]}"; do
 			if [ $i -eq $selected ]; then
 				echo -e "\033[1m> ${options[$i]}\033[0m"
 			else

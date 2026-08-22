@@ -1,14 +1,10 @@
 #!/bin/bash
 echo "Setup running"
 
-mkdir -p $HOME/CODE
-export CODE_ROOT=$HOME/CODE
-export PROJECT_ROOT=$HOME/profile
-export PATH="/usr/local/bin:$PATH"
-export PATH="/usr/local/sbin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
-export PROFILE_DIR=$(pwd)
-export ARCHITECTURE=$(uname -m)
+mkdir -p "$HOME/CODE"
+export PATH="$HOME/.local/bin:/usr/local/sbin:/usr/local/bin:$PATH"
+PROFILE_DIR="$(pwd)"
+export PROFILE_DIR
 # Upstream installers must not stop for their own confirmation prompts.
 # Homebrew may still request administrator approval after it deliberately
 # invalidates sudo. HOMEBREW_NO_ASK disables its CLI ask mode, while
@@ -31,7 +27,6 @@ trap 'handle_error $LINENO' ERR
 brew_shellenv
 
 install_command_line_tools() {
-	print_function_name
 	local clt_missing=false
 	local clt_update_required=false
 	local clt_placeholder="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
@@ -75,7 +70,7 @@ install_command_line_tools() {
 		# This marker makes softwareupdate include the standalone CLT package even
 		# when Xcode or an older CLT is already selected.
 		run_sudo /usr/bin/touch "$clt_placeholder"
-		clt_label="$(command_line_tools_label_if_required "$clt_update_required")" || true
+		clt_label="$(available_command_line_tools_label)" || true
 		run_sudo /bin/rm -f "$clt_placeholder"
 
 		if [ -n "$clt_label" ]; then
@@ -104,25 +99,7 @@ install_command_line_tools() {
 }
 
 copy_dotfiles() {
-	print_function_name
-	mkdir -p "$HOME/.config"
-	cp "$PROFILE_DIR/dotfiles/starship.toml" "$HOME/.config/starship.toml"
-	cp "$PROFILE_DIR/dotfiles/.profile" "$HOME/.profile"
-	cp "$PROFILE_DIR/VERSION" "$HOME/BASH_PROFILE_VERSION"
-	cp "$PROFILE_DIR/dotfiles/.bashrc" "$HOME/.bashrc"
-	cp "$PROFILE_DIR/dotfiles/.prettierrc" "$HOME/.prettierrc"
-	cp "$PROFILE_DIR/dotfiles/.bash_aliases" "$HOME/.bash_aliases"
-	cp "$PROFILE_DIR/dotfiles/.inputrc" "$HOME/.inputrc"
-
-	# Helper scripts that .bash_aliases shells out to (keeps the sourced
-	# .bash_aliases small/fast). Same path is used on macOS and Linux.
-	mkdir -p "$HOME/.local/bin"
-	cp "$PROFILE_DIR/dotfiles/bin/json_formatter.py" "$HOME/.local/bin/json_formatter.py"
-	chmod +x "$HOME/.local/bin/json_formatter.py"
-	cp "$PROFILE_DIR/dotfiles/bin/work-proxy" "$HOME/.local/bin/work-proxy"
-	chmod +x "$HOME/.local/bin/work-proxy"
-
-	copy_btop_config
+	copy_shared_dotfiles
 
 	# Ghostty loads this macOS-specific location after its XDG config.
 	local ghostty_config_dir="$HOME/Library/Application Support/com.mitchellh.ghostty"
@@ -173,7 +150,6 @@ copy_dotfiles() {
 }
 
 install_homebrew() {
-	print_function_name
 	if ! command -v brew >/dev/null 2>&1; then
 		log "Installing Homebrew..."
 		NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -246,12 +222,12 @@ cask_has_missing_app_artifact() {
 }
 
 install_packages() {
-	print_function_name
-
 	# Remove stale/deprecated taps that cause git errors or auth prompts
 	local stale_taps=("hashicorp/tap" "homebrew/cask-drivers" "homebrew/cask-versions" "homebrew/cask-fonts" "jenkins-x/jx" "ubuntu/microk8s")
+	local installed_taps
+	installed_taps="$(brew tap 2>/dev/null || true)"
 	for tap in "${stale_taps[@]}"; do
-		if brew tap | grep -q "$tap"; then
+		if printf '%s\n' "$installed_taps" | grep -Fxq "$tap"; then
 			log "Removing stale tap: $tap"
 			brew untap "$tap" 2>/dev/null || true
 		fi
@@ -265,7 +241,7 @@ install_packages() {
 	local brew_repo
 	brew_repo="$(brew --repository)"
 	for tap in homebrew/core homebrew/cask; do
-		if brew tap | grep -q "^${tap}$"; then
+		if printf '%s\n' "$installed_taps" | grep -Fxq "$tap"; then
 			log "Removing unnecessary tap: $tap"
 			brew untap --force "$tap" 2>/dev/null || true
 		fi
@@ -377,7 +353,6 @@ install_packages() {
 }
 
 setup_bash() {
-	print_function_name
 	# macOS ships with bash 3.2 (GPLv2). Homebrew installs bash 5+ which is
 	# needed for associative arrays and other features used in .bash_aliases.
 	local brew_bash="$(brew --prefix)/bin/bash"
@@ -401,7 +376,6 @@ setup_bash() {
 }
 
 install_ruby() {
-	print_function_name
 	# Ruby is installed via Homebrew. Use Homebrew's Ruby instead of macOS system Ruby
 	# so we get a current version and can install gems without sudo.
 	local brew_ruby="/opt/homebrew/opt/ruby/bin/ruby"
@@ -422,7 +396,6 @@ install_ruby() {
 }
 
 install_node() {
-	print_function_name
 	# Node is installed via Homebrew
 	if command -v node >/dev/null 2>&1; then
 		node -v
@@ -444,25 +417,17 @@ install_node() {
 	fi
 }
 
-go_installs() {
-	print_function_name
-	# scc is installed via Homebrew
-	go install github.com/dim13/otpauth@latest
-}
-
 install_go() {
-	print_function_name
 	# Go is installed via Homebrew
 	if command -v go >/dev/null 2>&1; then
 		go version
-		go_installs
+		go install github.com/dim13/otpauth@latest
 	else
 		log "Go not found, skipping go installs"
 	fi
 }
 
 setup_docker() {
-	print_function_name
 	log "Setting up Docker..."
 	mkdir -p ~/.docker/cli-plugins
 
@@ -475,8 +440,6 @@ setup_docker() {
 }
 
 setup_vscode() {
-	print_function_name
-
 	local vscode_app="/Applications/Visual Studio Code.app"
 
 	# Install or reinstall if the .app is missing from /Applications
@@ -501,7 +464,6 @@ setup_vscode() {
 }
 
 install_espanso() {
-	print_function_name
 	# Espanso is installed via Homebrew cask
 	if command -v espanso >/dev/null 2>&1; then
 		local espanso_config="$HOME/Library/Application Support/espanso"
@@ -528,7 +490,6 @@ install_espanso() {
 }
 
 install_tailscale() {
-	print_function_name
 	# Tailscale is installed via Homebrew cask. The cask installs the GUI app
 	# but does not put the CLI on PATH. A symlink doesn't work because the
 	# binary checks its bundle path, so we use a wrapper script instead.
@@ -567,7 +528,6 @@ install_tailscale() {
 }
 
 install_terraform() {
-	print_function_name
 	local arch
 	if [ "$(uname -m)" = "arm64" ]; then
 		arch="arm64"
@@ -608,13 +568,11 @@ install_terraform() {
 }
 
 install_webtools() {
-	print_function_name
 	# shfmt, shellcheck, and k9s are installed via Homebrew
 	curl -sS https://webi.sh/awless | sh
 }
 
 install_syncthing() {
-	print_function_name
 	# Syncthing is installed as a formula via the Brewfile (brew "syncthing").
 	# It ships a launchd agent; start it so it runs at login and keeps folders
 	# (e.g. ~/dotfiles) in sync in the background. Idempotent — a second start
@@ -651,7 +609,6 @@ main() {
 		install_espanso
 		install_tailscale
 		install_terraform
-		install_starship
 		install_webtools
 		install_syncthing
 		install_ai
