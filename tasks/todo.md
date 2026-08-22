@@ -1,30 +1,18 @@
-# Skip Tailscale changes over SSH
+# Skip the Tailscale installer over SSH
 
-- [x] Trace direct and package-manager Tailscale upgrade paths on both platforms.
-- [x] Replace the upgrade prompt with shared SSH-session detection.
-- [x] Skip direct Tailscale installation and configuration over SSH.
-- [x] Protect installed Tailscale from broad Ubuntu apt upgrades over SSH.
-- [x] Exclude Tailscale from macOS Homebrew Bundle and cask repairs over SSH.
-- [x] Simplify focused local and SSH regression coverage.
-- [x] Run shell formatting, lint, focused tests, and relevant regression suites.
-- [x] Obtain an independent review and resolve any material findings.
+- [x] Add one early SSH guard to Ubuntu's Tailscale installer.
+- [x] Cover standard SSH markers and unchanged local behaviour.
+- [x] Run focused and repository checks.
+- [x] Obtain an independent review.
 
 ## Review
 
-- [x] Any standard SSH marker now suppresses direct Tailscale setup on macOS
-      and Ubuntu; local behaviour remains unchanged and no prompt is added.
-- [x] Ubuntu temporarily holds an installed Tailscale package around every
-      broad apt upgrade over SSH, restores the prior state on success or
-      failure, and leaves a pre-existing hold untouched.
-- [x] macOS excludes Tailscale from Homebrew Bundle and every cask repair path
-      over SSH, then returns before opening the app or changing its CLI wrapper.
-- [x] The focused Tailscale and macOS tests, preference, logging, and runner
-      suites pass, as do Bash syntax, formatting, changed-test ShellCheck, and
-      `git diff --check`.
-- [x] Repository-wide ShellCheck retains unrelated existing findings, including
-      the Ubuntu `inline=false` error; the changed paths add no findings.
-- [x] Independent reviews found no material issues; both low-severity cleanup
-      and macOS early-return coverage gaps were resolved.
+- [x] Ubuntu's Tailscale installer returns immediately when any standard SSH
+      marker is set; the local installer and configuration path is unchanged.
+- [x] Focused Tailscale, macOS, preference, logging, and runner tests pass, as
+      do Bash syntax, formatting, changed-test ShellCheck, and `git diff --check`.
+- [x] Independent review found no production issue; inherited SSH variables
+      are cleared so each marker is tested in isolation.
 
 # Enable Ghostty copy-on-select on macOS
 

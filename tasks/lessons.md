@@ -8,12 +8,11 @@ Update this file whenever a correction reveals a rule worth keeping.
 Do not add a loading or progress bar. Keep plain newline-delimited function
 boundaries so terminal output and persisted logs remain readable and reliable.
 
-## Connection-disrupting installers
+## Keep guards proportional
 
-When installing or upgrading a package can restart the transport used to run
-setup, prefer a deterministic session-context guard over another prompt. Under
-SSH, skip both the direct installer and indirect package-manager changes for
-that package while leaving local setup behaviour unchanged.
+When asked to skip one installer in a particular context, add the direct guard
+to that installer. Do not broaden it into prompts or package-manager state
+coordination unless that wider behaviour is explicitly requested.
 
 ## Where a new install goes
 

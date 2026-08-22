@@ -76,57 +76,9 @@ selected_casks="$(casks_managed_by_own_updater \
 	self-updating managed-update incomplete-self-updating)"
 # shellcheck disable=SC2016 # The production variable reference is intentional.
 if [ "$selected_casks" != self-updating ] ||
-	! grep -Fq 'HOMEBREW_BUNDLE_CASK_SKIP="$bundle_skipped_casks"' \
+	! grep -Fq 'HOMEBREW_BUNDLE_CASK_SKIP="$installed_auto_update_casks"' \
 		"$repo_root/tools/setup_macos.sh"; then
 	printf '%s\n' 'FAIL: cask bundle skip does not contain exactly valid self-updating apps'
-	exit 1
-fi
-
-# shellcheck disable=SC2329 # Invoked indirectly by the cask skip helper.
-profile_is_running_over_ssh() {
-	return 1
-}
-selected_casks="$(casks_skipped_from_bundle self-updating tailscale-app managed-update)"
-if [ "$selected_casks" != self-updating ]; then
-	printf '%s\n' 'FAIL: a local Tailscale install was excluded from Homebrew Bundle'
-	exit 1
-fi
-# shellcheck disable=SC2329 # Invoked indirectly by the cask skip helper.
-profile_is_running_over_ssh() {
-	return 0
-}
-selected_casks="$(casks_skipped_from_bundle self-updating tailscale-app managed-update)"
-if [ "$selected_casks" != 'self-updating tailscale-app' ]; then
-	printf '%s\n' 'FAIL: Tailscale was not excluded from Homebrew Bundle over SSH'
-	exit 1
-fi
-
-tailscale_fixture="$tmp/install-tailscale.sh"
-sed -n '/^install_tailscale() {$/,/^}$/p' \
-	"$repo_root/tools/setup_macos.sh" >"$tailscale_fixture"
-# shellcheck disable=SC1090 # Function is extracted without running setup.
-source "$tailscale_fixture"
-tailscale_events="$tmp/tailscale-events"
-# shellcheck disable=SC2329 # Would be invoked if the SSH guard regressed.
-open() {
-	printf 'open %s\n' "$*" >>"$tailscale_events"
-}
-: >"$tailscale_events"
-install_tailscale >/dev/null
-if [ -s "$tailscale_events" ]; then
-	printf '%s\n' 'FAIL: macOS Tailscale setup launched the app over SSH'
-	exit 1
-fi
-
-# shellcheck disable=SC2016 # The production variable reference is intentional.
-repair_guard_line="$(grep -nF '[ "$cask" = tailscale-app ] && profile_is_running_over_ssh' \
-	"$repo_root/tools/setup_macos.sh" | cut -d: -f1)"
-# shellcheck disable=SC2016 # The production variable reference is intentional.
-repair_action_line="$(grep -nF 'brew reinstall --cask --force "$cask"' \
-	"$repo_root/tools/setup_macos.sh" | head -n 1 | cut -d: -f1)"
-if [ -z "$repair_guard_line" ] || [ -z "$repair_action_line" ] ||
-	[ "$repair_guard_line" -ge "$repair_action_line" ]; then
-	printf '%s\n' 'FAIL: SSH sessions are not protected from Tailscale cask repairs'
 	exit 1
 fi
 if grep -Eqi 'julia' "$repo_root/tools/setup_macos.sh" \

@@ -98,10 +98,6 @@ brew_shellenv() {
 	fi
 }
 
-profile_is_running_over_ssh() {
-	[ -n "${SSH_CONNECTION:-}" ] || [ -n "${SSH_CLIENT:-}" ] || [ -n "${SSH_TTY:-}" ]
-}
-
 collect_user_input() {
 	# Gather optional profile values before package installation.
 	GIT_USER_NAME=$(git config --global user.name 2>/dev/null) || GIT_USER_NAME=""
@@ -269,11 +265,7 @@ install_pyenv() {
 		export CPPFLAGS="-I$(brew --prefix openssl)/include -I$(brew --prefix readline)/include -I$(brew --prefix sqlite3)/include -I$(brew --prefix zlib)/include"
 		export PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig:$(brew --prefix readline)/lib/pkgconfig:$(brew --prefix sqlite3)/lib/pkgconfig:$(brew --prefix zlib)/lib/pkgconfig"
 	else
-		if declare -F run_apt_upgrader >/dev/null 2>&1; then
-			run_apt_upgrader
-		else
-			apt_upgrader
-		fi
+		apt_upgrader
 		sudo apt install -y software-properties-common
 	fi
 

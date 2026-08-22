@@ -18,19 +18,6 @@ casks_managed_by_own_updater() {
 	printf '%s\n' "$selected"
 }
 
-casks_skipped_from_bundle() {
-	local selected
-
-	selected="$(casks_managed_by_own_updater "$@")"
-	if profile_is_running_over_ssh; then
-		case " $selected " in
-		*" tailscale-app "*) ;;
-		*) selected="${selected:+$selected }tailscale-app" ;;
-		esac
-	fi
-	printf '%s\n' "$selected"
-}
-
 clt_receipt_exists() {
 	/usr/sbin/pkgutil --pkg-info=com.apple.pkg.CLTools_Executables &>/dev/null
 }
