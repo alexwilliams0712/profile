@@ -29,7 +29,7 @@ fi
 
 # shellcheck disable=SC2016 # The production variable references are intentional.
 if ! grep -Fq \
-	'cp $PROFILE_DIR/dotfiles/ghostty/config $HOME/.config/ghostty/config' \
+	'cp "$PROFILE_DIR/dotfiles/ghostty/config" "$HOME/.config/ghostty/config"' \
 	"$ubuntu_setup"; then
 	printf '%s\n' 'FAIL: Ubuntu setup does not install the managed Ghostty config'
 	exit 1
@@ -42,10 +42,16 @@ if ! grep -Fxq '$include /etc/inputrc' "$repo_root/dotfiles/.inputrc" ||
 	exit 1
 fi
 
+# shellcheck disable=SC2016 # The production variable references are intentional.
+if ! grep -Fq 'cp "$PROFILE_DIR/dotfiles/.inputrc" "$HOME/.inputrc"' \
+	"$repo_root/tools/common.sh"; then
+	printf '%s\n' 'FAIL: shared setup does not install the managed inputrc'
+	exit 1
+fi
+
 for setup in "$ubuntu_setup" "$macos_setup"; do
-	# shellcheck disable=SC2016 # The production variable references are intentional.
-	if ! grep -Fq 'cp "$PROFILE_DIR/dotfiles/.inputrc" "$HOME/.inputrc"' "$setup"; then
-		printf 'FAIL: %s does not install the managed inputrc\n' "$setup"
+	if ! grep -Fq $'\tcopy_shared_dotfiles' "$setup"; then
+		printf 'FAIL: %s does not install the shared dotfiles\n' "$setup"
 		exit 1
 	fi
 done

@@ -1,14 +1,11 @@
 #!/bin/bash
 echo "Setup running"
 
-mkdir -p $HOME/CODE
-export CODE_ROOT=$HOME/CODE
-export PROJECT_ROOT=$HOME/profile
-export PATH="/usr/local/bin:$PATH"
-export PATH="/usr/local/sbin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
-export PROFILE_DIR=$(pwd)
-export ARCHITECTURE=$(dpkg --print-architecture)
+mkdir -p "$HOME/CODE"
+export PATH="$HOME/.local/bin:/usr/local/sbin:/usr/local/bin:$PATH"
+PROFILE_DIR="$(pwd)"
+ARCHITECTURE="$(dpkg --print-architecture)"
+export PROFILE_DIR ARCHITECTURE
 set -e
 set -o pipefail
 
@@ -19,96 +16,47 @@ trap 'handle_error $LINENO' ERR
 keep_sudo_alive
 
 copy_dotfiles() {
-	print_function_name
-	mkdir -p $HOME/.config/terminator
-	cp $PROFILE_DIR/dotfiles/terminal_config $HOME/.config/terminator/config
-	mkdir -p $HOME/.config/ghostty
-	cp $PROFILE_DIR/dotfiles/ghostty/config $HOME/.config/ghostty/config
-	mkdir -p $HOME/.config/gtk-3.0
-	cp $PROFILE_DIR/dotfiles/gtk.css $HOME/.config/gtk-3.0/gtk.css
-	mkdir -p $HOME/.config
-	cp $PROFILE_DIR/dotfiles/starship.toml $HOME/.config/starship.toml
-	cp $PROFILE_DIR/dotfiles/.profile $HOME/.profile
-	cp $PROFILE_DIR/VERSION $HOME/BASH_PROFILE_VERSION
-	cp $PROFILE_DIR/dotfiles/.bashrc $HOME/.bashrc
-	cp $PROFILE_DIR/dotfiles/.prettierrc $HOME/.prettierrc
-	cp $PROFILE_DIR/dotfiles/.bash_aliases $HOME/.bash_aliases
-	cp "$PROFILE_DIR/dotfiles/.inputrc" "$HOME/.inputrc"
-
-	# Helper scripts that .bash_aliases shells out to (keeps the sourced
-	# .bash_aliases small/fast). Same path is used on macOS and Linux.
-	mkdir -p "$HOME/.local/bin"
-	cp "$PROFILE_DIR/dotfiles/bin/json_formatter.py" "$HOME/.local/bin/json_formatter.py"
-	chmod +x "$HOME/.local/bin/json_formatter.py"
-	cp "$PROFILE_DIR/dotfiles/bin/work-proxy" "$HOME/.local/bin/work-proxy"
-	chmod +x "$HOME/.local/bin/work-proxy"
-
-	copy_btop_config
-	# Source .bash_aliases so apt_upgrader (defined there) is available to later functions
-	source $HOME/.bash_aliases
+	mkdir -p "$HOME/.config/terminator"
+	cp "$PROFILE_DIR/dotfiles/terminal_config" "$HOME/.config/terminator/config"
+	mkdir -p "$HOME/.config/ghostty"
+	cp "$PROFILE_DIR/dotfiles/ghostty/config" "$HOME/.config/ghostty/config"
+	mkdir -p "$HOME/.config/gtk-3.0"
+	cp "$PROFILE_DIR/dotfiles/gtk.css" "$HOME/.config/gtk-3.0/gtk.css"
+	copy_shared_dotfiles
 }
 install_apt_packages() {
-	print_function_name
 	apt_upgrader
 	log "Running installs"
 	sudo apt-get install -y software-properties-common
 	sudo add-apt-repository -y universe
 	sudo apt-get -o DPkg::Lock::Timeout=60 install -y --upgrade \
-		blueman \
-		build-essential \
-		ca-certificates \
-		clamav \
-		clamav-daemon \
-		curl \
-		fswebcam \
-		git \
-		gnupg \
-		gnuplot \
-		imagemagick \
-		libbz2-dev \
-		libdbus-1-dev \
-		libffi-dev \
-		liblzma-dev \
-		libncursesw5-dev \
-		libreadline-dev \
-		libsqlite3-dev \
-		libssl-dev \
-		libxml2-dev \
-		libxmlsec1-dev \
-		libwxgtk3.2-dev \
-		lsb-release \
-		lzma \
-		make \
-		m4 \
-		moreutils \
-		openssh-server \
-		pkg-config \
-		python3-pip \
-		shellcheck \
-		tk-dev \
-		vlc \
-		wget \
-		xz-utils \
-		zlib1g-dev
-
-	sudo apt install -o DPkg::Lock::Timeout=60 -y --upgrade \
 		apt-transport-https \
 		aptitude \
 		at \
 		bash \
 		bat \
+		blueman \
 		bpytop \
 		build-essential \
+		ca-certificates \
+		clamav \
+		clamav-daemon \
 		curl \
 		dos2unix \
 		fail2ban \
 		fd-find \
 		figlet \
 		flatpak \
+		fswebcam \
 		gcc \
+		git \
+		gnupg \
+		gnuplot \
 		hyperfine \
+		imagemagick \
 		jq \
 		libbz2-dev \
+		libdbus-1-dev \
 		libffi-dev \
 		libfuse2 \
 		liblzma-dev \
@@ -121,23 +69,33 @@ install_apt_packages() {
 		libssl-dev \
 		libxml2-dev \
 		libxmlsec1-dev \
+		libwxgtk3.2-dev \
 		llvm \
 		lsd \
+		lsb-release \
+		lzma \
+		m4 \
 		make \
 		mold \
+		moreutils \
 		net-tools \
 		nfs-common \
 		openssl \
+		openssh-server \
 		pgformatter \
+		pkg-config \
 		postgresql-common \
+		python3-pip \
 		redis-tools \
 		ripgrep \
 		samba \
-		systemd-timesyncd \
+		shellcheck \
 		steam-devices \
+		systemd-timesyncd \
 		terminator \
 		tk-dev \
 		tree \
+		vlc \
 		wget \
 		xz-utils \
 		zlib1g-dev
@@ -182,17 +140,14 @@ install_slack() {
 }
 
 ssh_stuff() {
-	print_function_name
 	sudo systemctl enable fail2ban
 	sudo systemctl start fail2ban
 	sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 	sudo sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
 	sudo systemctl restart ssh
-	sudo systemctl reload ssh
 }
 
 configure_remote_unlock() {
-	print_function_name
 	local sudoers_file="/etc/sudoers.d/remote-unlock"
 	local sudoers_rule="$USER ALL=(root) NOPASSWD: /usr/bin/loginctl unlock-sessions"
 	local temp_file
@@ -243,7 +198,6 @@ install_pg_formatter() {
 }
 
 install_flatpaks() {
-	print_function_name
 	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	for app in \
 		org.telegram.desktop \
@@ -269,7 +223,6 @@ install_flatpaks() {
 }
 
 install_browser() {
-	print_function_name
 	# Update package lists first
 	log "Updating package lists"
 	sudo apt update
@@ -319,8 +272,6 @@ install_browser() {
 }
 
 install_vscode() {
-	print_function_name
-
 	# Clean up any existing Microsoft repository configurations to prevent conflicts
 	sudo rm -f /etc/apt/sources.list.d/*microsoft* /etc/apt/sources.list.d/*vscode*
 
@@ -342,7 +293,6 @@ install_vscode() {
 }
 
 install_1password() {
-	print_function_name
 	if command -v 1password >/dev/null 2>&1; then
 		log "1password is already installed, skipping installation"
 		return 0
@@ -385,7 +335,6 @@ install_1password() {
 }
 
 install_speedtest() {
-	print_function_name
 	# Ookla's packagecloud repo lags Ubuntu releases, so install the static binary directly.
 	if [ "$ARCHITECTURE" = "arm64" ]; then
 		local arch="aarch64"
@@ -402,15 +351,7 @@ install_speedtest() {
 	speedtest --version | head -1
 }
 
-go_installs() {
-	print_function_name
-	go install github.com/dim13/otpauth@latest
-	go install github.com/boyter/scc/v3@latest
-}
-
 install_go() {
-	print_function_name
-
 	arch=$(uname -m)
 	case "$arch" in
 	x86_64 | amd64) go_arch=linux-amd64 ;;
@@ -448,17 +389,15 @@ install_go() {
 	export PATH="/usr/local/go/bin:$PATH"
 	go version || return 1
 
-	go_installs
+	go install github.com/dim13/otpauth@latest
+	go install github.com/boyter/scc/v3@latest
 }
 
 install_jetbrains_toolbox() {
-	print_function_name
 	source tools/jetbrains_toolbox_installer.sh
 }
 
 install_espanso() {
-	print_function_name
-
 	# Upstream Wayland .deb is amd64-only.
 	if [ "$ARCHITECTURE" != "amd64" ]; then
 		log "espanso Wayland .deb is amd64-only (got: $ARCHITECTURE) — skipping"
@@ -528,7 +467,6 @@ install_espanso() {
 }
 
 install_and_setup_docker() {
-	print_function_name
 	sudo mkdir -m 0755 -p /etc/apt/keyrings
 	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
 	echo \
@@ -551,13 +489,10 @@ install_and_setup_docker() {
 		# Use sg instead of newgrp - it runs the command in a new group context without starting a new shell
 		sg docker -c "echo 'Docker group permissions applied for this session'"
 	fi
-	sudo systemctl enable docker.service
-	ensure_directory
 	log "Docker setup complete"
 }
 
 install_syncthing() {
-	print_function_name
 	# Syncthing via the official apt repo (apt.syncthing.net) — NOT snap.
 	# Snap's confinement sandboxes ~/ and breaks syncing arbitrary folders, and
 	# we avoid snap on Ubuntu generally. This mirrors the gh/docker keyring +
@@ -583,7 +518,6 @@ install_syncthing() {
 }
 
 install_github_cli() {
-	print_function_name
 	log "Running gh-cli setup"
 	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg |
 		sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -595,16 +529,13 @@ install_github_cli() {
 }
 
 install_clam_av() {
-	print_function_name
 	sudo systemctl stop clamav-freshclam.service
 	sudo freshclam
 	sudo systemctl --system daemon-reload
 	sudo systemctl restart clamav-daemon.service
-	sudo /etc/init.d/clamav-daemon start
 }
 
 install_carapace() {
-	print_function_name
 	local arch
 	if [ "$ARCHITECTURE" = "arm64" ]; then
 		arch="arm64"
@@ -629,7 +560,6 @@ install_carapace() {
 }
 
 install_viddy() {
-	print_function_name
 	local arch
 	if [ "$ARCHITECTURE" = "arm64" ]; then
 		arch="arm64"
@@ -653,7 +583,6 @@ install_viddy() {
 }
 
 install_duf() {
-	print_function_name
 	local arch
 	if [ "$ARCHITECTURE" = "arm64" ]; then
 		arch="arm64"
@@ -677,7 +606,6 @@ install_duf() {
 }
 
 configure_gnome() {
-	print_function_name
 	# One-shot GNOME interface tweaks. Persistent in dconf, so this only
 	# needs to run at machine setup — not on every shell start.
 	if command -v gsettings >/dev/null 2>&1; then
@@ -688,7 +616,6 @@ configure_gnome() {
 }
 
 configure_locale() {
-	print_function_name
 	if ! locale -a | grep -Eiq '^en_GB\.utf-?8$'; then
 		sudo locale-gen en_GB.UTF-8
 	fi
@@ -699,7 +626,6 @@ configure_locale() {
 }
 
 install_ghostty() {
-	print_function_name
 	# Install / upgrade Ghostty via the mkasberg community .deb, which tracks
 	# upstream releases. Asset names are suffixed with the Ubuntu VERSION_ID
 	# (e.g. ghostty_1.3.1-0.ppa2_amd64_25.10.deb), not the codename, so match
@@ -726,7 +652,6 @@ install_ghostty() {
 }
 
 install_gum() {
-	print_function_name
 	sudo mkdir -p /etc/apt/keyrings
 	curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --yes --dearmor -o /etc/apt/keyrings/charm.gpg
 	echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
@@ -781,7 +706,6 @@ github_install_bin() {
 }
 
 install_delta() {
-	print_function_name
 	local version arch
 	version=$(github_latest_tag "dandavison/delta") || return 1
 	arch=$(github_arch deb)
@@ -791,7 +715,6 @@ install_delta() {
 }
 
 install_lazygit() {
-	print_function_name
 	local version version_num arch
 	version=$(github_latest_tag "jesseduffield/lazygit") || return 1
 	version_num="${version#v}"
@@ -802,7 +725,6 @@ install_lazygit() {
 }
 
 install_lazydocker() {
-	print_function_name
 	local version version_num arch
 	version=$(github_latest_tag "jesseduffield/lazydocker") || return 1
 	version_num="${version#v}"
@@ -813,7 +735,6 @@ install_lazydocker() {
 }
 
 install_dust() {
-	print_function_name
 	local version version_num arch
 	version=$(github_latest_tag "bootandy/dust") || return 1
 	version_num="${version#v}"
@@ -824,7 +745,6 @@ install_dust() {
 }
 
 install_redis_insight() {
-	print_function_name
 	if [ "$ARCHITECTURE" = "arm64" ]; then
 		log "Redis Insight .deb not available for arm64, skipping"
 		return 0
@@ -847,7 +767,6 @@ install_redis_insight() {
 }
 
 install_terraform() {
-	print_function_name
 	if [ "$ARCHITECTURE" = "arm64" ]; then
 		arch="arm64"
 	else
@@ -862,7 +781,6 @@ install_terraform() {
 }
 
 install_aws_cli() {
-	print_function_name
 	if [ "$ARCHITECTURE" = "arm64" ]; then
 		log "Downloading AWS CLI for ARM64"
 		curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
@@ -879,7 +797,6 @@ install_aws_cli() {
 }
 
 install_node() {
-	print_function_name
 	curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
 	sudo apt-get install -y nodejs
 	node -v
@@ -890,70 +807,12 @@ install_node() {
 }
 
 install_tailscale() {
-	print_function_name
 	curl -fsSL https://tailscale.com/install.sh | sh
 	sudo tailscale up --ssh --stateful-filtering
 	sudo ufw deny ssh
 }
 
-install_k3s() {
-	print_function_name
-	curl -sfL https://get.k3s.io | sh -
-	sudo chmod 644 /etc/rancher/k3s/k3s.yaml
-	sudo ufw allow 6443/tcp                 #apiserver
-	sudo ufw allow from 10.42.0.0/16 to any #pods
-	sudo ufw allow from 10.43.0.0/16 to any #services
-
-	# Containerd perms
-	if ! id -nG "$USER" | grep -qw "containerd"; then
-		sudo groupadd containerd
-		sudo usermod -aG containerd "$USER"
-		newgrp containerd
-		sudo chgrp containerd /run/k3s/containerd/containerd.sock
-		sudo chmod 660 /run/k3s/containerd/containerd.sock
-	fi
-}
-
-install_helm() {
-	print_function_name
-	curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-	chmod 700 get_helm.sh
-	./get_helm.sh
-	sudo rm get_helm.sh
-}
-
-install_burpsuite() {
-	print_function_name
-	if [ "$ARCHITECTURE" = "arm64" ]; then
-		return 0
-	fi
-	latest_version="2024.5.5"
-
-	wget "https://portswigger-cdn.net/burp/releases/download?product=community&version=${latest_version}&type=Linux" -O burpsuite_installer.sh
-	chmod +x burpsuite_installer.sh
-	sudo ./burpsuite_installer.sh || true
-	rm burpsuite_installer.sh
-}
-
-install_coolercontrol() {
-	print_function_name
-	curl -1sLf 'https://dl.cloudsmith.io/public/coolercontrol/coolercontrol/setup.deb.sh' | sudo -E bash
-	sudo apt update
-	sudo apt install -y --upgrade coolercontrold
-	sudo systemctl enable --now coolercontrold
-}
-
-install_open_rgb_rules() {
-	print_function_name
-	wget https://openrgb.org/releases/release_0.9/openrgb-udev-install.sh -O openrgb-udev-install.sh | sh
-	rm openrgb-udev-install.sh
-	wget https://gitlab.com/CalcProgrammer1/OpenRGB/-/jobs/artifacts/master/raw/60-openrgb.rules?job=Linux+64+AppImage &
-	inline=false -O /usr/lib/udev/rules.d/60-openrgb.rules
-	sudo udevadm control --reload-rules && sudo udevadm trigger
-}
-
 install_font() {
-	print_function_name
 	wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/FiraCode.zip -O FiraCode.zip
 	unzip -o FiraCode.zip -d ~/.local/share/fonts
 	fc-cache -fv
@@ -961,7 +820,6 @@ install_font() {
 }
 
 webinstalls() {
-	print_function_name
 	curl -sS https://webi.sh/awless | sh
 	curl -sS https://webi.sh/k9s | sh
 	curl -sS https://webi.sh/redis-commander | sudo sh
@@ -980,19 +838,12 @@ btop_install() {
 
 	# Optional: Clean up
 	rm -rf /tmp/btop
-	ensure_directory
-}
-
-pip_installs() {
-	print_function_name
-	sudo -u $USER pip install -U pip pip-tools psutil
 }
 
 main() {
 	collect_user_input
 
 	failed_functions=()
-	local bootstrap_steps=(copy_dotfiles)
 	local remaining_steps=(
 		set_git_config
 		install_apt_packages
@@ -1021,12 +872,7 @@ main() {
 		install_aws_cli
 		install_terraform
 		install_speedtest
-		# install_k3s
-		# install_helm
-		# install_coolercontrol
-		# install_open_rgb_rules
 		webinstalls
-		# install_burpsuite
 		install_starship
 		install_carapace
 		install_viddy
@@ -1044,8 +890,8 @@ main() {
 		apt_upgrader
 	)
 
-	# copy_dotfiles must run first — it sources .bash_aliases which defines apt_upgrader
-	run_functions "${bootstrap_steps[@]}"
+	# Copy the aliases before loading apt_upgrader into the parent shell.
+	run_function copy_dotfiles
 	# run_function isolates setup steps so failures cannot be masked. Source the
 	# copied aliases in the parent as well because later steps use apt_upgrader.
 	if [ -f "$HOME/.bash_aliases" ]; then
