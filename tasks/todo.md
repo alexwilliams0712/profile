@@ -3,8 +3,7 @@
 - [x] Confirm `ssh_current` allocates a terminal and diagnose the Ubuntu path.
 - [x] Let the updated runner acquire the controlling terminal when the old
       entry point did not pass one through.
-- [x] Preserve the non-interactive fallback and close only runner-owned file
-      descriptors.
+- [x] Preserve inherited file descriptors and the non-interactive fallback.
 - [x] Run Bash 3.2, pseudo-terminal, no-terminal, formatting, and lint checks.
 - [x] Obtain an independent review and resolve its findings.
 
@@ -12,10 +11,10 @@
 
 - [x] Ubuntu's latest setup run predated the merged progress change, and the
       checkout therefore still contains the old renderer-free code.
-- [x] The updated runner acquires `/dev/tty` only when descriptor 9 is not
-      already a terminal, then closes only the terminal descriptor it opened.
-      Existing entry-point and non-interactive paths retain their previous
-      ownership and output.
+- [x] The updated runner uses `/dev/tty` directly, leaving inherited logging
+      and IPC descriptors intact. Non-interactive runs retain plain output.
+- [x] Setup functions close descriptor 9 only when it is the marked progress
+      terminal; direct-terminal and non-interactive functions preserve it.
 - [x] Verified the old-entry pipeline in a Bash 3.2 pseudo-terminal, the
       deferred current-entry path, plain no-terminal output, and descriptor
       cleanup. Reproduced the missing bars through `ssh_current alex-work`,

@@ -74,7 +74,6 @@ SETUP_PROGRESS_TOTAL=0
 SETUP_PROGRESS_FAILED=0
 SETUP_PROGRESS_ENABLED=0
 SETUP_PROGRESS_PINNED=0
-SETUP_PROGRESS_OWNS_FD=0
 SETUP_PROGRESS_SPINNER_PID=""
 SETUP_PROGRESS_STARTED=0
 SETUP_PROGRESS_STEP_STARTED=0
@@ -108,18 +107,8 @@ setup_progress_start() {
 	# old in-memory code unable to pass the terminal through on that first run.
 	if [ "$SETUP_PROGRESS_TOTAL" -gt 0 ] &&
 		[ "${TERM:-dumb}" != dumb ] &&
-		[ ! -t 9 ] &&
-		{ exec 9<>/dev/tty; } 2>/dev/null; then
+		{ : </dev/tty >/dev/tty; } 2>/dev/null; then
 		PROFILE_SETUP_OUTPUT_TTY=1
-		PROFILE_SETUP_PROGRESS_FD=9
-		PROFILE_SETUP_DEFER_PROGRESS_FINISH=0
-		SETUP_PROGRESS_OWNS_FD=1
-	fi
-	if [ "$SETUP_PROGRESS_TOTAL" -gt 0 ] &&
-		[ "${PROFILE_SETUP_OUTPUT_TTY:-0}" = 1 ] &&
-		[ "${PROFILE_SETUP_PROGRESS_FD:-}" = 9 ] &&
-		[ "${TERM:-dumb}" != dumb ] &&
-		(: >&9) 2>/dev/null; then
 		SETUP_PROGRESS_ENABLED=1
 	fi
 	if [ "$SETUP_PROGRESS_ENABLED" -eq 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -132,13 +121,13 @@ setup_progress_start() {
 }
 
 setup_progress_write() {
-	printf '%b' "$@" >&9 2>/dev/null || true
+	printf '%b' "$@" >/dev/tty 2>/dev/null || true
 }
 
 setup_progress_read_dimensions() {
 	local size rows columns label_width=28 bar_width=24
 
-	size="$(stty size <&9 2>/dev/null)" || return 1
+	size="$(stty size </dev/tty 2>/dev/null)" || return 1
 	rows=${size%% *}
 	columns=${size##* }
 	case "$rows:$columns" in
@@ -385,10 +374,6 @@ setup_progress_finish() {
 	fi
 	SETUP_PROGRESS_PINNED=0
 	SETUP_PROGRESS_ENABLED=0
-	if [ "$SETUP_PROGRESS_OWNS_FD" -eq 1 ]; then
-		exec 9>&-
-		SETUP_PROGRESS_OWNS_FD=0
-	fi
 }
 
 setup_progress_interrupt() {
@@ -493,8 +478,12 @@ run_function() {
 		set -e
 		set -o pipefail
 		trap 'handle_error $LINENO' ERR
-		"$func_name"
-	) 9>&-
+		if [ "${PROFILE_SETUP_PROGRESS_FD:-}" = 9 ] && [ -t 9 ]; then
+			"$func_name" 9>&-
+		else
+			"$func_name"
+		fi
+	)
 	exit_code=$?
 	if [ "$had_errexit" -eq 1 ]; then
 		set -e
