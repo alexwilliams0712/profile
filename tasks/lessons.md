@@ -11,6 +11,11 @@ progress, and reserve percentages for the exact overall function count. Suspend
 or isolate animation so foreground prompts cannot be overwritten, and retain
 plain output when no terminal is available.
 
+A self-updating run can combine an old entry point in memory with new platform
+scripts on disk. Shared terminal features must not rely solely on state exported
+by the entry point. Treat a reserved progress descriptor as usable only when it
+is a terminal; an SSH shell can inherit the same descriptor number for logging.
+
 ## Keep guards proportional
 
 When asked to skip one installer in a particular context, add the direct guard

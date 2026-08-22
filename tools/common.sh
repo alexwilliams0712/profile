@@ -74,6 +74,7 @@ SETUP_PROGRESS_TOTAL=0
 SETUP_PROGRESS_FAILED=0
 SETUP_PROGRESS_ENABLED=0
 SETUP_PROGRESS_PINNED=0
+SETUP_PROGRESS_OWNS_FD=0
 SETUP_PROGRESS_SPINNER_PID=""
 SETUP_PROGRESS_STARTED=0
 SETUP_PROGRESS_STEP_STARTED=0
@@ -103,6 +104,17 @@ setup_progress_start() {
 	SETUP_PROGRESS_MUTED=""
 	SETUP_PROGRESS_RESET=""
 
+	# The entry point may update itself before launching this script, leaving its
+	# old in-memory code unable to pass the terminal through on that first run.
+	if [ "$SETUP_PROGRESS_TOTAL" -gt 0 ] &&
+		[ "${TERM:-dumb}" != dumb ] &&
+		[ ! -t 9 ] &&
+		{ exec 9<>/dev/tty; } 2>/dev/null; then
+		PROFILE_SETUP_OUTPUT_TTY=1
+		PROFILE_SETUP_PROGRESS_FD=9
+		PROFILE_SETUP_DEFER_PROGRESS_FINISH=0
+		SETUP_PROGRESS_OWNS_FD=1
+	fi
 	if [ "$SETUP_PROGRESS_TOTAL" -gt 0 ] &&
 		[ "${PROFILE_SETUP_OUTPUT_TTY:-0}" = 1 ] &&
 		[ "${PROFILE_SETUP_PROGRESS_FD:-}" = 9 ] &&
@@ -373,6 +385,10 @@ setup_progress_finish() {
 	fi
 	SETUP_PROGRESS_PINNED=0
 	SETUP_PROGRESS_ENABLED=0
+	if [ "$SETUP_PROGRESS_OWNS_FD" -eq 1 ]; then
+		exec 9>&-
+		SETUP_PROGRESS_OWNS_FD=0
+	fi
 }
 
 setup_progress_interrupt() {
