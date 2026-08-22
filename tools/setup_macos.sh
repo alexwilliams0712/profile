@@ -20,7 +20,8 @@ set -o pipefail
 source "$PROFILE_DIR/tools/common.sh"
 # shellcheck disable=SC1091
 source "$PROFILE_DIR/tools/macos_helpers.sh"
-trap 'handle_error $LINENO' ERR
+setup_progress_install_traps
+trap 'setup_progress_finish; handle_error $LINENO' ERR
 
 # Use the Homebrew matching the current architecture. Privileged steps request
 # approval only when needed because Homebrew invalidates cached sudo tickets.
@@ -613,16 +614,24 @@ main() {
 		install_syncthing
 		install_ai
 	)
+	local setup_steps=(
+		"${preflight_steps[@]}"
+		"${before_brew_steps[@]}"
+		"${after_brew_steps[@]}"
+	)
 	failed_functions=()
+	setup_progress_start "${setup_steps[@]}"
 	if ! xcode-select -p &>/dev/null; then
 		clt_was_missing=true
 		run_functions "${preflight_steps[@]}"
 		# Git cannot read the existing identity until this required preflight succeeds.
 		if [ ${#failed_functions[@]} -ne 0 ]; then
+			setup_progress_finish
 			return 1
 		fi
 	fi
 
+	setup_progress_pause
 	collect_user_input
 
 	if [ "$clt_was_missing" = false ]; then
@@ -634,6 +643,7 @@ main() {
 	brew_shellenv
 	export HOMEBREW_NO_AUTO_UPDATE=1
 	run_functions "${after_brew_steps[@]}"
+	setup_progress_finish
 
 	# Report failures if any
 	if [ ${#failed_functions[@]} -ne 0 ]; then
