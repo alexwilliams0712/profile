@@ -1,3 +1,28 @@
+# Show setup progress on the first post-update run
+
+- [x] Confirm `ssh_current` allocates a terminal and diagnose the Ubuntu path.
+- [x] Let the updated runner acquire the controlling terminal when the old
+      entry point did not pass one through.
+- [x] Preserve inherited file descriptors and the non-interactive fallback.
+- [x] Run Bash 3.2, pseudo-terminal, no-terminal, formatting, and lint checks.
+- [x] Obtain an independent review and resolve its findings.
+
+## Review
+
+- [x] Ubuntu's latest setup run predated the merged progress change, and the
+      checkout therefore still contains the old renderer-free code.
+- [x] The updated runner uses `/dev/tty` directly, leaving inherited logging
+      and IPC descriptors intact. Non-interactive runs retain plain output.
+- [x] Setup functions close descriptor 9 only when it is the marked progress
+      terminal; direct-terminal and non-interactive functions preserve it.
+- [x] Verified the old-entry pipeline in a Bash 3.2 pseudo-terminal, the
+      deferred current-entry path, plain no-terminal output, and descriptor
+      cleanup. Reproduced the missing bars through `ssh_current alex-work`,
+      then verified the corrected animation in Ubuntu's non-interactive child
+      and `tee` path with an inherited non-terminal descriptor 9. Bash syntax,
+      shfmt, ShellCheck, and `git diff --check` pass.
+- [x] An independent Ubuntu review found no remaining issue.
+
 # Add professional setup progress
 
 - [x] Inspect the current runner and earlier progress implementations.

@@ -103,11 +103,12 @@ setup_progress_start() {
 	SETUP_PROGRESS_MUTED=""
 	SETUP_PROGRESS_RESET=""
 
+	# The entry point may update itself before launching this script, leaving its
+	# old in-memory code unable to pass the terminal through on that first run.
 	if [ "$SETUP_PROGRESS_TOTAL" -gt 0 ] &&
-		[ "${PROFILE_SETUP_OUTPUT_TTY:-0}" = 1 ] &&
-		[ "${PROFILE_SETUP_PROGRESS_FD:-}" = 9 ] &&
 		[ "${TERM:-dumb}" != dumb ] &&
-		(: >&9) 2>/dev/null; then
+		{ : </dev/tty >/dev/tty; } 2>/dev/null; then
+		PROFILE_SETUP_OUTPUT_TTY=1
 		SETUP_PROGRESS_ENABLED=1
 	fi
 	if [ "$SETUP_PROGRESS_ENABLED" -eq 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -120,13 +121,13 @@ setup_progress_start() {
 }
 
 setup_progress_write() {
-	printf '%b' "$@" >&9 2>/dev/null || true
+	printf '%b' "$@" >/dev/tty 2>/dev/null || true
 }
 
 setup_progress_read_dimensions() {
 	local size rows columns label_width=28 bar_width=24
 
-	size="$(stty size <&9 2>/dev/null)" || return 1
+	size="$(stty size </dev/tty 2>/dev/null)" || return 1
 	rows=${size%% *}
 	columns=${size##* }
 	case "$rows:$columns" in
@@ -477,8 +478,12 @@ run_function() {
 		set -e
 		set -o pipefail
 		trap 'handle_error $LINENO' ERR
-		"$func_name"
-	) 9>&-
+		if [ "${PROFILE_SETUP_PROGRESS_FD:-}" = 9 ] && [ -t 9 ]; then
+			"$func_name" 9>&-
+		else
+			"$func_name"
+		fi
+	)
 	exit_code=$?
 	if [ "$had_errexit" -eq 1 ]; then
 		set -e
