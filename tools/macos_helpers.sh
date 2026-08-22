@@ -1,5 +1,5 @@
 #!/bin/bash
-# macOS helpers isolated for focused tests.
+# macOS setup state helpers.
 
 cask_auto_updates() {
 	brew info --cask "$1" 2>/dev/null | sed -n '1p' | grep -q '(auto_updates)'

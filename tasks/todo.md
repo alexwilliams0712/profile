@@ -1,16 +1,16 @@
 # Skip the Tailscale installer over SSH
 
 - [x] Add one early SSH guard to Ubuntu's Tailscale installer.
-- [x] Cover standard SSH markers and unchanged local behaviour.
-- [x] Run focused and repository checks.
+- [x] Verify standard SSH markers and unchanged local behaviour.
+- [x] Run shell checks and local verification.
 - [x] Obtain an independent review.
 
 ## Review
 
 - [x] Ubuntu's Tailscale installer returns immediately when any standard SSH
       marker is set; the local installer and configuration path is unchanged.
-- [x] Focused Tailscale, macOS, preference, logging, and runner tests pass, as
-      do Bash syntax, formatting, changed-test ShellCheck, and `git diff --check`.
+- [x] Local SSH-marker checks pass, as do Bash syntax, formatting, ShellCheck,
+      and `git diff --check`.
 - [x] Independent review found no production issue; inherited SSH variables
       are cleared so each marker is tested in isolation.
 
@@ -20,7 +20,7 @@
 - [x] Add a small `ssh_current <host>` helper and verify its path quoting locally.
 - [x] Consolidate exact cross-platform setup duplication.
 - [x] Remove setup functions that are unreachable from the executable plans.
-- [x] Run focused tests, shell formatting, lint, and repository regressions.
+- [x] Run shell formatting, lint, and local verification.
 - [x] Obtain an independent review and resolve its findings.
 - [x] Include the changes in pull request #223.
 
@@ -32,9 +32,9 @@
       Brewfile-owned tools twice; Ubuntu installs one deduplicated package list.
 - [x] Removed unreachable installers, redundant setup logging and service calls,
       unused shell code, one stray public key, and other single-use wrappers.
-- [x] Verified Bash syntax, shell formatting, error-level ShellCheck, every
-      existing regression suite, special-character path handling, and a clean
-      temporary-home dotfile copy. Independent final reviews found no issues.
+- [x] Verified Bash syntax, shell formatting, error-level ShellCheck,
+      special-character path handling, and a clean temporary-home dotfile copy.
+      Independent final reviews found no issues.
 
 # Enable Ghostty copy-on-select on macOS
 
