@@ -27,6 +27,12 @@ Set `PROFILE_SETUP_LOG_DIR` to an absolute path to override the directory.
 Logs and their parent directory are mode `600` and `700` respectively.
 Treat them as private and never commit them.
 
+Interactive runs show one animated row for the active function and an exact
+overall function-count bar beneath it. Completed rows and detailed command
+output scroll above the footer and are written chronologically to the private
+log. Administrator prompts stay in the foreground. Non-interactive runs retain
+plain output.
+
 Each platform's `main` defines its executable function plan. The shared runner
 records failed functions and continues with the remaining steps.
 

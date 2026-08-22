@@ -1,3 +1,24 @@
+# Add professional setup progress
+
+- [x] Inspect the current runner and earlier progress implementations.
+- [x] Restore coloured per-function start, success, and failure states.
+- [x] Show an animated row for each function and one live overall progress bar.
+- [x] Keep full command output in the private log without terminal cursor codes.
+- [x] Preserve prompts, failures, non-interactive output, and terminal cleanup.
+- [x] Run local shell and pseudo-terminal verification.
+- [x] Obtain an independent final review and resolve its findings.
+
+## Review
+
+- [x] Interactive terminals keep an animated function row and exact overall
+      footer while ordinary output and prompts scroll above it; completed rows
+      remain visible and the private log contains no cursor controls.
+- [x] Verified success, failure continuation, foreground prompts, `NO_COLOR`,
+      non-interactive fallback, narrow terminals, resizes, signal cleanup,
+      deferred entry-point cleanup, log modes, and the absence of tracked tests.
+- [x] Bash 3.2 syntax, shfmt, error-level ShellCheck, and `git diff --check` pass.
+      Independent macOS and Ubuntu reviews found no remaining issue.
+
 # Skip the Tailscale installer over SSH
 
 - [x] Add one early SSH guard to Ubuntu's Tailscale installer.

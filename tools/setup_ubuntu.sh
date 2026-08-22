@@ -10,7 +10,8 @@ set -e
 set -o pipefail
 
 source "$PROFILE_DIR/tools/common.sh"
-trap 'handle_error $LINENO' ERR
+setup_progress_install_traps
+trap 'setup_progress_finish; handle_error $LINENO' ERR
 
 # Prompt for sudo once, then keep the timestamp warm for the whole install.
 keep_sudo_alive
@@ -893,6 +894,8 @@ main() {
 		install_ai
 		apt_upgrader
 	)
+	local setup_steps=(copy_dotfiles "${remaining_steps[@]}")
+	setup_progress_start "${setup_steps[@]}"
 
 	# Copy the aliases before loading apt_upgrader into the parent shell.
 	run_function copy_dotfiles
@@ -902,6 +905,7 @@ main() {
 		source "$HOME/.bash_aliases"
 	fi
 	run_functions "${remaining_steps[@]}"
+	setup_progress_finish
 
 	# Report failures if any
 	if [ ${#failed_functions[@]} -ne 0 ]; then

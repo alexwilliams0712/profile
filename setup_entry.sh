@@ -49,6 +49,9 @@ profile_setup_main() {
 	local setup_status
 	local tee_status
 	local had_pipefail=0
+	local output_tty=0
+	local terminal_rows
+	local terminal_size
 
 	case "${XDG_STATE_HOME:-}" in
 	/*) state_home="$XDG_STATE_HOME" ;;
@@ -106,12 +109,20 @@ profile_setup_main() {
 		unset -f profile_setup_run profile_setup_main
 		return 1
 	fi
+	if [ -t 9 ]; then
+		output_tty=1
+	fi
 	if set -o | grep -Eq '^pipefail[[:space:]]+on$'; then
 		had_pipefail=1
 		set +o pipefail
 	fi
 	if (
 		set +e
+		export PROFILE_SETUP_OUTPUT_TTY="$output_tty"
+		if [ "$output_tty" -eq 1 ]; then
+			export PROFILE_SETUP_PROGRESS_FD=9
+			export PROFILE_SETUP_DEFER_PROGRESS_FINISH=1
+		fi
 		profile_setup_run
 		setup_status=$?
 		printf '%s\n' "$setup_status" >|"$status_file"
@@ -120,6 +131,14 @@ profile_setup_main() {
 		tee_status=0
 	else
 		tee_status=$?
+	fi
+	if [ "$output_tty" -eq 1 ]; then
+		terminal_size="$(stty size <&9 2>/dev/null || true)"
+		terminal_rows=${terminal_size%% *}
+		case "$terminal_rows" in
+		'' | *[!0-9]* | 0) printf '\033[r\n' >&9 || true ;;
+		*) printf '\033[r\033[%d;1H\n' "$terminal_rows" >&9 || true ;;
+		esac
 	fi
 	if [ "$had_pipefail" -eq 1 ]; then
 		set -o pipefail
@@ -150,7 +169,7 @@ profile_setup_main() {
 	fi
 
 	# Start the replacement login shell only after tee has closed the log.
-	bash -l
+	bash -l 9>&-
 }
 
-profile_setup_main
+profile_setup_main 9>&1
