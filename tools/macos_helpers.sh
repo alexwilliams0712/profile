@@ -1,5 +1,5 @@
 #!/bin/bash
-# macOS helpers isolated for focused tests.
+# macOS setup state helpers.
 
 cask_auto_updates() {
 	brew info --cask "$1" 2>/dev/null | sed -n '1p' | grep -q '(auto_updates)'
@@ -33,13 +33,6 @@ available_command_line_tools_label() {
 		sed -e 's/^ *Label: //' -e 's/^ *//' |
 		sort -V |
 		tail -n 1
-}
-
-command_line_tools_label_if_required() {
-	if [ "$1" != true ]; then
-		return 1
-	fi
-	available_command_line_tools_label
 }
 
 move_stale_command_line_tools() {

@@ -39,13 +39,7 @@ again; never cache or broker the administrator password in setup code.
 ```bash
 shellcheck tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh tools/macos_helpers.sh setup_entry.sh
 shfmt -d tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh tools/macos_helpers.sh setup_entry.sh
-bash tests/setup_preferences/run.sh
-bash tests/setup_logging/run.sh
-bash tests/setup_macos/run.sh
-bash tests/setup_runner/run.sh
 ```
-
-Other focused regression scripts are available under `tests/`.
 
 ## Architecture
 
@@ -79,7 +73,7 @@ On macOS, `.bash_profile` sources `.bashrc` (setup script ensures this).
 
 ## Conventions
 
-- All setup functions use `print_function_name` at the top for logging.
+- `run_function` logs each setup step once and records failures without stopping later steps.
 - Functions check tool existence before acting (idempotent).
 - Architecture-aware: arm64 vs amd64 detection for Homebrew paths and binary downloads.
 - Sudo keepalive pattern at the top of entry scripts (refresh every 30s).

@@ -1,5 +1,4 @@
 export CODE_ROOT=$HOME/CODE
-export KUBECONFIG=~/.kube/config
 
 # Allow modification without restarting terminal
 alias refresh='source ~/.bashrc'
@@ -89,6 +88,16 @@ function unlock() {
 	fi
 
 	ssh "$1" 'sudo -n /usr/bin/loginctl unlock-sessions'
+}
+
+ssh_current() {
+	local remote_dir
+	if [[ $PWD == "$HOME" || $PWD == "$HOME/"* ]]; then
+		printf -v remote_dir '"$HOME"%q' "${PWD#"$HOME"}"
+	else
+		printf -v remote_dir %q "$PWD"
+	fi
+	ssh -t "$1" "cd -- $remote_dir && exec \"\${SHELL:-bash}\" -l"
 }
 
 function scp_mirror() {
@@ -448,75 +457,6 @@ _check_requires_python() {
 			;;
 		esac
 	done
-}
-
-function _select_option() {
-	local prompt="$1"
-	shift
-	local options=("$@")
-	local selected=0
-	local count=${#options[@]}
-	local esc=$(printf '\033')
-
-	echo "$prompt"
-	echo "Use ↑/↓ arrows, Enter to select"
-	echo ""
-
-	# Hide cursor and save position
-	printf '\033[?25l'
-
-	while true; do
-		# Print menu
-		for i in "${!options[@]}"; do
-			local annotation="${_SELECT_ANNOTATIONS[$i]:-}"
-			if [ $i -eq $selected ]; then
-				if [ -n "$annotation" ]; then
-					printf '\033[1;31m> %s  (%s)\033[0m\n' "${options[$i]}" "$annotation"
-				else
-					printf '\033[1;32m> %s\033[0m\n' "${options[$i]}"
-				fi
-			else
-				if [ -n "$annotation" ]; then
-					printf '\033[31m  %s  (%s)\033[0m\n' "${options[$i]}" "$annotation"
-				else
-					printf '  %s\n' "${options[$i]}"
-				fi
-			fi
-		done
-
-		# Read single keypress
-		IFS= read -rsn1 key
-
-		# Check for escape sequence (arrow keys)
-		if [[ $key == "$esc" ]]; then
-			read -rsn2 -t 0.1 rest
-			key+="$rest"
-		fi
-
-		# Handle key
-		case "$key" in
-		"${esc}[A") # Up
-			((selected--))
-			((selected < 0)) && selected=$((count - 1))
-			;;
-		"${esc}[B") # Down
-			((selected++))
-			((selected >= count)) && selected=0
-			;;
-		"") # Enter
-			break
-			;;
-		esac
-
-		# Move cursor back up to redraw
-		printf '\033[%dA' "$count"
-	done
-
-	# Show cursor
-	printf '\033[?25h'
-	echo ""
-
-	SELECTED_OPTION="${options[$selected]}"
 }
 
 function enter_pyenv() {

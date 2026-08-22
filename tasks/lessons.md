@@ -8,6 +8,17 @@ Update this file whenever a correction reveals a rule worth keeping.
 Do not add a loading or progress bar. Keep plain newline-delimited function
 boundaries so terminal output and persisted logs remain readable and reliable.
 
+## Keep guards proportional
+
+When asked to skip one installer in a particular context, add the direct guard
+to that installer. Do not broaden it into prompts or package-manager state
+coordination unless that wider behaviour is explicitly requested.
+
+## Keep verification local
+
+Do not add or retain a repository test suite. Verify changes with local,
+throwaway checks plus Bash syntax, ShellCheck, and shfmt.
+
 ## Where a new install goes
 
 Decide by whether the *exact same commands* work on both macOS and Ubuntu:
@@ -69,7 +80,7 @@ for absent casks, and aliases can target the same canonical cask twice. Snapshot
 ## General conventions (enforced)
 
 - Tabs for indentation in shell scripts (not spaces).
-- Every setup function starts with `print_function_name`.
+- `run_function` logs each setup step once; do not duplicate that inside setup functions.
 - Make functions idempotent — check `command -v` / file existence before acting;
   re-running setup must be safe.
 - Register new functions with `run_function <name>` in `main()` so a failure is
