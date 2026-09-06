@@ -7,7 +7,6 @@ ms-python.debugpy
 rust-lang.rust-analyzer
 golang.go
 hashicorp.terraform
-redhat.vscode-yaml
 tamasfe.even-better-toml
 
 # Shell
