@@ -67,6 +67,12 @@ SETUP_PROGRESS_STARTED=0
 SETUP_PROGRESS_STEP_STARTED=0
 SETUP_PROGRESS_STEP_LABEL=""
 SETUP_PROGRESS_STEP_STATE=run
+SETUP_PROGRESS_STEPS=()
+SETUP_PROGRESS_STATES=()
+SETUP_PROGRESS_TIMES=()
+SETUP_PROGRESS_FOOTER_ROWS=2
+SETUP_PROGRESS_GRID_COLUMNS=0
+SETUP_PROGRESS_CELL_WIDTH=0
 SETUP_PROGRESS_ROWS=0
 SETUP_PROGRESS_COLUMNS=0
 SETUP_PROGRESS_LABEL_WIDTH=28
@@ -78,6 +84,9 @@ SETUP_PROGRESS_MUTED=""
 SETUP_PROGRESS_RESET=""
 
 setup_progress_start() {
+	SETUP_PROGRESS_STEPS=("$@")
+	SETUP_PROGRESS_STATES=()
+	SETUP_PROGRESS_TIMES=()
 	SETUP_PROGRESS_CURRENT=0
 	SETUP_PROGRESS_TOTAL=$#
 	SETUP_PROGRESS_FAILED=0
@@ -134,26 +143,33 @@ setup_progress_read_dimensions() {
 			bar_width=8
 		fi
 	fi
+	SETUP_PROGRESS_GRID_COLUMNS=$(((SETUP_PROGRESS_TOTAL + rows - 5) / (rows - 4)))
+	SETUP_PROGRESS_FOOTER_ROWS=2
+	if [ "$SETUP_PROGRESS_GRID_COLUMNS" -gt 0 ] &&
+		[ $((columns / SETUP_PROGRESS_GRID_COLUMNS)) -ge 40 ]; then
+		SETUP_PROGRESS_CELL_WIDTH=$((columns / SETUP_PROGRESS_GRID_COLUMNS))
+		SETUP_PROGRESS_FOOTER_ROWS=$(((SETUP_PROGRESS_TOTAL + SETUP_PROGRESS_GRID_COLUMNS - 1) / SETUP_PROGRESS_GRID_COLUMNS + 1))
+	else
+		SETUP_PROGRESS_GRID_COLUMNS=0
+	fi
 	SETUP_PROGRESS_LABEL_WIDTH=$label_width
 	SETUP_PROGRESS_BAR_WIDTH=$bar_width
 }
 
 setup_progress_clear_footer() {
-	local rows=$1
+	local rows=$1 height=${2:-$SETUP_PROGRESS_FOOTER_ROWS} row
 
-	if [ "$rows" -ge 2 ]; then
-		setup_progress_write "\033[$((rows - 1));1H"$'\033[2K' \
-			"\033[${rows};1H"$'\033[2K'
-	fi
+	for ((row = rows - height + 1; row <= rows; row++)); do
+		[ "$row" -gt 0 ] && setup_progress_write "\033[${row};1H"$'\033[2K'
+	done
 }
 
 setup_progress_apply_pin() {
-	local output_row=$((SETUP_PROGRESS_ROWS - 2))
-	local step_row=$((SETUP_PROGRESS_ROWS - 1))
+	local output_row=$((SETUP_PROGRESS_ROWS - SETUP_PROGRESS_FOOTER_ROWS))
 
-	setup_progress_write $'\033[r'"\033[${step_row};1H"$'\033[2K' \
-		"\033[${SETUP_PROGRESS_ROWS};1H"$'\033[2K' \
-		"\033[1;${output_row}r\033[${output_row};1H"
+	setup_progress_write $'\033[r'
+	setup_progress_clear_footer "$SETUP_PROGRESS_ROWS"
+	setup_progress_write "\033[1;${output_row}r\033[${output_row};1H"
 	SETUP_PROGRESS_PINNED=1
 }
 
@@ -163,7 +179,7 @@ setup_progress_pin() {
 }
 
 setup_progress_restore() {
-	local step_row=$((SETUP_PROGRESS_ROWS - 1))
+	local step_row=$((SETUP_PROGRESS_ROWS - SETUP_PROGRESS_FOOTER_ROWS + 1))
 
 	if [ "$SETUP_PROGRESS_PINNED" -ne 1 ]; then
 		return
@@ -175,12 +191,12 @@ setup_progress_restore() {
 }
 
 setup_progress_refresh_dimensions() {
-	local old_rows=$SETUP_PROGRESS_ROWS
+	local old_rows=$SETUP_PROGRESS_ROWS old_height=$SETUP_PROGRESS_FOOTER_ROWS
 	local old_columns=$SETUP_PROGRESS_COLUMNS
 
 	if ! setup_progress_read_dimensions; then
 		setup_progress_write $'\033[r'
-		setup_progress_clear_footer "$old_rows"
+		setup_progress_clear_footer "$old_rows" "$old_height"
 		setup_progress_clear_footer "$SETUP_PROGRESS_ROWS"
 		if [ "$SETUP_PROGRESS_ROWS" -ge 2 ]; then
 			setup_progress_write "\033[$((SETUP_PROGRESS_ROWS - 1));1H"
@@ -192,21 +208,20 @@ setup_progress_refresh_dimensions() {
 	if [ "$old_rows" -ne "$SETUP_PROGRESS_ROWS" ] ||
 		[ "$old_columns" -ne "$SETUP_PROGRESS_COLUMNS" ]; then
 		setup_progress_write $'\033[r'
-		setup_progress_clear_footer "$old_rows"
+		setup_progress_clear_footer "$old_rows" "$old_height"
 		setup_progress_apply_pin
 	fi
 }
 
 setup_progress_line() {
-	local kind=$1 state=$2 tick=${3:-0}
+	local kind=$1 state=$2 tick=${3:-0} elapsed=${4:-$((SECONDS - SETUP_PROGRESS_STEP_STARTED))}
 	local width=$SETUP_PROGRESS_BAR_WIDTH pulse_width=5 ix filled=0 position=0
-	local started="$SETUP_PROGRESS_STEP_STARTED"
 	local label=${SETUP_PROGRESS_STEP_LABEL//_/ }
 	local colour="$SETUP_PROGRESS_BLUE" icon="●" suffix
 	local bar="" bar_colour char timer padded_label percent=0
 
 	if [ "$kind" = overall ]; then
-		started="$SETUP_PROGRESS_STARTED"
+		elapsed=$((SECONDS - SETUP_PROGRESS_STARTED))
 		label=Overall
 		icon="◆"
 		filled=$((SETUP_PROGRESS_CURRENT * width / SETUP_PROGRESS_TOTAL))
@@ -222,6 +237,10 @@ setup_progress_line() {
 		fi
 	fi
 	case "$state" in
+	pending)
+		colour="$SETUP_PROGRESS_MUTED"
+		icon="○"
+		;;
 	ok)
 		colour="$SETUP_PROGRESS_GREEN"
 		icon="✓"
@@ -237,25 +256,34 @@ setup_progress_line() {
 		bar_colour="$SETUP_PROGRESS_MUTED"
 		char="─"
 		if { [ "$kind" = overall ] && [ "$ix" -lt "$filled" ]; } ||
-			{ [ "$kind" = step ] && [ "$state" != run ]; } ||
-			{ [ "$kind" = step ] && [ "$ix" -ge "$position" ] && [ "$ix" -lt $((position + pulse_width)) ]; }; then
+			{ [ "$kind" = step ] && { [ "$state" = ok ] || [ "$state" = fail ]; }; } ||
+			{ [ "$kind" = step ] && [ "$state" = run ] && [ "$ix" -ge "$position" ] && [ "$ix" -lt $((position + pulse_width)) ]; }; then
 			bar_colour="$colour"
 			char="━"
 		fi
 		bar="${bar}${bar_colour}${char}"
 	done
 	printf -v timer '%d:%02d:%02d' \
-		$(((SECONDS - started) / 3600)) \
-		$((((SECONDS - started) % 3600) / 60)) $(((SECONDS - started) % 60))
+		$((elapsed / 3600)) \
+		$(((elapsed % 3600) / 60)) $((elapsed % 60))
 	if [ "$kind" = overall ]; then
 		printf -v suffix '%3d%% %d/%d %s' "$percent" "$SETUP_PROGRESS_CURRENT" \
 			"$SETUP_PROGRESS_TOTAL" "$timer"
+	elif [ "$state" = pending ]; then
+		suffix="  0%"
 	elif [ "$state" = run ]; then
 		suffix=$timer
 	elif [ "$state" = ok ]; then
 		suffix="100% $timer"
 	else
 		suffix="FAIL $timer"
+	fi
+	if [ "$kind" = step ] && [ "${SETUP_PROGRESS_COMPACT:-0}" -eq 1 ]; then
+		case "$state" in
+		run) suffix=" ..." ;;
+		ok) suffix="100%" ;;
+		fail) suffix="FAIL" ;;
+		esac
 	fi
 	printf -v padded_label "%-${SETUP_PROGRESS_LABEL_WIDTH}.${SETUP_PROGRESS_LABEL_WIDTH}s" "$label"
 	printf -v SETUP_PROGRESS_LINE '  %b%s%b %b%s%b %s%b %s' \
@@ -264,15 +292,40 @@ setup_progress_line() {
 }
 
 setup_progress_render() {
-	local tick=${1:-0}
-	local step_row=$((SETUP_PROGRESS_ROWS - 1))
-	local step_line
+	local tick=${1:-0} ix row column elapsed state output=$'\0337'
+	local label_width=$SETUP_PROGRESS_LABEL_WIDTH bar_width=$SETUP_PROGRESS_BAR_WIDTH
+	local step_row=$((SETUP_PROGRESS_ROWS - SETUP_PROGRESS_FOOTER_ROWS + 1))
+	local SETUP_PROGRESS_STEP_LABEL=$SETUP_PROGRESS_STEP_LABEL
+	local SETUP_PROGRESS_LABEL_WIDTH=$SETUP_PROGRESS_LABEL_WIDTH
+	local SETUP_PROGRESS_BAR_WIDTH=$SETUP_PROGRESS_BAR_WIDTH
+	local SETUP_PROGRESS_COMPACT=0
 
-	setup_progress_line step "$SETUP_PROGRESS_STEP_STATE" "$tick"
-	step_line=$SETUP_PROGRESS_LINE
+	if [ "$SETUP_PROGRESS_GRID_COLUMNS" -gt 0 ]; then
+		SETUP_PROGRESS_COMPACT=1
+		SETUP_PROGRESS_LABEL_WIDTH=22
+		SETUP_PROGRESS_BAR_WIDTH=$((SETUP_PROGRESS_CELL_WIDTH - 32))
+		[ "$SETUP_PROGRESS_BAR_WIDTH" -gt 24 ] && SETUP_PROGRESS_BAR_WIDTH=24
+		for ((row = step_row; row < SETUP_PROGRESS_ROWS; row++)); do
+			output+="\033[${row};1H"$'\033[2K'
+		done
+		for ((ix = 0; ix < SETUP_PROGRESS_TOTAL; ix++)); do
+			SETUP_PROGRESS_STEP_LABEL=${SETUP_PROGRESS_STEPS[ix]}
+			state=${SETUP_PROGRESS_STATES[ix]:-pending}
+			elapsed=${SETUP_PROGRESS_TIMES[ix]:-0}
+			[ "$state" = run ] && elapsed=$((SECONDS - SETUP_PROGRESS_STEP_STARTED))
+			setup_progress_line step "$state" "$tick" "$elapsed"
+			row=$((step_row + ix / SETUP_PROGRESS_GRID_COLUMNS))
+			column=$((1 + (ix % SETUP_PROGRESS_GRID_COLUMNS) * SETUP_PROGRESS_CELL_WIDTH))
+			output+="\033[${row};${column}H${SETUP_PROGRESS_LINE}"
+		done
+	else
+		setup_progress_line step "$SETUP_PROGRESS_STEP_STATE" "$tick"
+		output+="\033[${step_row};1H"$'\033[2K'"${SETUP_PROGRESS_LINE}"
+	fi
+	SETUP_PROGRESS_LABEL_WIDTH=$label_width
+	SETUP_PROGRESS_BAR_WIDTH=$bar_width
 	setup_progress_line overall run
-	setup_progress_write $'\0337'"\033[${step_row};1H"$'\033[2K'"${step_line}" \
-		"\033[${SETUP_PROGRESS_ROWS};1H"$'\033[2K'"${SETUP_PROGRESS_LINE}"$'\0338'
+	setup_progress_write "${output}\033[${SETUP_PROGRESS_ROWS};1H"$'\033[2K'"${SETUP_PROGRESS_LINE}"$'\0338'
 }
 
 setup_progress_begin_step() {
@@ -288,6 +341,7 @@ setup_progress_begin_step() {
 	SETUP_PROGRESS_STEP_LABEL=$1
 	SETUP_PROGRESS_STEP_STARTED=$SECONDS
 	SETUP_PROGRESS_STEP_STATE=run
+	SETUP_PROGRESS_STATES[SETUP_PROGRESS_CURRENT]=run
 	setup_progress_render 0
 	(
 		local tick=0
@@ -318,13 +372,15 @@ setup_progress_complete_step() {
 	local state=ok
 
 	setup_progress_stop_spinner
-	SETUP_PROGRESS_CURRENT=$((SETUP_PROGRESS_CURRENT + 1))
 	if [ "$exit_code" -ne 0 ]; then
 		SETUP_PROGRESS_FAILED=$((SETUP_PROGRESS_FAILED + 1))
 		state=fail
 	fi
 	SETUP_PROGRESS_STEP_LABEL=$label
 	SETUP_PROGRESS_STEP_STATE=$state
+	SETUP_PROGRESS_STATES[SETUP_PROGRESS_CURRENT]=$state
+	SETUP_PROGRESS_TIMES[SETUP_PROGRESS_CURRENT]=$((SECONDS - SETUP_PROGRESS_STEP_STARTED))
+	SETUP_PROGRESS_CURRENT=$((SETUP_PROGRESS_CURRENT + 1))
 	if setup_progress_refresh_dimensions; then
 		setup_progress_render
 		setup_progress_line step "$state"
@@ -355,10 +411,10 @@ setup_progress_finish() {
 			SETUP_PROGRESS_ENABLED=0
 			return
 		fi
-		step_row=$((SETUP_PROGRESS_ROWS - 1))
-		setup_progress_write $'\033[r'"\033[${step_row};1H"$'\033[2K' \
-			"\033[${SETUP_PROGRESS_ROWS};1H"$'\033[2K' \
-			"\033[${step_row};1H${overall_line}"$'\n'
+		step_row=$((SETUP_PROGRESS_ROWS - SETUP_PROGRESS_FOOTER_ROWS + 1))
+		setup_progress_write $'\033[r'
+		setup_progress_clear_footer "$SETUP_PROGRESS_ROWS"
+		setup_progress_write "\033[${step_row};1H${overall_line}"$'\n'
 	fi
 	SETUP_PROGRESS_PINNED=0
 	SETUP_PROGRESS_ENABLED=0

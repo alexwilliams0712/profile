@@ -479,3 +479,21 @@ The log confirmed APT refused to downgrade Ubuntu's duf 0.9.1-1 to upstream
 retains current or newer packages; missing or older packages still install.
 Independent review, Bash syntax, ShellCheck, shfmt and diff checks pass.
 No tests or full setup runs were performed.
+
+# Keep the setup plan visible
+
+- [x] Retain every step's state and elapsed time in the shared progress renderer.
+- [x] Show the plan in a persistent grid, with an active-step fallback for small terminals.
+- [x] Review terminal cleanup, logging and both platform callers; run static checks only.
+
+## Review
+
+Both platforms share the persistent grid, with pending, active, successful and
+failed steps above the overall bar. Layout adapts to terminal dimensions and
+keeps at least three rows for output. Small terminals retain the compact view.
+Independent review caught a narrow-terminal width issue, now corrected.
+Bash syntax, ShellCheck, shfmt and diff checks pass; no tests were run.
+The new display has not been exercised during a full setup run.
+
+The monitored setup passed duf and all other steps except VS Code configuration:
+the YAML extension request received HTTP 503 from its server.
