@@ -465,3 +465,17 @@ Python plugin updates and VS Code extension updates are retained.
 Three simplification passes and independent review are complete. Bash syntax,
 required ShellCheck, shfmt and diff checks pass. No tests were added or run.
 The pre-PR review restored the behaviours that the initial speed pass changed.
+
+# Avoid redundant duf downgrades
+
+- [x] Skip the upstream package when an installed duf package is current or newer.
+- [x] Review the guard and run syntax, lint and formatting checks; add no tests.
+- [x] Prepare the focused fix for a PR.
+
+## Review
+
+The log confirmed APT refused to downgrade Ubuntu's duf 0.9.1-1 to upstream
+0.9.1. The installer now compares installed package versions with dpkg and
+retains current or newer packages; missing or older packages still install.
+Independent review, Bash syntax, ShellCheck, shfmt and diff checks pass.
+No tests or full setup runs were performed.
