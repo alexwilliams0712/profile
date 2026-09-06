@@ -350,3 +350,100 @@ the fresh-install branch** (`if [ "$installed" != "$latest" ]`). So:
 - `default.yml` is espanso's generated template (not empty); the backend sed works,
   so we append `keyboard_layout` rather than rewrite the file.
 - macOS path (`brew` cask + `service register`/`start`) is correct and unchanged.
+
+# Diagnose Espanso after the September setup run
+
+- [x] Inspect the private setup log and live Espanso installation.
+- [x] Check runtime configuration, dependencies, permissions and service state.
+- [x] Explicitly enable expansions with `espanso cmd enable`.
+- [x] Fix the independently reproduced fresh-install abort on a missing binary.
+- [x] Verify absent, present and broken binary paths; review the final diff.
+
+## Review
+
+Espanso Wayland 2.4.1 is installed, with its service running and enabled at login.
+The worker initialises keyboard detection and injection with the `gb` layout;
+clipboard tools and the required capability are present. Alex subsequently
+reported that expansion may now work. The earlier disabled state was not observed,
+so enabling expansions is a possible explanation, not a proven root cause.
+End-to-end expansion remains unverified. A separate fresh-install
+defect was reproduced: the version check exited under `set -e` when Espanso
+was absent. An explicit availability guard now lets installation proceed.
+Throwaway checks cover absent, present and broken binaries, and reproduce the
+base-branch failure. Bash syntax, shfmt and diff checks pass; ShellCheck reports
+only the same pre-existing findings as the base revision.
+The six reported setup failures are separate: five encountered package-manager
+locks; Tailscale rejected omitted existing flags.
+
+# Repair all six failed Ubuntu setup steps
+
+- [x] Handle package-manager lock contention without interrupting other installers.
+- [x] Repair package compatibility and review the browser, Python, formatter and VS Code paths.
+- [x] Preserve existing Tailscale preferences when enabling its requested features.
+- [x] Run focused regressions, package simulations and independent review.
+- [ ] Rerun affected installers where authentication permits and record results.
+
+## Review
+
+Added bounded retries for actual APT/dpkg lock contention and removed the
+upgrader's automatic repository deletion and PackageKit interruption.
+Updated Ubuntu package names, switched Vivaldi to its signed APT repository,
+preserved existing VS Code repositories and repaired Tailscale preference updates.
+The live aliases matched the base revision and were updated with the repaired helper.
+
+Focused existing/fresh/failure-path checks passed, including the real VS Code
+configuration helper and a real APT lists-lock test in temporary directories.
+The full base-package simulation and live base-package installation passed.
+Bash syntax, shfmt, error-level repository ShellCheck and diff checks pass;
+full ShellCheck adds no findings. Independent review reported no blocking issues.
+
+The live six-step repair completed install_apt_packages. Administrator
+authentication was then dismissed, blocking the remaining five steps.
+A private retry-installs.sh beside the setup logs uses normal foreground sudo
+and the existing timestamp keepalive to rerun those five steps from a terminal.
+The pinned Python interpreter passes standard-library imports; Vivaldi and VS Code
+report their installed versions. The old /usr/local pg_format remains at 5.10
+until its source installer can rerun. No pending installer is claimed successful.
+
+# Harden setup for fresh and repeat runs across machines
+
+- [x] Audit entry-point updates, platform detection and invocation paths.
+- [x] Fix reproducible fresh-install, repeat-run and failure-reporting defects in shared and platform installers.
+- [x] Remove destructive assumptions that can affect unrelated local files or repositories.
+- [x] Verify with isolated fresh/existing/failure scenarios and all shell checks.
+- [x] Obtain independent review, reconcile findings and document remaining platform limits.
+
+## Review
+
+The entry point preserves local changes, commits and branches, updates clean main
+only by fast-forward, resolves its location independently of the caller and
+rejects unsupported platforms before authentication. Ubuntu now requires 24.04+;
+22.04 failed real package simulation with missing lsd and wxWidgets packages.
+
+Archive/build installers use owned temporary directories and no longer delete
+unrelated working-directory files. Go validates its replacement before removing
+the installed tree. Node and Tailscale vendor scripts share lock retry handling.
+ClamAV resumes signature updates after a failed one-shot update. Flatpak and VS
+Code partial failures now reach the setup summary. Installer PATH is refreshed
+between subprocesses; pyenv no longer sources interactive shell configuration.
+
+Espanso selects X11 or Wayland correctly, repairs dependencies on repeat runs,
+defers headless/unsupported-architecture setup explicitly and renders contact
+values as valid YAML. Independent review found Unicode separator/emoji defects
+in the first renderer; exact libyaml roundtrip tests now pass after correction.
+macOS uses architecture-independent Homebrew paths, preserves customised Ghostty
+configuration and avoids resetting Brew repositories or ignoring dependencies.
+
+Verification: base-package simulations passed in disposable Ubuntu 24.04 and
+26.04 amd64 containers. Real temporary Git repositories cover dirty/local-commit,
+topic-branch/detached and clean-fast-forward cases. Bash and real Zsh source tests
+cover arbitrary caller directories and paths with spaces; caller cwd and private
+logs are preserved. Focused fresh/existing/failure checks cover Espanso, VS Code,
+shared PATH, archive cleanup, corrupt Go archives and actual APT lock contention.
+Required repository ShellCheck, Bash syntax, shfmt and diff checks pass. Aliases
+retain their pre-existing lint findings, with no additions from the lock helper.
+Independent reviews are complete and all identified material concerns resolved.
+
+Full installs on physical Macs and ARM machines remain unverified. The earlier
+five live Ubuntu installer retries still require terminal sudo authentication;
+this code-hardening pass does not claim those pending installs completed.

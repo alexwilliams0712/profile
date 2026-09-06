@@ -258,19 +258,43 @@ clean_broken_repos() {
 	fi
 }
 
+with_package_lock_retry() {
+	local output started=$SECONDS status
+	local -a statuses
+	output=$(mktemp) || return 1
+	while true; do
+		if "$@" 2>&1 | tee "$output"; then
+			statuses=("${PIPESTATUS[@]}")
+		else
+			statuses=("${PIPESTATUS[@]}")
+		fi
+		status=${statuses[0]}
+		if ((statuses[1] != 0)); then
+			rm -f "$output"
+			return "${statuses[1]}"
+		fi
+		if ((status == 0 || SECONDS - started >= 300)) ||
+			! command grep -Eq 'Could not get lock .*([Rr]esource temporarily unavailable|held by process)|Unable to acquire .*lock.*another process|dpkg: error: .*lock.*(locked by|another process)' "$output"; then
+			rm -f "$output"
+			return "$status"
+		fi
+		printf 'Package manager is busy; retrying in 5 seconds.\n' >&2
+		sleep 5
+	done
+}
+
+apt_get() {
+	# apt update does not honour the dpkg lock timeout.
+	with_package_lock_retry sudo env LC_ALL=C apt-get -o DPkg::Lock::Timeout=5 "$@"
+}
+
 function apt_upgrader() {
 	print_function_name
-	sudo find /etc/apt/sources.list.d/ -name "*.sources" -exec grep -l questing {} \; -exec rm -v {} \;
-	sudo systemctl stop packagekit
-	sudo dpkg --configure -a
-	clean_broken_repos
-	sudo apt update -y
-	sudo apt upgrade -y
-	sudo apt full-upgrade -y
-	sudo apt autoremove -y
-	sudo apt-get -o DPkg::Lock::Timeout=-1 update -y
-	sudo apt-get -o DPkg::Lock::Timeout=-1 upgrade -y
-	sudo systemctl start packagekit
+	with_package_lock_retry sudo env LC_ALL=C dpkg --configure -a || return
+	apt_get update || return
+	apt_get upgrade -y || return
+	apt_get full-upgrade -y || return
+	apt_get autoremove -y
 }
 
 alias file_counter="find . -maxdepth 1 -type f | sed -n 's/..*\.//p' | sort | uniq -c"

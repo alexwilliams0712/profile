@@ -2,44 +2,80 @@
 
 profile_setup_run() {
 	local os_name
-	os_name="$(uname)"
+	local branch
+	local worktree_status
+	local ID VERSION_ID
+	cd -- "$1" || return 1
+	os_name="$(uname)" || return 1
 	export PROFILE_SETUP_NO_LOGIN_SHELL=1
 
-	if [ "$os_name" = "Darwin" ]; then
-		# Homebrew revokes cached sudo tickets, so setup_macos requests visible
-		# foreground approval only when a privileged step actually needs it.
-		:
-	else
-		sudo -v
+	if [ "$(id -u)" -eq 0 ]; then
+		printf 'Error: run setup as your normal user; privileged steps use sudo.\n' >&2
+		return 1
 	fi
-
-	if [ "$os_name" != "Darwin" ] && ! command -v git >/dev/null 2>&1; then
-		echo "git is not installed, installing git."
-		sudo apt-get update
-		sudo apt-get install -y git
-	fi
-
-	# Pull latest version of this repo (non-fatal on first run / auth issues).
-	# Apple's /usr/bin/git is only a launcher until the Command Line Tools exist.
-	if { [ "$os_name" != "Darwin" ] || xcode-select -p &>/dev/null; } && GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' git fetch origin 2>/dev/null; then
-		git reset --hard origin/main
-		git checkout main
-		GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' git pull
-	else
-		echo "Warning: could not fetch from remote, continuing with local copy."
-	fi
-
-	if [ "$os_name" = "Darwin" ]; then
-		bash tools/setup_macos.sh
-	elif [ "$os_name" = "Linux" ]; then
-		bash tools/setup_ubuntu.sh
-	else
+	case "$os_name" in
+	Darwin) ;;
+	Linux)
+		if [ ! -r /etc/os-release ]; then
+			printf 'Error: cannot identify this Linux distribution.\n' >&2
+			return 1
+		fi
 		# shellcheck disable=SC1091
-		source tools/setup_macos.sh
+		. /etc/os-release
+		if [ "${ID:-}" != ubuntu ] || ! command -v apt-get >/dev/null 2>&1; then
+			printf 'Error: Linux setup supports Ubuntu only (detected %s).\n' "${ID:-unknown}" >&2
+			return 1
+		fi
+		if ! dpkg --compare-versions "${VERSION_ID:-0}" ge 24.04; then
+			printf 'Error: Ubuntu 24.04 or later is required (detected %s).\n' "${VERSION_ID:-unknown}" >&2
+			return 1
+		fi
+		sudo -v || return 1
+		if ! command -v git >/dev/null 2>&1; then
+			echo "git is not installed, installing git."
+			bash -e -o pipefail -c '
+				source "$1/dotfiles/.bash_aliases"
+				apt_get update
+				apt_get install -y git
+			' bash "$PWD" || return 1
+		fi
+		;;
+	*)
+		printf 'Error: unsupported operating system: %s\n' "$os_name" >&2
+		return 1
+		;;
+	esac
+
+	# Only advance an untouched main checkout; local work always takes priority.
+	# Apple's git launcher needs Command Line Tools before it can inspect a repo.
+	if { [ "$os_name" != "Darwin" ] || xcode-select -p &>/dev/null; } &&
+		command -v git >/dev/null 2>&1 &&
+		branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)" &&
+		[ "$branch" = main ] &&
+		worktree_status="$(git status --porcelain 2>/dev/null)" &&
+		[ -z "$worktree_status" ]; then
+		if GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' git fetch origin main; then
+			if git merge-base --is-ancestor HEAD FETCH_HEAD; then
+				git merge --ff-only FETCH_HEAD || return 1
+			else
+				echo "Keeping local checkout: main has local commits."
+			fi
+		else
+			echo "Warning: could not fetch from remote, continuing with local copy."
+		fi
+	else
+		echo "Keeping local checkout: automatic updates require a clean main branch."
 	fi
+
+	case "$os_name" in
+	Darwin) bash tools/setup_macos.sh ;;
+	Linux) bash tools/setup_ubuntu.sh ;;
+	esac
 }
 
 profile_setup_main() {
+	local repo_dir
+	repo_dir="$(cd -- "$(dirname -- "$1")" && pwd -P)" || return 1
 	local state_home
 	local log_dir
 	local log_file
@@ -123,7 +159,7 @@ profile_setup_main() {
 			export PROFILE_SETUP_PROGRESS_FD=9
 			export PROFILE_SETUP_DEFER_PROGRESS_FINISH=1
 		fi
-		profile_setup_run
+		profile_setup_run "$repo_dir"
 		setup_status=$?
 		printf '%s\n' "$setup_status" >|"$status_file"
 		exit "$setup_status"
@@ -172,4 +208,8 @@ profile_setup_main() {
 	bash -l 9>&-
 }
 
-profile_setup_main 9>&1
+if [ -n "${ZSH_VERSION:-}" ]; then
+	eval 'profile_setup_main "${(%):-%x}" 9>&1'
+else
+	profile_setup_main "${BASH_SOURCE[0]}" 9>&1
+fi

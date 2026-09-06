@@ -97,3 +97,11 @@ for absent casks, and aliases can target the same canonical cask twice. Snapshot
   collected and reported at the end instead of aborting the whole run.
 - Lint before done: `shellcheck` and `shfmt -d` must be clean on every edited
   script (see CLAUDE.md for the exact command).
+
+## Local repair authentication
+
+Use the repository's normal foreground sudo prompt and timestamp keepalive for
+multi-step Ubuntu repairs. Launching every privileged command through a separate
+PolicyKit request causes repeated authentication prompts. Never collect or store
+the administrator password; when terminal authentication is needed, provide a
+concrete repair script that uses the existing sudo flow.
