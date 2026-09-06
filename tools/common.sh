@@ -7,15 +7,7 @@ handle_error() {
 	echo "An error occurred on line $1"
 }
 
-# Prime the sudo timestamp once, then keep it warm in the background on Linux.
-# Homebrew deliberately resets the timestamp, so macOS uses foreground
-# run_sudo calls that can re-prompt when necessary.
-# - Idempotent: a second call is a no-op while a loop is already running.
-# - set -e / pipefail safe: the priming `sudo -v` is guarded with `|| return`,
-#   and the background loop's commands can't abort the parent shell.
-# - The loop exits on its own once the parent script ($$) is gone, is killed by
-#   the EXIT trap on error/early-exit paths, and is killed explicitly by
-#   exit_script before it returns or replaces the setup process.
+# Keep Linux sudo authorisation alive; Homebrew resets macOS timestamps.
 SUDO_KEEPALIVE_PID=""
 sudo_command() {
 	/usr/bin/sudo "$@"
@@ -24,14 +16,10 @@ sudo_command() {
 keep_sudo_alive() {
 	local parent_pid=$$
 
-	# Already running? Do nothing.
 	if [ -n "$SUDO_KEEPALIVE_PID" ] && kill -0 "$SUDO_KEEPALIVE_PID" 2>/dev/null; then
 		return 0
 	fi
-	# Prompt for the password once (non-fatal under set -e if the user aborts).
 	sudo_command -v || return 1
-	# Explicitly extend the cached credentials until this script exits. Running
-	# an arbitrary sudo command does not reliably refresh the timestamp on macOS.
 	(
 		local sleep_pid=""
 		trap 'if [ -n "$sleep_pid" ]; then kill "$sleep_pid" 2>/dev/null || true; wait "$sleep_pid" 2>/dev/null || true; fi; exit 0' HUP INT TERM
@@ -528,7 +516,6 @@ set_git_config() {
 	git config --global alias.l 'log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit'
 	git config --global merge.conflictStyle zdiff3
 
-	# Use delta as the pager for diff/log/show if available
 	if command -v delta >/dev/null 2>&1; then
 		git config --global core.pager delta
 		git config --global interactive.diffFilter 'delta --color-only'
@@ -537,7 +524,6 @@ set_git_config() {
 		git config --global delta.line-numbers true
 	fi
 
-	# Apply values collected by collect_user_input
 	if [ -n "$GIT_USER_NAME" ]; then git config --global user.name "$GIT_USER_NAME"; fi
 	if [ -n "$GIT_USER_EMAIL" ]; then git config --global user.email "$GIT_USER_EMAIL"; fi
 	if [ -n "$GIT_USER_PHONE" ]; then git config --global user.phonenumber "$GIT_USER_PHONE"; fi
@@ -595,18 +581,13 @@ install_starship() {
 }
 
 install_foundry() {
-	# Foundry (forge, cast, anvil, chisel) via the official installer — NOT snap.
-	# foundryup installs to ~/.foundry/bin (added to PATH in .bashrc).
 	curl -fsSL https://foundry.paradigm.xyz | bash
 	"$HOME/.foundry/bin/foundryup"
 	"$HOME/.foundry/bin/cast" --version
 }
 
 install_rust() {
-	# Rust via the official rustup installer (NOT Homebrew/apt). This keeps the
-	# real rustup binary and its cargo/rustc proxies in ~/.cargo/bin. Installing
-	# rustup from Homebrew puts the binary under /opt/homebrew and leaves the
-	# ~/.cargo/bin proxies dangling whenever the formula is renamed/upgraded.
+	# Keep rustup beside its proxies; Homebrew upgrades can leave them dangling.
 	if [ ! -x "$HOME/.cargo/bin/rustup" ]; then
 		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
 	fi
@@ -618,180 +599,188 @@ install_rust() {
 }
 
 install_pyenv() {
-	local os_type
+	local os_type expected_arch hw_arch dependency prefix
 	os_type="$(uname -s)"
+	export PYENV_ROOT="$HOME/.pyenv"
+	export PATH="$PYENV_ROOT/bin:$PATH"
+	local python_bin="$PYENV_ROOT/versions/$DEFAULT_PYTHON_VERSION/bin/python"
 
-	# Platform-specific pre-requisites
-	if [ "$os_type" = "Darwin" ]; then
-		# Enforce native architecture — abort if running under Rosetta on Apple Silicon
-		local hw_arch
+	if [ "$os_type" = Darwin ]; then
+		expected_arch="$(uname -m)"
 		hw_arch="$(sysctl -n hw.optional.arm64 2>/dev/null || echo 0)"
-		if [ "$hw_arch" = "1" ] && [ "$(uname -m)" = "x86_64" ]; then
-			log "ERROR: Running under Rosetta (x86_64 translation) on Apple Silicon."
-			log "Re-run this script natively: arch -arm64 bash setup_entry.sh"
+		if [ "$hw_arch" = 1 ] && [ "$expected_arch" = x86_64 ]; then
+			log "Running under Rosetta; rerun natively: arch -arm64 bash setup_entry.sh"
 			return 1
 		fi
-
-		# Force compiler to target the native architecture
-		ARCHFLAGS="-arch $(uname -m)"
-		export ARCHFLAGS
-
-		# Set build flags so pyenv can find Homebrew keg-only dependencies
-		LDFLAGS="-L$(brew --prefix openssl)/lib -L$(brew --prefix readline)/lib -L$(brew --prefix sqlite3)/lib -L$(brew --prefix zlib)/lib"
-		CPPFLAGS="-I$(brew --prefix openssl)/include -I$(brew --prefix readline)/include -I$(brew --prefix sqlite3)/include -I$(brew --prefix zlib)/include"
-		PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig:$(brew --prefix readline)/lib/pkgconfig:$(brew --prefix sqlite3)/lib/pkgconfig:$(brew --prefix zlib)/lib/pkgconfig"
-		export LDFLAGS CPPFLAGS PKG_CONFIG_PATH
-	else
-		apt_upgrader
-		apt_get install -y software-properties-common
 	fi
 
-	# Prefer Homebrew's pyenv on macOS; its version directory may not exist yet.
-	local pyenv_dir="$HOME/.pyenv"
-	if ! command -v pyenv >/dev/null 2>&1 && [ ! -x "$pyenv_dir/bin/pyenv" ]; then
-		if [ -d "$pyenv_dir" ]; then
-			log "Incomplete pyenv installation at $pyenv_dir; preserve or move it before retrying."
+	# Homebrew owns pyenv on macOS; preserve an incomplete local installation.
+	if ! command -v pyenv >/dev/null 2>&1; then
+		if [ -d "$PYENV_ROOT" ]; then
+			log "Incomplete pyenv installation at $PYENV_ROOT; preserve or move it before retrying."
 			return 1
 		fi
 		curl -fsSL https://pyenv.run | bash
 	fi
-
-	export PYENV_ROOT="$HOME/.pyenv"
-	export PATH="$PYENV_ROOT/bin:$PATH"
-	if command -v pyenv >/dev/null 2>&1; then
-		eval "$(pyenv init --path)"
-		eval "$(pyenv init -)"
-	fi
-
-	# Update pyenv plugin index (Linux-only; on macOS pyenv is managed by Homebrew)
-	if [ "$os_type" != "Darwin" ]; then
+	eval "$(pyenv init --path)"
+	eval "$(pyenv init -)"
+	if [ "$os_type" != Darwin ]; then
 		pyenv update
 	fi
 
-	local pyenv_version_dir="$PYENV_ROOT/versions/$DEFAULT_PYTHON_VERSION"
-	local python_bin="$pyenv_version_dir/bin/python"
-	if [ -d "$pyenv_version_dir" ] && [ ! -x "$python_bin" ]; then
-		log "Removing incomplete Python $DEFAULT_PYTHON_VERSION installation"
+	if [ -d "${python_bin%/bin/python}" ] &&
+		{ [ ! -x "$python_bin" ] ||
+			{ [ "$os_type" = Darwin ] && ! file -L "$python_bin" | grep -w "$expected_arch" >/dev/null; }; }; then
+		log "Removing incomplete or mismatched Python $DEFAULT_PYTHON_VERSION"
 		pyenv uninstall -f "$DEFAULT_PYTHON_VERSION"
 	fi
-
-	# Install Python versions
-	if [ "$os_type" = "Darwin" ]; then
-		pyenv install -s "$DEFAULT_PYTHON_VERSION"
-
-		# Verify the installed Python matches the native architecture
-		local expected_arch
-		expected_arch="$(uname -m)"
-		if [ -f "$python_bin" ]; then
-			local binary_arch
-			binary_arch="$(file "$python_bin" | grep -o 'arm64\|x86_64' | head -1)"
-			if [ "$binary_arch" != "$expected_arch" ]; then
-				log "ERROR: Python binary is $binary_arch but expected $expected_arch"
-				log "Removing mismatched build and reinstalling..."
-				pyenv uninstall -f "$DEFAULT_PYTHON_VERSION"
-				pyenv install "$DEFAULT_PYTHON_VERSION"
-			else
-				log "Python architecture verified: $binary_arch"
-			fi
+	if [ ! -x "$python_bin" ]; then
+		if [ "$os_type" = Darwin ]; then
+			export ARCHFLAGS="-arch $expected_arch"
+			LDFLAGS="" CPPFLAGS="" PKG_CONFIG_PATH=""
+			for dependency in openssl readline sqlite3 zlib; do
+				prefix="$(brew --prefix "$dependency")"
+				LDFLAGS+=" -L$prefix/lib"
+				CPPFLAGS+=" -I$prefix/include"
+				PKG_CONFIG_PATH+="${PKG_CONFIG_PATH:+:}$prefix/lib/pkgconfig"
+			done
+			export LDFLAGS CPPFLAGS PKG_CONFIG_PATH
 		fi
-	else
-		# Install the pinned default version exactly as specified.
-		# Only one version is installed on purpose — extra minor versions slow
-		# down pyenv shim resolution (and the prompt) without much benefit.
 		pyenv install -s "$DEFAULT_PYTHON_VERSION"
 	fi
 	if [ ! -x "$python_bin" ]; then
-		log "ERROR: Python $DEFAULT_PYTHON_VERSION installation is incomplete"
+		log "Python $DEFAULT_PYTHON_VERSION installation is incomplete"
 		return 1
 	fi
 	pyenv global "$DEFAULT_PYTHON_VERSION"
 
-	# Install pyenv-virtualenv plugin
-	local venv_folder
-	venv_folder="$(pyenv root)/plugins/pyenv-virtualenv"
-	local venv_url="https://github.com/pyenv/pyenv-virtualenv.git"
+	local venv_folder="$PYENV_ROOT/plugins/pyenv-virtualenv"
 	if [ ! -d "$venv_folder" ]; then
-		git clone "$venv_url" "$venv_folder"
+		git clone https://github.com/pyenv/pyenv-virtualenv.git "$venv_folder"
 	else
-		git -C "$venv_folder" pull --ff-only "$venv_url"
+		git -C "$venv_folder" pull --ff-only https://github.com/pyenv/pyenv-virtualenv.git
 	fi
-
-	# Install uv
-	if [ "$os_type" = "Darwin" ]; then
-		# uv is installed via Homebrew on macOS
-		:
-	else
+	if [ "$os_type" != Darwin ]; then
 		curl -LsSf https://astral.sh/uv/install.sh | sh
 	fi
-
-	# Install base Python packages
-	# `--system` selects Ubuntu's externally managed `/usr` interpreter.
 	export PATH="$HOME/.local/bin:$PATH"
 	uv pip install --python "$python_bin" pip-tools psutil
-
-	# Create a default venv if needed (macOS convention)
-	if [ "$os_type" = "Darwin" ] && [ ! -d "$HOME/.venv" ]; then
+	if [ "$os_type" = Darwin ] && [ ! -d "$HOME/.venv" ]; then
 		uv venv --python "$python_bin" "$HOME/.venv"
 	fi
-
 }
 
-install_ai() {
-	# Claude Code — official native installer. Self-contained binary, no Node
-	# required; auto-detects arch (darwin/linux × arm64/x64) and self-updates.
-	curl -fsSL https://claude.ai/install.sh | bash
-
-	# OpenAI Codex CLI — official native installer (Rust binary, arch-aware).
-	# Re-running upgrades in place.
-	curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_NON_INTERACTIVE=1 sh
-
-	# Gemini CLI — Google ships NO native curl/bash installer; every method
-	# (Homebrew, MacPorts, conda) just wraps the npm package, so npm is the only
-	# non-Homebrew path. Node is installed earlier in both setups.
-	if command -v npm >/dev/null 2>&1; then
-		if [ "$(uname -s)" = "Darwin" ]; then
-			# macOS uses a user-owned npm prefix (~/.npm-global), so no sudo.
-			npm install -g @google/gemini-cli
-		else
-			# Linux installs node as root (nodesource), so global needs sudo.
-			sudo npm install -g @google/gemini-cli
-		fi
+install_npm_packages() {
+	if [ "$(uname -s)" = Darwin ]; then
+		npm install -g "$@"
 	else
-		log "npm not found; Gemini CLI installation failed"
+		sudo npm install -g "$@"
+	fi
+}
+
+configure_node() {
+	local dir packages=(wscat json5 fracturedjsonjs)
+	if [ "$(uname -s)" = Darwin ]; then
+		for dir in "$HOME/.npm" "$HOME/.npm-global"; do
+			if [ -d "$dir" ] &&
+				[ -n "$(find "$dir" ! -user "$(id -un)" -print -quit 2>/dev/null)" ]; then
+				run_sudo chown -R "$(id -u):$(id -g)" "$dir"
+			fi
+		done
+		mkdir -p "$HOME/.npm-global"
+		npm config set prefix "$HOME/.npm-global"
+	else
+		packages+=(prettier)
+	fi
+	install_npm_packages "${packages[@]}"
+}
+
+install_go_tools() {
+	go install github.com/dim13/otpauth@latest
+	if [ "$(uname -s)" != Darwin ]; then
+		go install github.com/boyter/scc/v3@latest
+	fi
+}
+
+github_latest_tag() {
+	local repo="$1" tag
+	tag=$(curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" | jq -r '.tag_name') || return
+	if [ -z "$tag" ] || [ "$tag" = null ]; then
+		log "Could not fetch latest tag for $repo" >&2
 		return 1
 	fi
+	echo "$tag"
+}
 
-	log "AI CLI tools installation complete"
+install_terraform() (
+	local os arch version install_dir installed_binary=terraform target_dir=/usr/local/bin
+	case "$(uname -s)" in
+	Darwin) os=darwin ;;
+	Linux) os=linux ;;
+	*)
+		log "Unsupported Terraform platform"
+		return 1
+		;;
+	esac
+	case "$(uname -m)" in
+	x86_64 | amd64) arch=amd64 ;;
+	arm64 | aarch64) arch=arm64 ;;
+	*)
+		log "Unsupported Terraform architecture"
+		return 1
+		;;
+	esac
+	version=$(github_latest_tag hashicorp/terraform) || return
+	version=${version#v}
+	if [ "$os" = linux ]; then
+		installed_binary="$target_dir/terraform"
+	fi
+	if command -v "$installed_binary" >/dev/null 2>&1 &&
+		"$installed_binary" version | grep -Fx "Terraform v$version" >/dev/null; then
+		return 0
+	fi
+	install_dir=$(mktemp -d) || return
+	trap 'rm -rf "$install_dir"' EXIT
+	curl -fsSL "https://releases.hashicorp.com/terraform/$version/terraform_${version}_${os}_${arch}.zip" -o "$install_dir/terraform.zip"
+	unzip -oq "$install_dir/terraform.zip" -d "$install_dir"
+	if [ "$os" = linux ]; then
+		sudo install -m 0755 "$install_dir/terraform" "$target_dir/terraform"
+	else
+		if [ ! -d "$target_dir" ] || [ ! -w "$target_dir" ]; then
+			target_dir="$HOME/.local/bin"
+			mkdir -p "$target_dir"
+		fi
+		install -m 0755 "$install_dir/terraform" "$target_dir/terraform"
+	fi
+	"$target_dir/terraform" version
+)
+
+install_ai() {
+	curl -fsSL https://claude.ai/install.sh | bash
+	curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_NON_INTERACTIVE=1 sh
+	install_npm_packages @google/gemini-cli
 }
 
 exit_script() {
 	local setup_status=0
 	setup_progress_finish
-	# Stop the sudo keepalive explicitly before returning or replacing this process.
 	stop_sudo_keepalive
 	cd "$PROFILE_DIR"
 	if [ ${#failed_functions[@]} -eq 0 ]; then
-		echo "==============================="
-		echo "       Setup Complete          "
-		echo "==============================="
+		log "Setup complete."
 	else
-		echo "==============================="
-		echo "       Setup Failed            "
-		echo "==============================="
+		printf '\nSetup failed in:\n'
+		printf '  %s\n' "${failed_functions[@]}"
 		setup_status=1
 	fi
-	if [ "${PROFILE_SETUP_NO_LOGIN_SHELL:-0}" = 1 ]; then
-		return "$setup_status"
-	fi
-	if [ "$setup_status" -ne 0 ]; then
+	if [ "${PROFILE_SETUP_NO_LOGIN_SHELL:-0}" = 1 ] || [ "$setup_status" -ne 0 ]; then
 		return "$setup_status"
 	fi
 	exec bash -l
 }
 
 configure_vscode() {
-	# Copy VS Code settings and keybindings, install extensions.
-	# Expects $VSCODE_USER_DIR to be set by the caller (platform-specific path).
+	# The caller supplies the platform-specific VSCODE_USER_DIR.
 
 	if ! command -v code >/dev/null 2>&1; then
 		log "code CLI not found; VS Code configuration failed"
@@ -801,20 +790,14 @@ configure_vscode() {
 	local vscode_dotfiles="$PROFILE_DIR/dotfiles/vscode"
 	local extensions_failed=0 line
 
-	# Create the VS Code User directory if it doesn't exist
 	mkdir -p "$VSCODE_USER_DIR"
 
-	# Copy settings and keybindings
 	cp "$vscode_dotfiles/settings.json" "$VSCODE_USER_DIR/settings.json"
-	log "Copied VS Code settings.json"
 
 	cp "$vscode_dotfiles/keybindings.json" "$VSCODE_USER_DIR/keybindings.json"
-	log "Copied VS Code keybindings.json"
 
-	# Install extensions from list
 	if [ -f "$vscode_dotfiles/extensions.txt" ]; then
 		while IFS= read -r line || [ -n "$line" ]; do
-			# Skip comments and blank lines
 			line=$(echo "$line" | xargs)
 			if [ -z "$line" ] || [[ "$line" == \#* ]]; then
 				continue

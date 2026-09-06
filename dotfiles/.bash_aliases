@@ -292,7 +292,6 @@ function apt_upgrader() {
 	print_function_name
 	with_package_lock_retry sudo env LC_ALL=C dpkg --configure -a || return
 	apt_get update || return
-	apt_get upgrade -y || return
 	apt_get full-upgrade -y || return
 	apt_get autoremove -y
 }

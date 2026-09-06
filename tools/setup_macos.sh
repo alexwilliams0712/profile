@@ -408,40 +408,6 @@ install_ruby() {
 	fi
 }
 
-install_node() {
-	# Node is installed via Homebrew
-	if command -v node >/dev/null 2>&1; then
-		node -v
-		npm -v
-		# Fix npm ownership if root-owned files exist
-		for dir in "$HOME/.npm" "$HOME/.npm-global"; do
-			if [ -d "$dir" ] &&
-				[ -n "$(find "$dir" ! -user "$(id -un)" -print -quit 2>/dev/null)" ]; then
-				log "Fixing ownership under $dir"
-				run_sudo chown -R "$(id -u):$(id -g)" "$dir"
-			fi
-		done
-		# Set npm global prefix to match PATH in .bashrc (~/.npm-global/bin)
-		mkdir -p "$HOME/.npm-global"
-		npm config set prefix "$HOME/.npm-global"
-		npm install -g wscat json5 fracturedjsonjs
-	else
-		log "Node not found; npm global installation failed"
-		return 1
-	fi
-}
-
-install_go() {
-	# Go is installed via Homebrew
-	if command -v go >/dev/null 2>&1; then
-		go version
-		go install github.com/dim13/otpauth@latest
-	else
-		log "Go not found; Go installation failed"
-		return 1
-	fi
-}
-
 setup_docker() {
 	log "Setting up Docker..."
 	mkdir -p ~/.docker/cli-plugins
@@ -543,56 +509,12 @@ install_tailscale() {
 	fi
 }
 
-install_terraform() {
-	local arch
-	if [ "$(uname -m)" = "arm64" ]; then
-		arch="arm64"
-	else
-		arch="amd64"
-	fi
-	local latest_version
-	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '"tag_name":.*' | cut -d'v' -f2 | tr -d '",')
-	if command -v terraform >/dev/null 2>&1 &&
-		terraform version | head -n 1 | grep -qx "Terraform v$latest_version"; then
-		log "Terraform $latest_version is already installed."
-		terraform version
-		return 0
-	fi
-
-	local tmp_dir
-	tmp_dir="$(mktemp -d)"
-	curl -fsSL "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_darwin_${arch}.zip" \
-		-o "$tmp_dir/terraform.zip" || {
-		rm -rf "$tmp_dir"
-		return 1
-	}
-	unzip -oq "$tmp_dir/terraform.zip" -d "$tmp_dir" || {
-		rm -rf "$tmp_dir"
-		return 1
-	}
-	local install_dir="/usr/local/bin"
-	if [ ! -d "$install_dir" ] || [ ! -w "$install_dir" ]; then
-		install_dir="$HOME/.local/bin"
-		mkdir -p "$install_dir"
-	fi
-	install -m 0755 "$tmp_dir/terraform" "$install_dir/terraform" || {
-		rm -rf "$tmp_dir"
-		return 1
-	}
-	rm -rf "$tmp_dir"
-	terraform version
-}
-
 install_webtools() {
 	# shfmt, shellcheck, and k9s are installed via Homebrew
 	curl -sS https://webi.sh/awless | sh
 }
 
 install_syncthing() {
-	# Syncthing is installed as a formula via the Brewfile (brew "syncthing").
-	# It ships a launchd agent; start it so it runs at login and keeps folders
-	# (e.g. ~/dotfiles) in sync in the background. Idempotent — a second start
-	# just re-registers the already-running service.
 	if command -v syncthing >/dev/null 2>&1; then
 		brew services start syncthing
 		syncthing --version | head -1
@@ -619,8 +541,8 @@ main() {
 		install_pyenv
 		install_rust
 		install_foundry
-		install_node
-		install_go
+		configure_node
+		install_go_tools
 		setup_docker
 		setup_vscode
 		install_espanso
@@ -659,15 +581,6 @@ main() {
 	brew_shellenv
 	export HOMEBREW_NO_AUTO_UPDATE=1
 	run_functions "${after_brew_steps[@]}"
-	setup_progress_finish
-
-	# Report failures if any
-	if [ ${#failed_functions[@]} -ne 0 ]; then
-		echo -e "\n\033[1;91mThe following functions failed:\033[0m"
-		printf '\033[1;91m%s\033[0m\n' "${failed_functions[@]}"
-		echo -e "\n\033[1;91mPlease check the above functions and try running them individually.\033[0m"
-	fi
-
 	exit_script
 }
 main

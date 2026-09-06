@@ -28,6 +28,11 @@ stopping another package manager or deleting repository definitions. Downloaded
 archives are unpacked in private temporary directories. Failed VS Code extensions
 and Flatpak applications count as failed steps, while later steps still run.
 
+Ubuntu performs one full upgrade at the end; individual installers refresh APT
+only for repository setup. Terraform, Node configuration, Go tools and completion
+reporting are shared. Matching Go/Terraform installs avoid redundant downloads;
+source builds, Python plugin updates and VS Code extension updates are retained.
+
 Every run writes a private log and prints its path. For diagnostics, inspect the
 latest run first:
 
