@@ -105,3 +105,12 @@ multi-step Ubuntu repairs. Launching every privileged command through a separate
 PolicyKit request causes repeated authentication prompts. Never collect or store
 the administrator password; when terminal authentication is needed, provide a
 concrete repair script that uses the existing sudo flow.
+
+## Keep setup lean
+
+For setup refactors, use syntax, lint, formatting and code review rather than
+adding tests. Consolidate identical macOS/Ubuntu work, keep package-manager
+commands platform-specific and avoid repeated upgrade cycles within one run.
+
+A DRY/performance pass MUST preserve the installed tool set, source/package
+selection, installation locations and update policy unless a change is requested.

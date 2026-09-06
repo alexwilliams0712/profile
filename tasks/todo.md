@@ -447,3 +447,21 @@ Independent reviews are complete and all identified material concerns resolved.
 Full installs on physical Macs and ARM machines remain unverified. The earlier
 five live Ubuntu installer retries still require terminal sudo authentication;
 this code-hardening pass does not claim those pending installs completed.
+
+# Simplify setup and reduce repeat-run work
+
+- [x] Pass 1: consolidate common platform behaviour and repeated summaries.
+- [x] Pass 2: remove repeated package updates and unnecessary downloads/builds.
+- [x] Pass 3: shorten redundant comments and output; review the integrated diff.
+- [x] Run Bash syntax, ShellCheck and shfmt only; add no tests.
+
+## Review
+
+Shared Terraform, Node/npm, Go tools and final summaries replace platform copies.
+Ubuntu now has one full-upgrade cycle. Matching Go/Terraform versions avoid repeat
+downloads; existing package choices, source builds, installation locations,
+Python plugin updates and VS Code extension updates are retained.
+
+Three simplification passes and independent review are complete. Bash syntax,
+required ShellCheck, shfmt and diff checks pass. No tests were added or run.
+The pre-PR review restored the behaviours that the initial speed pass changed.

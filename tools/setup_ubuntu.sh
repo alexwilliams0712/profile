@@ -46,7 +46,8 @@ copy_dotfiles() {
 	copy_shared_dotfiles
 }
 install_apt_packages() {
-	apt_upgrader
+	with_package_lock_retry sudo env LC_ALL=C dpkg --configure -a
+	apt_get update
 	local fuse_package=libfuse2
 	if apt-cache show libfuse2t64 >/dev/null 2>&1; then
 		fuse_package=libfuse2t64
@@ -198,27 +199,12 @@ install_pg_formatter() (
 	local install_dir
 	install_dir=$(mktemp -d)
 	trap 'rm -rf "$install_dir"' EXIT
-	cd "$install_dir"
-	echo "Installing pg_formatter..."
-
-	# Install dependencies
-	apt_get update
-	apt_get install -y git perl make
-
-	# Clone and install
-	git clone https://github.com/darold/pgFormatter.git
-	cd pgFormatter
+	git clone --depth 1 https://github.com/darold/pgFormatter.git "$install_dir/pgFormatter"
+	cd "$install_dir/pgFormatter"
 	perl Makefile.PL
 	make
 	sudo make install
-
-	# Verify installation
-	if pg_format --version >/dev/null 2>&1; then
-		echo "pg_formatter installed successfully!"
-	else
-		echo "pg_formatter installation may have failed. Please check manually."
-		return 1
-	fi
+	pg_format --version
 )
 
 install_flatpaks() {
@@ -250,7 +236,6 @@ install_flatpaks() {
 }
 
 install_browser() {
-	apt_get update
 	if ! apt-cache show vivaldi-stable >/dev/null 2>&1; then
 		local key_file
 		key_file=$(mktemp)
@@ -267,7 +252,6 @@ install_browser() {
 }
 
 install_vscode() {
-	apt_get update
 	if ! apt-cache show code >/dev/null 2>&1; then
 		local key_file
 		key_file=$(mktemp)
@@ -361,16 +345,17 @@ install_go() (
 	trap 'rm -rf "$install_dir"' EXIT
 	page=$(curl -fsSL https://go.dev/dl/)
 	archive=$(grep -oEm1 "go[0-9.]+\.${go_arch}\.tar\.gz" <<<"$page")
-	curl -fsSL "https://go.dev/dl/$archive" -o "$install_dir/go.tar.gz"
-	tar -xzf "$install_dir/go.tar.gz" -C "$install_dir"
-	# Validate the replacement before removing a working installation.
-	"$install_dir/go/bin/go" version
-	sudo rm -rf /usr/local/go
-	sudo mv "$install_dir/go" /usr/local/go
+	local version="${archive%%.linux-*}"
+	if [ ! -x /usr/local/go/bin/go ] || ! /usr/local/go/bin/go version | grep -Fq " $version "; then
+		curl -fsSL "https://go.dev/dl/$archive" -o "$install_dir/go.tar.gz"
+		tar -xzf "$install_dir/go.tar.gz" -C "$install_dir"
+		# Validate the replacement before removing a working installation.
+		"$install_dir/go/bin/go" version
+		sudo rm -rf /usr/local/go
+		sudo mv "$install_dir/go" /usr/local/go
+	fi
 	export PATH="/usr/local/go/bin:$PATH"
-	go version
-	go install github.com/dim13/otpauth@latest
-	go install github.com/boyter/scc/v3@latest
+	install_go_tools
 )
 
 install_jetbrains_toolbox() {
@@ -403,7 +388,6 @@ install_espanso() {
 	if [ "$package_status" = installed ] && command -v espanso >/dev/null 2>&1; then
 		installed="v$(espanso --version)"
 	fi
-	apt_get update
 	if [ "$session" = wayland ]; then
 		apt_get install -y wl-clipboard libxkbcommon0 libcap2-bin
 	fi
@@ -461,7 +445,7 @@ install_and_setup_docker() {
 		"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
       $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 	sudo chmod a+r /etc/apt/keyrings/docker.gpg
-	apt_upgrader
+	apt_get update
 	apt_get install -y \
 		docker-ce \
 		docker-ce-cli \
@@ -481,21 +465,14 @@ install_and_setup_docker() {
 }
 
 install_syncthing() {
-	# Syncthing via the official apt repo (apt.syncthing.net) — NOT snap.
-	# Snap's confinement sandboxes ~/ and breaks syncing arbitrary folders, and
-	# we avoid snap on Ubuntu generally. This mirrors the gh/docker keyring +
-	# sources.list pattern used elsewhere in this script.
 	sudo mkdir -p /etc/apt/keyrings
 	sudo curl -fsSL -o /etc/apt/keyrings/syncthing-archive-keyring.gpg https://syncthing.net/release-key.gpg
 	echo "deb [signed-by=/etc/apt/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable" |
 		sudo tee /etc/apt/sources.list.d/syncthing.list >/dev/null
-	apt_upgrader
+	apt_get update
 	apt_get install -y syncthing
 
-	# Run as a per-user service and keep it alive across logouts/reboots so
-	# folders (e.g. ~/dotfiles) stay in sync headlessly. enable-linger lets the
-	# user manager run without an active login session. Guarded because
-	# `systemctl --user` needs a user DBus, which may be absent over plain SSH.
+	# SSH sessions may lack the user bus; linger enables startup after logout.
 	sudo loginctl enable-linger "$USER" || log "Could not enable linger for $USER"
 	if systemctl --user enable --now syncthing.service 2>/dev/null; then
 		log "syncthing.service enabled for $USER"
@@ -512,7 +489,7 @@ install_github_cli() {
 	sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
 	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] \
 		https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
-	apt_upgrader
+	apt_get update
 	apt_get install gh -y
 }
 
@@ -525,18 +502,9 @@ install_clam_av() (
 )
 
 install_carapace() {
-	local arch
-	if [ "$ARCHITECTURE" = "arm64" ]; then
-		arch="arm64"
-	else
-		arch="amd64"
-	fi
-	local latest_version
-	latest_version=$(curl -fsSL https://api.github.com/repos/carapace-sh/carapace-bin/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
-	if [ -z "$latest_version" ]; then
-		log "Could not fetch latest carapace version"
-		return 1
-	fi
+	local arch latest_version
+	arch=$(github_arch deb)
+	latest_version=$(github_latest_tag carapace-sh/carapace-bin)
 	local version_num="${latest_version#v}"
 	local download_url="https://github.com/carapace-sh/carapace-bin/releases/download/${latest_version}/carapace-bin_${version_num}_linux_${arch}.tar.gz"
 	log "Downloading carapace ${latest_version} for ${arch}"
@@ -545,18 +513,9 @@ install_carapace() {
 }
 
 install_viddy() {
-	local arch
-	if [ "$ARCHITECTURE" = "arm64" ]; then
-		arch="arm64"
-	else
-		arch="x86_64"
-	fi
-	local latest_version
-	latest_version=$(curl -fsSL https://api.github.com/repos/sachaos/viddy/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
-	if [ -z "$latest_version" ]; then
-		log "Could not fetch latest viddy version"
-		return 1
-	fi
+	local arch latest_version
+	arch=$(github_arch uname)
+	latest_version=$(github_latest_tag sachaos/viddy)
 	local download_url="https://github.com/sachaos/viddy/releases/download/${latest_version}/viddy-${latest_version}-linux-${arch}.tar.gz"
 	log "Downloading viddy ${latest_version} for ${arch}"
 	github_install_bin "$download_url" viddy
@@ -564,18 +523,9 @@ install_viddy() {
 }
 
 install_duf() {
-	local arch
-	if [ "$ARCHITECTURE" = "arm64" ]; then
-		arch="arm64"
-	else
-		arch="amd64"
-	fi
-	local latest_version
-	latest_version=$(curl -fsSL https://api.github.com/repos/muesli/duf/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
-	if [ -z "$latest_version" ]; then
-		log "Could not fetch latest duf version"
-		return 1
-	fi
+	local arch latest_version
+	arch=$(github_arch deb)
+	latest_version=$(github_latest_tag muesli/duf)
 	local version_num="${latest_version#v}"
 	local deb_file="duf_${version_num}_linux_${arch}.deb"
 	local download_url="https://github.com/muesli/duf/releases/download/${latest_version}/${deb_file}"
@@ -605,10 +555,7 @@ configure_locale() {
 }
 
 install_ghostty() {
-	# Install / upgrade Ghostty via the mkasberg community .deb, which tracks
-	# upstream releases. Asset names are suffixed with the Ubuntu VERSION_ID
-	# (e.g. ghostty_1.3.1-0.ppa2_amd64_25.10.deb), not the codename, so match
-	# on `lsb_release -rs`.
+	# Assets encode the Ubuntu version, not the codename.
 	local arch
 	arch=$(github_arch deb)
 	local ubuntu_version
@@ -616,11 +563,8 @@ install_ghostty() {
 	local release_json
 	release_json=$(curl -fsSL https://api.github.com/repos/mkasberg/ghostty-ubuntu/releases/latest)
 	local deb_url
-	deb_url=$(echo "$release_json" |
-		grep -oE '"browser_download_url": *"[^"]*\.deb"' |
-		cut -d'"' -f4 |
-		grep "_${arch}_${ubuntu_version}\.deb$" |
-		head -n1)
+	deb_url=$(jq -r --arg suffix "_${arch}_${ubuntu_version}.deb" \
+		'[.assets[].browser_download_url | select(endswith($suffix))][0] // empty' <<<"$release_json")
 	if [ -z "$deb_url" ]; then
 		log "Could not locate a Ghostty .deb for Ubuntu ${ubuntu_version}/${arch}"
 		return 1
@@ -640,17 +584,6 @@ install_gum() {
 }
 
 # GitHub release helpers — shared by install_delta, install_lazygit, etc.
-github_latest_tag() {
-	local repo="$1"
-	local tag
-	tag=$(curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" | jq -r '.tag_name')
-	if [ -z "$tag" ] || [ "$tag" = "null" ]; then
-		log "Could not fetch latest tag for ${repo}"
-		return 1
-	fi
-	echo "$tag"
-}
-
 github_arch() {
 	# Usage: github_arch deb   -> amd64 | arm64
 	#        github_arch uname -> x86_64 | arm64
@@ -743,25 +676,6 @@ install_redis_insight() {
 	github_install_deb "https://github.com/redis/RedisInsight/releases/download/${version}/Redis-Insight-linux-amd64.deb"
 }
 
-install_terraform() (
-	local install_dir
-	install_dir=$(mktemp -d)
-	trap 'rm -rf "$install_dir"' EXIT
-	cd "$install_dir"
-	if [ "$ARCHITECTURE" = "arm64" ]; then
-		arch="arm64"
-	else
-		arch="amd64"
-	fi
-	local version
-	version=$(github_latest_tag hashicorp/terraform)
-	version=${version#v}
-	curl -fsSL "https://releases.hashicorp.com/terraform/$version/terraform_${version}_linux_${arch}.zip" -o terraform.zip
-	unzip terraform.zip
-	sudo install -m 0755 terraform /usr/local/bin/terraform
-	terraform version
-)
-
 install_aws_cli() (
 	local install_dir
 	install_dir=$(mktemp -d)
@@ -792,9 +706,7 @@ run_apt_installer() (
 install_node() {
 	run_apt_installer https://deb.nodesource.com/setup_current.x bash
 	apt_get install -y nodejs
-	node -v
-	npm -v
-	sudo npm install -g wscat prettier json5 fracturedjsonjs
+	configure_node
 }
 
 install_tailscale() {
@@ -898,15 +810,6 @@ main() {
 		source "$HOME/.bash_aliases"
 	fi
 	run_functions "${remaining_steps[@]}"
-	setup_progress_finish
-
-	# Report failures if any
-	if [ ${#failed_functions[@]} -ne 0 ]; then
-		echo -e "\n\033[1;91mThe following functions failed:\033[0m"
-		printf '\033[1;91m%s\033[0m\n' "${failed_functions[@]}"
-		echo -e "\n\033[1;91mPlease check the above functions and try running them individually.\033[0m"
-	fi
-
 	exit_script
 }
 main
