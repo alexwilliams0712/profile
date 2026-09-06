@@ -523,10 +523,16 @@ install_viddy() {
 }
 
 install_duf() {
-	local arch latest_version
+	local arch latest_version installed_package
 	arch=$(github_arch deb)
 	latest_version=$(github_latest_tag muesli/duf)
 	local version_num="${latest_version#v}"
+	installed_package=$(dpkg-query -W -f='${db:Status-Status} ${Version}' duf 2>/dev/null) || installed_package=""
+	if [[ "$installed_package" == installed\ * ]] &&
+		dpkg --compare-versions "${installed_package#installed }" ge "$version_num"; then
+		duf --version
+		return
+	fi
 	local deb_file="duf_${version_num}_linux_${arch}.deb"
 	local download_url="https://github.com/muesli/duf/releases/download/${latest_version}/${deb_file}"
 	log "Downloading duf ${latest_version} for ${arch}"
