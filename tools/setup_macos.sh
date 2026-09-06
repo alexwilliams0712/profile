@@ -1,9 +1,14 @@
 #!/bin/bash
+if [ "$(id -u)" -eq 0 ]; then
+	printf 'Error: run setup as your normal user; privileged steps use sudo.\n' >&2
+	exit 1
+fi
 echo "Setup running"
 
 mkdir -p "$HOME/CODE"
 export PATH="$HOME/.local/bin:/usr/local/sbin:/usr/local/bin:$PATH"
-PROFILE_DIR="$(pwd)"
+PROFILE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)" || exit 1
+cd -- "$PROFILE_DIR" || exit 1
 export PROFILE_DIR
 # Upstream installers must not stop for their own confirmation prompts.
 # Homebrew may still request administrator approval after it deliberately
@@ -106,8 +111,10 @@ copy_dotfiles() {
 	local ghostty_config_dir="$HOME/Library/Application Support/com.mitchellh.ghostty"
 	mkdir -p "$ghostty_config_dir"
 	cp "$PROFILE_DIR/dotfiles/ghostty/config" "$ghostty_config_dir/config.ghostty"
-	# Do not load the legacy file previously managed by this profile as well.
-	rm -f "$HOME/.config/ghostty/config"
+	# Remove only an unchanged legacy copy managed by this profile.
+	if cmp -s "$PROFILE_DIR/dotfiles/ghostty/config" "$HOME/.config/ghostty/config"; then
+		rm -f "$HOME/.config/ghostty/config"
+	fi
 
 	# Disable custom prefs folder (fragile — breaks if repo path changes)
 	defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool false
@@ -262,7 +269,7 @@ install_packages() {
 	for pkg in "${unwanted[@]}"; do
 		if printf '%s\n' "$installed_formulae" | grep -Fxq "$pkg"; then
 			log "Removing unwanted package: $pkg"
-			brew uninstall --ignore-dependencies "$pkg" 2>/dev/null || true
+			brew uninstall "$pkg" 2>/dev/null || true
 		fi
 	done
 	local caskroom
@@ -276,9 +283,7 @@ install_packages() {
 	[ -n "$brew_cache" ] && rm -rf "${brew_cache:?}/Cask" 2>/dev/null || true
 
 	log "Updating Homebrew..."
-	# Reset local repo state so the JSON API (not stale local taps) is the
-	# source of truth, then update. Both are best-effort — non-fatal on error.
-	brew update-reset || log "Warning: brew update-reset had errors, continuing..."
+	# Updating is best-effort; preserve local Homebrew repository changes.
 	brew update || log "Warning: brew update had errors, continuing..."
 	log "Installing packages from Brewfile..."
 	# Homebrew 6 can misclassify casks as formulae when Bundle prefetches a mixed
@@ -356,7 +361,8 @@ install_packages() {
 setup_bash() {
 	# macOS ships with bash 3.2 (GPLv2). Homebrew installs bash 5+ which is
 	# needed for associative arrays and other features used in .bash_aliases.
-	local brew_bash="$(brew --prefix)/bin/bash"
+	local brew_bash
+	brew_bash="$(brew --prefix)/bin/bash"
 	if [ -f "$brew_bash" ]; then
 		if ! grep -q "$brew_bash" /etc/shells 2>/dev/null; then
 			log "Adding Homebrew bash to /etc/shells"
@@ -379,9 +385,14 @@ setup_bash() {
 install_ruby() {
 	# Ruby is installed via Homebrew. Use Homebrew's Ruby instead of macOS system Ruby
 	# so we get a current version and can install gems without sudo.
-	local brew_ruby="/opt/homebrew/opt/ruby/bin/ruby"
+	local ruby_prefix
+	ruby_prefix="$(brew --prefix ruby)"
+	local brew_ruby="$ruby_prefix/bin/ruby"
 	if [ -f "$brew_ruby" ]; then
-		export PATH="/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/4.0.0/bin:$PATH"
+		export PATH="$ruby_prefix/bin:$PATH"
+		local gem_bin
+		gem_bin="$(ruby -rrubygems -e 'puts Gem.bindir')"
+		export PATH="$gem_bin:$PATH"
 		log "Using Homebrew Ruby: $("$brew_ruby" --version)"
 
 		# Install bundler (used for managing project-level gem dependencies like fastlane)
@@ -392,7 +403,8 @@ install_ruby() {
 			log "Bundler already installed: $(bundle --version)"
 		fi
 	else
-		log "Homebrew Ruby not found, skipping Ruby setup"
+		log "Homebrew Ruby not found; Ruby setup failed"
+		return 1
 	fi
 }
 
@@ -414,7 +426,8 @@ install_node() {
 		npm config set prefix "$HOME/.npm-global"
 		npm install -g wscat json5 fracturedjsonjs
 	else
-		log "Node not found, skipping npm global installs"
+		log "Node not found; npm global installation failed"
+		return 1
 	fi
 }
 
@@ -424,7 +437,8 @@ install_go() {
 		go version
 		go install github.com/dim13/otpauth@latest
 	else
-		log "Go not found, skipping go installs"
+		log "Go not found; Go installation failed"
+		return 1
 	fi
 }
 
@@ -433,8 +447,10 @@ setup_docker() {
 	mkdir -p ~/.docker/cli-plugins
 
 	# Symlink docker-compose from Homebrew if available
-	if [ -f /opt/homebrew/opt/docker-compose/bin/docker-compose ]; then
-		ln -sfn /opt/homebrew/opt/docker-compose/bin/docker-compose ~/.docker/cli-plugins/docker-compose
+	local compose_bin
+	compose_bin="$(brew --prefix)/opt/docker-compose/bin/docker-compose"
+	if [ -f "$compose_bin" ]; then
+		ln -sfn "$compose_bin" ~/.docker/cli-plugins/docker-compose
 	fi
 
 	# Docker Desktop is installed by the Brewfile but started only by the user.
@@ -453,8 +469,10 @@ setup_vscode() {
 	# Add the `code` CLI to PATH
 	local code_bin="$vscode_app/Contents/Resources/app/bin/code"
 	if [ -f "$code_bin" ]; then
-		ln -sf "$code_bin" /usr/local/bin/code
-		log "VS Code CLI linked to /usr/local/bin/code"
+		mkdir -p "$HOME/.local/bin"
+		ln -sf "$code_bin" "$HOME/.local/bin/code"
+		export PATH="$HOME/.local/bin:$PATH"
+		log "VS Code CLI linked to $HOME/.local/bin/code"
 	else
 		log "VS Code binary not found after install, skipping configuration"
 		return 1
@@ -470,7 +488,7 @@ install_espanso() {
 		local espanso_config="$HOME/Library/Application Support/espanso"
 		local config_file="$espanso_config/config/default.yml"
 		mkdir -p "$espanso_config/config" "$espanso_config/match"
-		cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$espanso_config/match/base.yml"
+		configure_espanso_matches "$espanso_config/match/base.yml"
 		# Use Clipboard backend to avoid key injection issues (e.g. @ becoming ")
 		if [ ! -f "$config_file" ]; then
 			printf 'backend: Clipboard\n' >"$config_file"
@@ -479,14 +497,10 @@ install_espanso() {
 		else
 			printf '\nbackend: Clipboard\n' >>"$config_file"
 		fi
-		# Substitute placeholders with git config values
-		local match_file="$espanso_config/match/base.yml"
-		sed -i '' "s|__EMAIL__|$(git config --global user.email)|" "$match_file"
-		sed -i '' "s|__GIT_USER__|$(git config --global user.name)|" "$match_file"
-		sed -i '' "s|__PHONE__|$(git config --global user.phonenumber)|" "$match_file"
-		espanso --version || true
+		espanso --version
 	else
-		log "espanso not found, skipping config"
+		log "espanso not found; configuration failed"
+		return 1
 	fi
 }
 
@@ -525,6 +539,7 @@ install_tailscale() {
 		fi
 	else
 		log "Tailscale.app not found in /Applications. Verify brew cask install succeeded."
+		return 1
 	fi
 }
 
@@ -579,10 +594,11 @@ install_syncthing() {
 	# (e.g. ~/dotfiles) in sync in the background. Idempotent — a second start
 	# just re-registers the already-running service.
 	if command -v syncthing >/dev/null 2>&1; then
-		brew services start syncthing || log "Could not start syncthing service"
+		brew services start syncthing
 		syncthing --version | head -1
 	else
-		log "syncthing not found (brew bundle may have failed); skipping service start"
+		log "syncthing not found (brew bundle may have failed); service setup failed"
+		return 1
 	fi
 }
 

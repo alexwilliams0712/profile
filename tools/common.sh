@@ -453,6 +453,10 @@ collect_user_input() {
 	log "All profile input collected. Setup will continue."
 }
 
+setup_tool_path() {
+	export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.pyenv/bin:$HOME/.pyenv/shims:$HOME/.npm-global/bin:$HOME/.foundry/bin:$HOME/go/bin:/usr/local/go/bin:$PATH"
+}
+
 run_function() {
 	local func_name=$1 exit_code=0
 	local had_errexit=0
@@ -478,6 +482,8 @@ run_function() {
 		set -e
 		set -o pipefail
 		trap 'handle_error $LINENO' ERR
+		# Earlier steps install these tools in subprocesses; refresh their PATH.
+		setup_tool_path
 		if [ "${PROFILE_SETUP_PROGRESS_FD:-}" = 9 ] && [ -t 9 ]; then
 			"$func_name" 9>&-
 		else
@@ -553,8 +559,36 @@ copy_shared_dotfiles() {
 	chmod +x "$HOME/.local/bin/json_formatter.py" "$HOME/.local/bin/work-proxy"
 }
 
+configure_espanso_matches() {
+	local output=$1 temporary email name phone
+	email="$(git config --global user.email)" || email=""
+	name="$(git config --global user.name)" || name=""
+	phone="$(git config --global user.phonenumber)" || phone=""
+	temporary="$(mktemp "${output}.XXXXXX")" || return 1
+	# JSON strings are valid YAML scalars and escape quotes, slashes and newlines.
+	if ! PROFILE_ESPANSO_EMAIL="$email" PROFILE_ESPANSO_NAME="$name" PROFILE_ESPANSO_PHONE="$phone" \
+		perl -MJSON::PP -MEncode=decode -pe '
+			BEGIN {
+				my $json = JSON::PP->new->utf8->allow_nonref;
+				%values = map {
+					my $value = $json->encode(decode("UTF-8", $ENV{"PROFILE_ESPANSO_" . $_}));
+					$value =~ s/\xC2\x85/\\u0085/g;
+					$value =~ s/\xE2\x80\xA8/\\u2028/g;
+					$value =~ s/\xE2\x80\xA9/\\u2029/g;
+					$_ => $value
+				} qw(EMAIL NAME PHONE);
+				$values{GIT_USER} = $values{NAME};
+			}
+			s/"__(EMAIL|GIT_USER|PHONE)__"/$values{$1}/g;
+		' "$PROFILE_DIR/dotfiles/espanso_match_file.yml" >"$temporary"; then
+		rm -f "$temporary"
+		return 1
+	fi
+	mv -f "$temporary" "$output"
+}
+
 install_starship() {
-	curl -sS https://starship.rs/install.sh | sh -s -- -y
+	curl -fsS https://starship.rs/install.sh | sh -s -- -y
 	if command -v starship >/dev/null 2>&1; then
 		starship --version
 	fi
@@ -563,7 +597,7 @@ install_starship() {
 install_foundry() {
 	# Foundry (forge, cast, anvil, chisel) via the official installer — NOT snap.
 	# foundryup installs to ~/.foundry/bin (added to PATH in .bashrc).
-	curl -L https://foundry.paradigm.xyz | bash
+	curl -fsSL https://foundry.paradigm.xyz | bash
 	"$HOME/.foundry/bin/foundryup"
 	"$HOME/.foundry/bin/cast" --version
 }
@@ -599,23 +633,27 @@ install_pyenv() {
 		fi
 
 		# Force compiler to target the native architecture
-		export ARCHFLAGS="-arch $(uname -m)"
+		ARCHFLAGS="-arch $(uname -m)"
+		export ARCHFLAGS
 
 		# Set build flags so pyenv can find Homebrew keg-only dependencies
-		export LDFLAGS="-L$(brew --prefix openssl)/lib -L$(brew --prefix readline)/lib -L$(brew --prefix sqlite3)/lib -L$(brew --prefix zlib)/lib"
-		export CPPFLAGS="-I$(brew --prefix openssl)/include -I$(brew --prefix readline)/include -I$(brew --prefix sqlite3)/include -I$(brew --prefix zlib)/include"
-		export PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig:$(brew --prefix readline)/lib/pkgconfig:$(brew --prefix sqlite3)/lib/pkgconfig:$(brew --prefix zlib)/lib/pkgconfig"
+		LDFLAGS="-L$(brew --prefix openssl)/lib -L$(brew --prefix readline)/lib -L$(brew --prefix sqlite3)/lib -L$(brew --prefix zlib)/lib"
+		CPPFLAGS="-I$(brew --prefix openssl)/include -I$(brew --prefix readline)/include -I$(brew --prefix sqlite3)/include -I$(brew --prefix zlib)/include"
+		PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig:$(brew --prefix readline)/lib/pkgconfig:$(brew --prefix sqlite3)/lib/pkgconfig:$(brew --prefix zlib)/lib/pkgconfig"
+		export LDFLAGS CPPFLAGS PKG_CONFIG_PATH
 	else
 		apt_upgrader
-		sudo apt install -y software-properties-common
+		apt_get install -y software-properties-common
 	fi
 
-	# Install pyenv if not already present
+	# Prefer Homebrew's pyenv on macOS; its version directory may not exist yet.
 	local pyenv_dir="$HOME/.pyenv"
-	if [ -d "$pyenv_dir" ]; then
-		log "The $pyenv_dir directory already exists. Remove it to reinstall."
-	else
-		curl https://pyenv.run | bash
+	if ! command -v pyenv >/dev/null 2>&1 && [ ! -x "$pyenv_dir/bin/pyenv" ]; then
+		if [ -d "$pyenv_dir" ]; then
+			log "Incomplete pyenv installation at $pyenv_dir; preserve or move it before retrying."
+			return 1
+		fi
+		curl -fsSL https://pyenv.run | bash
 	fi
 
 	export PYENV_ROOT="$HOME/.pyenv"
@@ -627,9 +665,7 @@ install_pyenv() {
 
 	# Update pyenv plugin index (Linux-only; on macOS pyenv is managed by Homebrew)
 	if [ "$os_type" != "Darwin" ]; then
-		source ~/.bashrc 2>/dev/null || true
 		pyenv update
-		source ~/.bashrc 2>/dev/null || true
 	fi
 
 	local pyenv_version_dir="$PYENV_ROOT/versions/$DEFAULT_PYTHON_VERSION"
@@ -677,8 +713,7 @@ install_pyenv() {
 	if [ ! -d "$venv_folder" ]; then
 		git clone "$venv_url" "$venv_folder"
 	else
-		cd "$venv_folder"
-		git pull "$venv_url"
+		git -C "$venv_folder" pull --ff-only "$venv_url"
 	fi
 
 	# Install uv
@@ -690,14 +725,13 @@ install_pyenv() {
 	fi
 
 	# Install base Python packages
-	if command -v uv >/dev/null 2>&1; then
-		# `--system` selects Ubuntu's externally managed `/usr` interpreter.
-		uv pip install --python "$python_bin" pip-tools psutil
-	fi
+	# `--system` selects Ubuntu's externally managed `/usr` interpreter.
+	export PATH="$HOME/.local/bin:$PATH"
+	uv pip install --python "$python_bin" pip-tools psutil
 
 	# Create a default venv if needed (macOS convention)
 	if [ "$os_type" = "Darwin" ] && [ ! -d "$HOME/.venv" ]; then
-		uv venv "$HOME/.venv"
+		uv venv --python "$python_bin" "$HOME/.venv"
 	fi
 
 }
@@ -723,7 +757,8 @@ install_ai() {
 			sudo npm install -g @google/gemini-cli
 		fi
 	else
-		log "npm not found, skipping Gemini CLI install"
+		log "npm not found; Gemini CLI installation failed"
+		return 1
 	fi
 
 	log "AI CLI tools installation complete"
@@ -759,11 +794,12 @@ configure_vscode() {
 	# Expects $VSCODE_USER_DIR to be set by the caller (platform-specific path).
 
 	if ! command -v code >/dev/null 2>&1; then
-		log "code CLI not found, skipping VS Code configuration"
-		return 0
+		log "code CLI not found; VS Code configuration failed"
+		return 1
 	fi
 
 	local vscode_dotfiles="$PROFILE_DIR/dotfiles/vscode"
+	local extensions_failed=0 line
 
 	# Create the VS Code User directory if it doesn't exist
 	mkdir -p "$VSCODE_USER_DIR"
@@ -777,14 +813,20 @@ configure_vscode() {
 
 	# Install extensions from list
 	if [ -f "$vscode_dotfiles/extensions.txt" ]; then
-		while IFS= read -r line; do
+		while IFS= read -r line || [ -n "$line" ]; do
 			# Skip comments and blank lines
 			line=$(echo "$line" | xargs)
 			if [ -z "$line" ] || [[ "$line" == \#* ]]; then
 				continue
 			fi
-			code --install-extension "$line" --force 2>/dev/null || log "Failed to install extension: $line"
+			if ! code --install-extension "$line" --force; then
+				log "Failed to install extension: $line"
+				extensions_failed=1
+			fi
 		done <"$vscode_dotfiles/extensions.txt"
-		log "VS Code extensions installed"
+		if [ "$extensions_failed" -eq 0 ]; then
+			log "VS Code extensions installed"
+		fi
 	fi
+	return "$extensions_failed"
 }

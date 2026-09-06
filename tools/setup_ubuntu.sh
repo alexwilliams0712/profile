@@ -1,10 +1,30 @@
 #!/bin/bash
 echo "Setup running"
 
+if [ "$(id -u)" -eq 0 ]; then
+	printf 'Run setup as your normal user; privileged steps use sudo.\n' >&2
+	exit 1
+fi
+
+# shellcheck disable=SC1091
+source /etc/os-release
+if [ "${ID:-}" != ubuntu ] || ! dpkg --compare-versions "${VERSION_ID:-0}" ge 24.04; then
+	printf 'Linux setup requires Ubuntu 24.04 or newer.\n' >&2
+	exit 1
+fi
+
 mkdir -p "$HOME/CODE"
 export PATH="$HOME/.local/bin:/usr/local/sbin:/usr/local/bin:$PATH"
-PROFILE_DIR="$(pwd)"
-ARCHITECTURE="$(dpkg --print-architecture)"
+PROFILE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$PROFILE_DIR"
+ARCHITECTURE="$(dpkg --print-architecture)" || exit 1
+case "$ARCHITECTURE" in
+amd64 | arm64) ;;
+*)
+	printf 'Unsupported Ubuntu architecture: %s\n' "$ARCHITECTURE" >&2
+	exit 1
+	;;
+esac
 export PROFILE_DIR ARCHITECTURE
 set -e
 set -o pipefail
@@ -27,10 +47,15 @@ copy_dotfiles() {
 }
 install_apt_packages() {
 	apt_upgrader
+	local fuse_package=libfuse2
+	if apt-cache show libfuse2t64 >/dev/null 2>&1; then
+		fuse_package=libfuse2t64
+	fi
 	log "Running installs"
-	sudo apt-get install -y software-properties-common
-	sudo add-apt-repository -y universe
-	sudo apt-get -o DPkg::Lock::Timeout=60 install -y --upgrade \
+	apt_get install -y software-properties-common
+	sudo add-apt-repository --no-update -y universe
+	apt_get update
+	apt_get install -y --upgrade \
 		apt-transport-https \
 		aptitude \
 		at \
@@ -59,10 +84,10 @@ install_apt_packages() {
 		libbz2-dev \
 		libdbus-1-dev \
 		libffi-dev \
-		libfuse2 \
+		"$fuse_package" \
 		liblzma-dev \
 		libmysqlclient-dev \
-		libncursesw5-dev \
+		libncurses-dev \
 		libnetfilter-queue1 \
 		libpq-dev \
 		libreadline-dev \
@@ -96,14 +121,16 @@ install_apt_packages() {
 		terminator \
 		tk-dev \
 		tree \
+		ufw \
+		unzip \
 		vlc \
 		wget \
 		xz-utils \
 		zlib1g-dev
 
 	sudo systemctl disable postgresql.service
-	sudo YES=yes /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
-	sudo apt install -y postgresql-18
+	with_package_lock_retry sudo env LC_ALL=C YES=yes /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+	apt_get install -y postgresql-18
 	sudo systemctl enable systemd-timesyncd
 	sudo systemctl start systemd-timesyncd
 	sudo timedatectl set-ntp true
@@ -134,7 +161,7 @@ install_slack() {
 	log "Downloading Slack to $TMP_DEB..."
 	wget -q -O "$TMP_DEB" "$SLACK_DEB_URL"
 	log "Installing / upgrading Slack..."
-	sudo apt install -y "$TMP_DEB"
+	apt_get install -y "$TMP_DEB"
 	log "Cleaning up..."
 	rm -f "$TMP_DEB"
 	log "Slack install/upgrade complete."
@@ -167,16 +194,16 @@ configure_remote_unlock() {
 	rm -f "$temp_file"
 }
 
-install_pg_formatter() {
+install_pg_formatter() (
+	local install_dir
+	install_dir=$(mktemp -d)
+	trap 'rm -rf "$install_dir"' EXIT
+	cd "$install_dir"
 	echo "Installing pg_formatter..."
 
 	# Install dependencies
-	sudo apt update
-	sudo apt install -y git perl make
-
-	# Create temporary directory
-	TEMP_DIR=$(mktemp -d)
-	cd "$TEMP_DIR"
+	apt_get update
+	apt_get install -y git perl make
 
 	# Clone and install
 	git clone https://github.com/darold/pgFormatter.git
@@ -185,10 +212,6 @@ install_pg_formatter() {
 	make
 	sudo make install
 
-	# Clean up
-	cd ~
-	rm -rf "$TEMP_DIR"
-
 	# Verify installation
 	if pg_format --version >/dev/null 2>&1; then
 		echo "pg_formatter installed successfully!"
@@ -196,9 +219,10 @@ install_pg_formatter() {
 		echo "pg_formatter installation may have failed. Please check manually."
 		return 1
 	fi
-}
+)
 
 install_flatpaks() {
+	local failed=0
 	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	for app in \
 		org.telegram.desktop \
@@ -215,115 +239,85 @@ install_flatpaks() {
 			log "Successfully installed $app"
 		else
 			log "Failed to install $app - continuing with next application"
+			failed=1
 		fi
 	done
 
 	# ZapZap is sandboxed and only sees XDG dirs by default; grant access to
 	# $HOME so it can attach and save files anywhere in the home directory.
 	flatpak override --user --filesystem=home com.rtosta.zapzap
+	return "$failed"
 }
 
 install_browser() {
-	# Update package lists first
-	log "Updating package lists"
-	sudo apt update
-
-	# Try to get the latest version from Vivaldi's download page
-	log "Fetching latest Vivaldi version information"
-	latest_version=$(curl -s "https://vivaldi.com/download/" | grep -o 'vivaldi-stable_[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-[0-9]*' | head -1 | sed 's/vivaldi-stable_//')
-
-	# Fallback to your specified version if we can't fetch the latest
-	if [ -z "$latest_version" ]; then
-		log "Could not fetch latest version, using fallback version"
-		version="7.4.3684.52-1"
-	else
-		version="$latest_version"
-		log "Latest version found: $version"
+	apt_get update
+	if ! apt-cache show vivaldi-stable >/dev/null 2>&1; then
+		local key_file
+		key_file=$(mktemp)
+		curl -fsSL https://repo.vivaldi.com/stable/linux_signing_key.pub |
+			gpg --dearmor >"$key_file"
+		sudo install -D -m 644 "$key_file" /etc/apt/keyrings/vivaldi.gpg
+		rm -f "$key_file"
+		printf 'deb [arch=%s signed-by=/etc/apt/keyrings/vivaldi.gpg] https://repo.vivaldi.com/stable/deb/ stable main\n' "$ARCHITECTURE" |
+			sudo tee /etc/apt/sources.list.d/vivaldi.list >/dev/null
+		apt_get update
 	fi
-
-	if command -v vivaldi >/dev/null 2>&1; then
-		installed_version=$(vivaldi --version 2>/dev/null | grep -o '[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*')
-		# Strip the package revision (e.g. -1) from version for comparison
-		latest_upstream=$(echo "$version" | sed 's/-[0-9]*$//')
-		if [ "$installed_version" = "$latest_upstream" ]; then
-			log "Vivaldi is already up to date ($installed_version)"
-			return 0
-		fi
-		log "Vivaldi $installed_version is installed, upgrading to $latest_upstream"
-	fi
-
-	if [ "$ARCHITECTURE" = "arm64" ]; then
-		arch="arm64"
-	else
-		arch="amd64"
-	fi
-
-	log "Downloading Vivaldi $version for $arch"
-	wget "https://downloads.vivaldi.com/stable/vivaldi-stable_${version}_${arch}.deb"
-
-	# Use dpkg to force installation of the local .deb file
-	log "Installing Vivaldi from local .deb file"
-	sudo dpkg -i ./vivaldi-stable_${version}_${arch}.deb
-
-	# Fix any dependency issues that dpkg couldn't resolve
-	sudo apt install -f -y
-
-	rm -f vivaldi-stable_${version}_${arch}.deb
-	log "Vivaldi installation completed"
+	apt_get install -y vivaldi-stable
+	vivaldi --version
 }
 
 install_vscode() {
-	# Clean up any existing Microsoft repository configurations to prevent conflicts
-	sudo rm -f /etc/apt/sources.list.d/*microsoft* /etc/apt/sources.list.d/*vscode*
-
-	# Set up Microsoft repository (safe to run even if already configured)
-	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >packages.microsoft.gpg
-	sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
-	sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] \
-		https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
-
-	# Update package lists and install/upgrade VS Code
-	apt_upgrader
-	sudo apt-get install -y code
-
-	# Clean up
-	rm -f packages.microsoft.gpg
-
-	VSCODE_USER_DIR="$HOME/.config/Code/User"
+	apt_get update
+	if ! apt-cache show code >/dev/null 2>&1; then
+		local key_file
+		key_file=$(mktemp)
+		curl -fsSL https://packages.microsoft.com/keys/microsoft.asc |
+			gpg --dearmor >"$key_file"
+		sudo install -D -m 644 "$key_file" /etc/apt/keyrings/packages.microsoft.gpg
+		rm -f "$key_file"
+		printf '%s\n' 'deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main' |
+			sudo tee /etc/apt/sources.list.d/vscode.list >/dev/null
+		apt_get update
+	fi
+	apt_get install -y code
+	local VSCODE_USER_DIR="$HOME/.config/Code/User"
 	configure_vscode
 }
 
-install_1password() {
+install_1password() (
+	local install_dir
+	install_dir=$(mktemp -d)
+	trap 'rm -rf "$install_dir"' EXIT
+	cd "$install_dir"
 	if command -v 1password >/dev/null 2>&1; then
 		log "1password is already installed, skipping installation"
 		return 0
 	fi
 	if [ "$ARCHITECTURE" = "arm64" ]; then
 		log "Downloading 1Password for ARM64"
-		curl -sSO https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz
-		curl -sSO https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz.sig
+		curl -fsSLO https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz
+		curl -fsSLO https://downloads.1password.com/linux/tar/stable/aarch64/1password-latest.tar.gz.sig
 	else
 		log "Downloading 1Password for x86_64"
-		curl -sSO https://downloads.1password.com/linux/tar/stable/x86_64/1password-latest.tar.gz
-		curl -sSO https://downloads.1password.com/linux/tar/stable/x86_64/1password-latest.tar.gz.sig
+		curl -fsSLO https://downloads.1password.com/linux/tar/stable/x86_64/1password-latest.tar.gz
+		curl -fsSLO https://downloads.1password.com/linux/tar/stable/x86_64/1password-latest.tar.gz.sig
 	fi
 
 	# Verify GPG signature (optional but recommended)
-	curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --import
+	curl -fsSL https://downloads.1password.com/linux/keys/1password.asc | gpg --import
 	gpg --verify 1password-latest.tar.gz.sig 1password-latest.tar.gz || {
 		log "GPG verification failed"
 		return 1
 	}
 
 	# Extract and install
-	sudo tar -xf 1password-latest.tar.gz
+	tar -xf 1password-latest.tar.gz
 	sudo mkdir -p /opt/1Password
 	sudo mv 1password-*/* /opt/1Password/
 	sudo /opt/1Password/after-install.sh
 
 	# Clean up downloaded files
 	sudo rm -f 1password-latest.tar.gz 1password-latest.tar.gz.sig
-	sudo rm -rf 1password-*/
 
 	# Verify installation
 	if command -v 1password >/dev/null 2>&1; then
@@ -333,7 +327,7 @@ install_1password() {
 		log "1Password installation failed"
 		return 1
 	fi
-}
+)
 
 install_speedtest() {
 	# Ookla's packagecloud repo lags Ubuntu releases, so install the static binary directly.
@@ -352,115 +346,108 @@ install_speedtest() {
 	speedtest --version | head -1
 }
 
-install_go() {
+install_go() (
+	local arch go_arch page archive install_dir
 	arch=$(uname -m)
 	case "$arch" in
 	x86_64 | amd64) go_arch=linux-amd64 ;;
 	aarch64 | arm64) go_arch=linux-arm64 ;;
 	*)
-		echo "unsupported arch: $arch" >&2
+		log "Unsupported Go architecture: $arch"
 		return 1
 		;;
 	esac
-
-	# get downloads page without piping curl
-	page=$(curl -fsSL https://go.dev/dl/) || return 1
-
-	t=$(grep -oEm1 "go[0-9.]+\.${go_arch}\.tar\.gz" <<<"$page") || {
-		echo "could not determine latest Go version" >&2
-		return 1
-	}
-
-	tmp=$(mktemp /tmp/go.tar.gz.XXXXXX) || return 1
-	curl -fsSL "https://go.dev/dl/$t" -o "$tmp" || {
-		rm -f "$tmp"
-		return 1
-	}
-
-	sudo rm -rf /usr/local/go || {
-		rm -f "$tmp"
-		return 1
-	}
-	sudo tar -C /usr/local -xzf "$tmp" || {
-		rm -f "$tmp"
-		return 1
-	}
-	rm -f "$tmp"
-
+	install_dir=$(mktemp -d)
+	trap 'rm -rf "$install_dir"' EXIT
+	page=$(curl -fsSL https://go.dev/dl/)
+	archive=$(grep -oEm1 "go[0-9.]+\.${go_arch}\.tar\.gz" <<<"$page")
+	curl -fsSL "https://go.dev/dl/$archive" -o "$install_dir/go.tar.gz"
+	tar -xzf "$install_dir/go.tar.gz" -C "$install_dir"
+	# Validate the replacement before removing a working installation.
+	"$install_dir/go/bin/go" version
+	sudo rm -rf /usr/local/go
+	sudo mv "$install_dir/go" /usr/local/go
 	export PATH="/usr/local/go/bin:$PATH"
-	go version || return 1
-
+	go version
 	go install github.com/dim13/otpauth@latest
 	go install github.com/boyter/scc/v3@latest
-}
+)
 
 install_jetbrains_toolbox() {
-	source tools/jetbrains_toolbox_installer.sh
+	# shellcheck disable=SC1091
+	source "$PROFILE_DIR/tools/jetbrains_toolbox_installer.sh"
 }
 
 install_espanso() {
-	# Upstream Wayland .deb is amd64-only.
-	if [ "$ARCHITECTURE" != "amd64" ]; then
-		log "espanso Wayland .deb is amd64-only (got: $ARCHITECTURE) — skipping"
+	if [ "$ARCHITECTURE" != amd64 ]; then
+		log "Espanso upstream .deb packages support amd64 only; skipping $ARCHITECTURE."
+		return 0
+	fi
+	local session package other_package
+	if [ -n "${WAYLAND_DISPLAY:-}" ] || [ "${XDG_SESSION_TYPE:-}" = wayland ]; then
+		session=wayland
+		package=espanso-wayland
+		other_package=espanso
+	elif [ -n "${DISPLAY:-}" ] || [ "${XDG_SESSION_TYPE:-}" = x11 ]; then
+		session=x11
+		package=espanso
+		other_package=espanso-wayland
+	else
+		log "No desktop session detected; run Espanso setup from a desktop terminal."
 		return 0
 	fi
 
-	local latest installed
-	latest=$(curl -fsSL https://api.github.com/repos/espanso/espanso/releases/latest |
-		grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4)
-	latest="${latest:-v2.3.0}"
-	installed=$(command -v espanso >/dev/null && echo "v$(espanso --version 2>/dev/null)")
-
+	local latest installed="" package_status
+	latest=$(github_latest_tag espanso/espanso)
+	package_status=$(dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null || true)
+	if [ "$package_status" = installed ] && command -v espanso >/dev/null 2>&1; then
+		installed="v$(espanso --version)"
+	fi
+	apt_get update
+	if [ "$session" = wayland ]; then
+		apt_get install -y wl-clipboard libxkbcommon0 libcap2-bin
+	fi
 	if [ "$installed" != "$latest" ]; then
-		log "Installing espanso $latest for Wayland (have: ${installed:-none})"
-		sudo apt-get update
-		sudo apt-get install -y wl-clipboard libxkbcommon0
-		local deb=/tmp/espanso-wayland.deb
-		curl -fsSL "https://github.com/espanso/espanso/releases/download/${latest}/espanso-debian-wayland-amd64.deb" -o "$deb" || {
-			log "Failed to download espanso .deb"
-			return 1
-		}
-		sudo dpkg -i "$deb" || sudo apt-get install -y -f
-		rm -f "$deb"
-	else
-		log "espanso $installed already installed"
+		log "Installing Espanso $latest for $session (have: ${installed:-none})"
+		local install_dir status=0
+		local -a packages=()
+		install_dir=$(mktemp -d)
+		package_status=$(dpkg-query -W -f='${db:Status-Status}' "$other_package" 2>/dev/null || true)
+		if [ "$package_status" = installed ]; then
+			packages+=("$other_package-")
+		fi
+		if curl -fsSL "https://github.com/espanso/espanso/releases/download/${latest}/espanso-debian-${session}-amd64.deb" -o "$install_dir/espanso.deb"; then
+			apt_get install -y "$install_dir/espanso.deb" "${packages[@]}" || status=$?
+		else
+			status=$?
+		fi
+		rm -rf "$install_dir"
+		if [ "$status" -ne 0 ]; then
+			return "$status"
+		fi
 	fi
 
-	# Grant the keyboard-capture capability and register the service on EVERY
-	# run, not just on fresh install. espanso on Wayland needs CAP_DAC_OVERRIDE
-	# to read /dev/input/event* (detection) and write /dev/uinput (injection);
-	# without it the daemon starts but silently never expands. apt upgrades
-	# strip file capabilities, and a machine where espanso was already present
-	# never had it applied, so this must be reasserted idempotently.
-	if ! getcap "$(command -v espanso)" 2>/dev/null | grep -q cap_dac_override; then
-		log "Granting cap_dac_override to espanso (needed for keyboard capture on Wayland)"
-		sudo setcap "cap_dac_override+p" "$(command -v espanso)"
+	# Package upgrades can strip the capability needed for Wayland input access.
+	if [ "$session" = wayland ] && ! getcap "$(command -v espanso)" | grep -q cap_dac_override; then
+		sudo setcap 'cap_dac_override+p' "$(command -v espanso)"
 	fi
-	espanso service register || true
+	espanso service register
 
-	# Reapply config every run so git-config substitutions and template edits stay in sync.
-	local cfg
+	local cfg kb_layout
 	cfg="$(espanso path config)"
-	mkdir -p "$cfg/match"
-	cp "$PROFILE_DIR/dotfiles/espanso_match_file.yml" "$cfg/match/base.yml"
-	# Clipboard backend avoids Wayland keystroke quirks (e.g. @ → ").
-	sed -i 's/^# backend: Clipboard/backend: Clipboard/' "$cfg/config/default.yml"
-
-	# espanso cannot auto-detect the keyboard layout on Wayland; set it
-	# explicitly (otherwise triggers/expansions can mis-map keys, e.g. @ <-> ").
-	# Append once, idempotently, leaving the rest of the generated template intact.
-	local kb_layout
-	kb_layout=$(localectl status 2>/dev/null | sed -n 's/.*X11 Layout: *//p' | awk '{print $1}')
-	if [ -n "$kb_layout" ] && ! grep -q '^keyboard_layout:' "$cfg/config/default.yml"; then
-		printf '\nkeyboard_layout:\n  layout: "%s"\n' "$kb_layout" >>"$cfg/config/default.yml"
+	mkdir -p "$cfg/match" "$cfg/config"
+	touch "$cfg/config/default.yml"
+	configure_espanso_matches "$cfg/match/base.yml"
+	if [ "$session" = wayland ]; then
+		if ! grep -q '^backend:' "$cfg/config/default.yml"; then
+			printf '\nbackend: Clipboard\n' >>"$cfg/config/default.yml"
+		fi
+		kb_layout=$(localectl status 2>/dev/null | sed -n 's/.*X11 Layout: *//p' | awk '{print $1}' || true)
+		if [ -n "$kb_layout" ] && ! grep -q '^keyboard_layout:' "$cfg/config/default.yml"; then
+			printf '\nkeyboard_layout:\n  layout: "%s"\n' "$kb_layout" >>"$cfg/config/default.yml"
+		fi
 	fi
-
-	sed -i "s|__EMAIL__|$(git config --global user.email)|;
-		s|__GIT_USER__|$(git config --global user.name)|;
-		s|__PHONE__|$(git config --global user.phonenumber)|" "$cfg/match/base.yml"
-
-	# (Re)start so a running worker picks up the capability and refreshed config.
-	if espanso service status 2>/dev/null | grep -q "is running"; then
+	if espanso service status 2>/dev/null | grep -q 'is running'; then
 		espanso service restart
 	else
 		espanso service start
@@ -475,7 +462,7 @@ install_and_setup_docker() {
       $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 	sudo chmod a+r /etc/apt/keyrings/docker.gpg
 	apt_upgrader
-	sudo apt-get -o DPkg::Lock::Timeout=60 install -y \
+	apt_get install -y \
 		docker-ce \
 		docker-ce-cli \
 		containerd.io \
@@ -485,8 +472,8 @@ install_and_setup_docker() {
 	if ! grep -q "^docker:" /etc/group; then
 		sudo groupadd docker
 	fi
-	if ! groups $USER | grep -q "\bdocker\b"; then
-		sudo usermod -aG docker $USER
+	if ! groups "$USER" | grep -q "\bdocker\b"; then
+		sudo usermod -aG docker "$USER"
 		# Use sg instead of newgrp - it runs the command in a new group context without starting a new shell
 		sg docker -c "echo 'Docker group permissions applied for this session'"
 	fi
@@ -503,7 +490,7 @@ install_syncthing() {
 	echo "deb [signed-by=/etc/apt/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable" |
 		sudo tee /etc/apt/sources.list.d/syncthing.list >/dev/null
 	apt_upgrader
-	sudo apt-get -o DPkg::Lock::Timeout=60 install -y syncthing
+	apt_get install -y syncthing
 
 	# Run as a per-user service and keep it alive across logouts/reboots so
 	# folders (e.g. ~/dotfiles) stay in sync headlessly. enable-linger lets the
@@ -526,15 +513,16 @@ install_github_cli() {
 	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] \
 		https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
 	apt_upgrader
-	sudo apt -o DPkg::Lock::Timeout=60 install gh -y
+	apt_get install gh -y
 }
 
-install_clam_av() {
+install_clam_av() (
 	sudo systemctl stop clamav-freshclam.service
+	trap 'sudo systemctl start clamav-freshclam.service' EXIT
 	sudo freshclam
 	sudo systemctl --system daemon-reload
 	sudo systemctl restart clamav-daemon.service
-}
+)
 
 install_carapace() {
 	local arch
@@ -552,11 +540,7 @@ install_carapace() {
 	local version_num="${latest_version#v}"
 	local download_url="https://github.com/carapace-sh/carapace-bin/releases/download/${latest_version}/carapace-bin_${version_num}_linux_${arch}.tar.gz"
 	log "Downloading carapace ${latest_version} for ${arch}"
-	curl -fsSL "$download_url" -o /tmp/carapace.tar.gz
-	tar -xzf /tmp/carapace.tar.gz -C /tmp
-	sudo mv /tmp/carapace /usr/local/bin/carapace
-	sudo chmod +x /usr/local/bin/carapace
-	rm -f /tmp/carapace.tar.gz
+	github_install_bin "$download_url" carapace
 	carapace --version
 }
 
@@ -575,11 +559,7 @@ install_viddy() {
 	fi
 	local download_url="https://github.com/sachaos/viddy/releases/download/${latest_version}/viddy-${latest_version}-linux-${arch}.tar.gz"
 	log "Downloading viddy ${latest_version} for ${arch}"
-	curl -fsSL "$download_url" -o /tmp/viddy.tar.gz
-	tar -xzf /tmp/viddy.tar.gz -C /tmp
-	sudo mv /tmp/viddy /usr/local/bin/viddy
-	sudo chmod +x /usr/local/bin/viddy
-	rm -f /tmp/viddy.tar.gz
+	github_install_bin "$download_url" viddy
 	viddy --version
 }
 
@@ -600,9 +580,7 @@ install_duf() {
 	local deb_file="duf_${version_num}_linux_${arch}.deb"
 	local download_url="https://github.com/muesli/duf/releases/download/${latest_version}/${deb_file}"
 	log "Downloading duf ${latest_version} for ${arch}"
-	curl -fsSL "$download_url" -o "/tmp/${deb_file}"
-	sudo dpkg -i "/tmp/${deb_file}"
-	rm -f "/tmp/${deb_file}"
+	github_install_deb "$download_url"
 	duf --version
 }
 
@@ -656,8 +634,8 @@ install_gum() {
 	sudo mkdir -p /etc/apt/keyrings
 	curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --yes --dearmor -o /etc/apt/keyrings/charm.gpg
 	echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-	sudo apt update
-	sudo apt install -y gum
+	apt_get update
+	apt_get install -y gum
 	gum --version
 }
 
@@ -687,24 +665,22 @@ github_arch() {
 	fi
 }
 
-github_install_deb() {
-	local url="$1"
-	local deb_file="/tmp/$(basename "$url")"
-	curl -fsSL "$url" -o "$deb_file"
-	sudo apt install -y --reinstall "$deb_file"
-	rm -f "$deb_file"
-}
+github_install_deb() (
+	local url="$1" install_dir
+	install_dir=$(mktemp -d) || return
+	trap 'rm -rf "$install_dir"' EXIT
+	curl -fsSL "$url" -o "$install_dir/package.deb" || return
+	apt_get install -y --reinstall "$install_dir/package.deb"
+)
 
-github_install_bin() {
-	local url="$1"
-	local binary_name="$2"
-	local tarball="/tmp/${binary_name}.tar.gz"
-	curl -fsSL "$url" -o "$tarball"
-	tar -xzf "$tarball" -C /tmp "$binary_name"
-	sudo mv "/tmp/$binary_name" "/usr/local/bin/$binary_name"
-	sudo chmod +x "/usr/local/bin/$binary_name"
-	rm -f "$tarball"
-}
+github_install_bin() (
+	local url="$1" binary_name="$2" install_dir
+	install_dir=$(mktemp -d) || return
+	trap 'rm -rf "$install_dir"' EXIT
+	curl -fsSL "$url" -o "$install_dir/package.tar.gz" || return
+	tar -xzf "$install_dir/package.tar.gz" -C "$install_dir" "$binary_name" || return
+	sudo install -m 0755 "$install_dir/$binary_name" "/usr/local/bin/$binary_name"
+)
 
 install_delta() {
 	local version arch
@@ -761,50 +737,64 @@ install_redis_insight() {
 	# Purge first to avoid the prerm script wiping files during upgrade
 	if [ -n "$installed_version" ]; then
 		log "Purging old Redis Insight ${installed_version}"
-		sudo dpkg --purge redisinsight
+		with_package_lock_retry sudo env LC_ALL=C dpkg --purge redisinsight
 	fi
 	log "Downloading Redis Insight ${version}"
 	github_install_deb "https://github.com/redis/RedisInsight/releases/download/${version}/Redis-Insight-linux-amd64.deb"
 }
 
-install_terraform() {
+install_terraform() (
+	local install_dir
+	install_dir=$(mktemp -d)
+	trap 'rm -rf "$install_dir"' EXIT
+	cd "$install_dir"
 	if [ "$ARCHITECTURE" = "arm64" ]; then
 		arch="arm64"
 	else
 		arch="amd64"
 	fi
-	latest_version=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '\"tag_name\":.*' | cut -d'v' -f2 | tr -d \",)
-	curl -sLO "https://releases.hashicorp.com/terraform/$latest_version/terraform_${latest_version}_linux_${arch}.zip"
-	unzip "terraform_${latest_version}_linux_${arch}.zip"
-	sudo mv terraform /usr/local/bin/
-	sudo rm -rf terraform_* LICENSE.txt
+	local version
+	version=$(github_latest_tag hashicorp/terraform)
+	version=${version#v}
+	curl -fsSL "https://releases.hashicorp.com/terraform/$version/terraform_${version}_linux_${arch}.zip" -o terraform.zip
+	unzip terraform.zip
+	sudo install -m 0755 terraform /usr/local/bin/terraform
 	terraform version
-}
+)
 
-install_aws_cli() {
+install_aws_cli() (
+	local install_dir
+	install_dir=$(mktemp -d)
+	trap 'rm -rf "$install_dir"' EXIT
+	cd "$install_dir"
 	if [ "$ARCHITECTURE" = "arm64" ]; then
 		log "Downloading AWS CLI for ARM64"
-		curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+		curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
 	else
 		log "Downloading AWS CLI for x86_64"
-		curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+		curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 	fi
 
 	unzip -o awscliv2.zip
 	sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
 	which aws
 	aws --version
-	sudo rm -rf aws*
-}
+)
+
+run_apt_installer() (
+	local installer
+	installer=$(mktemp) || return
+	trap 'rm -f "$installer"' EXIT
+	curl -fsSL "$1" -o "$installer" || return
+	with_package_lock_retry sudo env LC_ALL=C "$2" "$installer"
+)
 
 install_node() {
-	curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
-	sudo apt-get install -y nodejs
+	run_apt_installer https://deb.nodesource.com/setup_current.x bash
+	apt_get install -y nodejs
 	node -v
 	npm -v
 	sudo npm install -g wscat prettier json5 fracturedjsonjs
-	sudo rm -f package.json package-lock.json
-	sudo rm -rf node_modules
 }
 
 install_tailscale() {
@@ -812,17 +802,22 @@ install_tailscale() {
 		log "Skipping Tailscale installation over SSH."
 		return 0
 	fi
-	curl -fsSL https://tailscale.com/install.sh | sh
-	sudo tailscale up --ssh --stateful-filtering
+	run_apt_installer https://tailscale.com/install.sh sh
+	sudo tailscale set --ssh --stateful-filtering
+	sudo tailscale up
 	sudo ufw deny ssh
 }
 
-install_font() {
+install_font() (
+	local install_dir
+	install_dir=$(mktemp -d)
+	trap 'rm -rf "$install_dir"' EXIT
+	cd "$install_dir"
 	wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/FiraCode.zip -O FiraCode.zip
 	unzip -o FiraCode.zip -d ~/.local/share/fonts
 	fc-cache -fv
 	rm -f FiraCode.zip
-}
+)
 
 webinstalls() {
 	curl -sS https://webi.sh/awless | sh
@@ -832,18 +827,15 @@ webinstalls() {
 	curl -sS https://webi.sh/shellcheck | sh
 }
 
-btop_install() {
-	# Clone into /tmp (ephemeral and suitable for setup scripts)
-	git clone https://github.com/aristocratos/btop.git /tmp/btop
-
-	# Build and install
-	cd /tmp/btop
+btop_install() (
+	local install_dir
+	install_dir=$(mktemp -d)
+	trap 'rm -rf "$install_dir"' EXIT
+	git clone --depth 1 https://github.com/aristocratos/btop.git "$install_dir/btop"
+	cd "$install_dir/btop"
 	make
 	sudo make install
-
-	# Optional: Clean up
-	rm -rf /tmp/btop
-}
+)
 
 main() {
 	collect_user_input
@@ -902,6 +894,7 @@ main() {
 	# run_function isolates setup steps so failures cannot be masked. Source the
 	# copied aliases in the parent as well because later steps use apt_upgrader.
 	if [ -f "$HOME/.bash_aliases" ]; then
+		# shellcheck disable=SC1091
 		source "$HOME/.bash_aliases"
 	fi
 	run_functions "${remaining_steps[@]}"

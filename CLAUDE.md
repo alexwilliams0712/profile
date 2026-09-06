@@ -12,7 +12,21 @@ Personal dotfiles and automated development environment setup for macOS and Ubun
 source setup_entry.sh
 ```
 
-This detects the OS (`uname`), pulls the latest from `origin/main`, then dispatches to `tools/setup_macos.sh` or `tools/setup_ubuntu.sh`.
+Run as a normal user from a macOS or Ubuntu 24.04+ installation.
+The entry point resolves its own directory, so the caller's working directory is
+irrelevant. A clean `main` checkout advances by fast-forward only; local changes,
+local commits and other branches are preserved. It then dispatches to
+`tools/setup_macos.sh` or `tools/setup_ubuntu.sh`.
+
+Ubuntu binary installers target amd64 and arm64; individual upstream applications
+may support only amd64 and report that limitation. Espanso selects the X11 or
+Wayland package from the desktop session and defers setup when no desktop is
+available. Other Linux distributions and older Ubuntu releases are rejected before setup.
+
+APT operations retry actual lock contention for up to five minutes, without
+stopping another package manager or deleting repository definitions. Downloaded
+archives are unpacked in private temporary directories. Failed VS Code extensions
+and Flatpak applications count as failed steps, while later steps still run.
 
 Every run writes a private log and prints its path. For diagnostics, inspect the
 latest run first:
