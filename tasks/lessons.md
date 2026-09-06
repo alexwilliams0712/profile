@@ -5,9 +5,10 @@ Update this file whenever a correction reveals a rule worth keeping.
 
 ## Setup output
 
-Interactive progress must stay separate from the private log. Keep completed
-function rows, use an indeterminate state when a function exposes no measurable
-progress, and reserve percentages for the exact overall function count. Suspend
+Interactive progress must stay separate from the private log. Keep the whole
+step plan visible when terminal space permits, including pending and completed
+steps. Use an indeterminate state when an active function exposes no measurable
+progress, and reserve measured percentages for the overall function count. Suspend
 or isolate animation so foreground prompts cannot be overwritten, and retain
 plain output when no terminal is available.
 
