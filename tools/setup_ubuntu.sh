@@ -544,8 +544,9 @@ configure_gnome() {
 	# One-shot GNOME interface tweaks. Persistent in dconf, so this only
 	# needs to run at machine setup — not on every shell start.
 	if command -v gsettings >/dev/null 2>&1; then
-		gsettings set org.gnome.desktop.interface text-scaling-factor 0.95
-		gsettings set org.gnome.desktop.interface cursor-size 24
+		# Sized for 100% monitor scale on 4K panels; fractional scaling is slow.
+		gsettings set org.gnome.desktop.interface text-scaling-factor 1.425
+		gsettings set org.gnome.desktop.interface cursor-size 40
 		gsettings set org.gnome.desktop.interface gtk-enable-primary-paste true
 	fi
 }
