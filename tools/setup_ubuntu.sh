@@ -417,8 +417,8 @@ install_espanso() {
 	fi
 	espanso service register
 
-	local cfg kb_layout
-	cfg="$(espanso path config)"
+	# `espanso path config` panics until config/default.yml exists.
+	local cfg="$HOME/.config/espanso" kb_layout
 	mkdir -p "$cfg/match" "$cfg/config"
 	touch "$cfg/config/default.yml"
 	configure_espanso_matches "$cfg/match/base.yml"
