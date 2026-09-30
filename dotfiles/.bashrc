@@ -87,7 +87,10 @@ esac
 # Tint each Ghostty split so neighbours are distinguishable.
 # The exported marker stops nested shells from re-tinting their split.
 if [ "$TERM_PROGRAM" = "ghostty" ] && [ -z "${GHOSTTY_SPLIT_TINT:-}" ]; then
-	_split_tints=(001a22 0a1a2a 101a22 001f1a 1a1a24 0a2218)
+	_split_tints=(
+		001a22 0a1a2a 101a22 001f1a 1a1a24 0a2218
+		211622 250c23 250e11 231915 252016
+	)
 	export GHOSTTY_SPLIT_TINT="${_split_tints[RANDOM % ${#_split_tints[@]}]}"
 	printf '\e]11;#%s\a' "$GHOSTTY_SPLIT_TINT"
 	unset _split_tints
