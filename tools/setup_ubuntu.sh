@@ -431,6 +431,13 @@ install_espanso() {
 			printf '\nkeyboard_layout:\n  layout: "%s"\n' "$kb_layout" >>"$cfg/config/default.yml"
 		fi
 	fi
+	# The first-run wizard blocks the launcher past the service start timeout.
+	local kvs flag
+	kvs="$(espanso path runtime)/kvs"
+	mkdir -p "$kvs"
+	for flag in has_displayed_welcome has_completed_wizard; do
+		printf true >"$kvs/$flag"
+	done
 	if espanso service status 2>/dev/null | grep -q 'is running'; then
 		espanso service restart
 	else
