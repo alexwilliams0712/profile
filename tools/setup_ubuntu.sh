@@ -121,6 +121,7 @@ install_apt_packages() {
 		systemd-timesyncd \
 		terminator \
 		tk-dev \
+		tmux \
 		tree \
 		ufw \
 		unzip \
