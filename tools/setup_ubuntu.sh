@@ -552,11 +552,38 @@ configure_gnome() {
 	# One-shot GNOME interface tweaks. Persistent in dconf, so this only
 	# needs to run at machine setup — not on every shell start.
 	if command -v gsettings >/dev/null 2>&1; then
-		# Sized for 100% monitor scale on 4K panels; fractional scaling is slow.
-		gsettings set org.gnome.desktop.interface text-scaling-factor 1.425
-		gsettings set org.gnome.desktop.interface cursor-size 40
+		configure_gnome_sizing
 		gsettings set org.gnome.desktop.interface gtk-enable-primary-paste true
 	fi
+}
+
+configure_gnome_sizing() {
+	# Text and cursor sizes are global, so size for the lowest-resolution
+	# connected screen. 4K panels run at 100% monitor scale because
+	# fractional scaling is slow, and need larger text to compensate.
+	local status_file width min_width=""
+	for status_file in /sys/class/drm/card*-*/status; do
+		[ "$(cat "$status_file")" = connected ] || continue
+		width=$(head -n 1 "${status_file%/status}/modes" 2>/dev/null)
+		width=${width%%x*}
+		[[ $width =~ ^[0-9]+$ ]] || continue
+		if [ -z "$min_width" ] || [ "$width" -lt "$min_width" ]; then
+			min_width=$width
+		fi
+	done
+	if [ -z "$min_width" ]; then
+		log "No connected display detected; leaving GNOME text and cursor sizes unchanged."
+		return 0
+	fi
+	if [ "$min_width" -ge 3840 ]; then
+		log "All connected displays are 4K; using large text and cursor."
+		gsettings set org.gnome.desktop.interface text-scaling-factor 1.425
+		gsettings set org.gnome.desktop.interface cursor-size 40
+		return 0
+	fi
+	log "Narrowest connected display is ${min_width}px wide; using standard text and cursor."
+	gsettings set org.gnome.desktop.interface text-scaling-factor 0.95
+	gsettings set org.gnome.desktop.interface cursor-size 24
 }
 
 configure_locale() {
