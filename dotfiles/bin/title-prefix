@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+"""Run a command in a pty and prefix its terminal titles with the launch directory.
+
+The prefix is the last two parts of the working directory.
+Window resizes are forwarded so full-screen interfaces redraw correctly.
+
+Usage: title-prefix <command> [args...]
+"""
+
+import fcntl
+import os
+import pty
+import re
+import select
+import signal
+import sys
+import termios
+import tty
+
+TITLE = re.compile(rb"\x1b\]([02]);([^\x07\x1b]*)(\x07|\x1b\\)")
+# A title sequence can be split across reads; hold the tail back until complete.
+PARTIAL = re.compile(rb"\x1b(\][02]?;?[^\x07\x1b]*\x1b?)?$")
+
+prefix = "/".join(os.getcwd().split("/")[-2:]).encode()
+pid, fd = pty.fork()
+if pid == 0:
+    try:
+        os.execvp(sys.argv[1], sys.argv[1:])
+    except OSError as error:
+        sys.stderr.write(f"title-prefix: {sys.argv[1]}: {error.strerror}\n")
+        os._exit(127)
+
+
+def resize(*_):
+    size = fcntl.ioctl(0, termios.TIOCGWINSZ, b"\0" * 8)
+    fcntl.ioctl(fd, termios.TIOCSWINSZ, size)
+    os.kill(pid, signal.SIGWINCH)
+
+
+resize()
+signal.signal(signal.SIGWINCH, resize)
+os.write(1, b"\x1b]2;" + prefix + b"\x07")
+saved = termios.tcgetattr(0)
+tty.setraw(0)
+buf = b""
+try:
+    while True:
+        try:
+            ready, _, _ = select.select([0, fd], [], [])
+        except InterruptedError:
+            continue
+        if 0 in ready:
+            os.write(fd, os.read(0, 65536))
+        if fd in ready:
+            try:
+                data = buf + os.read(fd, 65536)
+            except OSError:
+                break
+            if not data:
+                break
+            tail = PARTIAL.search(data)
+            buf, data = (data[tail.start():], data[: tail.start()]) if tail else (b"", data)
+            os.write(1, TITLE.sub(lambda m: m[0][:4] + prefix + b" \xc2\xb7 " + m[2] + m[3], data))
+finally:
+    termios.tcsetattr(0, termios.TCSAFLUSH, saved)
+sys.exit(os.waitstatus_to_exitcode(os.waitpid(pid, 0)[1]))
