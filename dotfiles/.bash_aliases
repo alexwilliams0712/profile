@@ -1438,7 +1438,7 @@ magpie_mirror() {
 # Prefix Claude/Codex tab titles with the launch directory.
 # Falls back to the plain command without a terminal or the wrapper.
 _title_prefixed() {
-	if [ -t 0 ] && [ -t 1 ] && command -v "$1" >/dev/null 2>&1 && command -v title-prefix >/dev/null 2>&1; then
+	if [ -t 0 ] && [ -t 1 ] && [ -t 2 ] && type -P "$1" >/dev/null && type -P title-prefix >/dev/null; then
 		title-prefix "$@"
 		return
 	fi

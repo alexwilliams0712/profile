@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """Run a command in a pty and prefix its terminal titles with the launch directory.
 
 The prefix is the last two parts of the working directory.
@@ -21,7 +21,8 @@ TITLE = re.compile(rb"\x1b\]([02]);([^\x07\x1b]*)(\x07|\x1b\\)")
 # A title sequence can be split across reads; hold the tail back until complete.
 PARTIAL = re.compile(rb"\x1b(\][02]?;?[^\x07\x1b]*\x1b?)?$")
 
-prefix = "/".join(os.getcwd().split("/")[-2:]).encode()
+# Control bytes in a directory name would end the title sequence early.
+prefix = re.sub(rb"[\x00-\x1f\x7f]", b"", "/".join(os.getcwd().split("/")[-2:]).encode())
 pid, fd = pty.fork()
 if pid == 0:
     try:
@@ -39,6 +40,8 @@ def resize(*_):
 
 resize()
 signal.signal(signal.SIGWINCH, resize)
+# The tty is raw, so Ctrl-C reaches the child as input; ignore stray SIGINTs here.
+signal.signal(signal.SIGINT, signal.SIG_IGN)
 os.write(1, b"\x1b]2;" + prefix + b"\x07")
 saved = termios.tcgetattr(0)
 tty.setraw(0)
@@ -63,4 +66,5 @@ try:
             os.write(1, TITLE.sub(lambda m: m[0][:4] + prefix + b" \xc2\xb7 " + m[2] + m[3], data))
 finally:
     termios.tcsetattr(0, termios.TCSAFLUSH, saved)
-sys.exit(os.waitstatus_to_exitcode(os.waitpid(pid, 0)[1]))
+code = os.waitstatus_to_exitcode(os.waitpid(pid, 0)[1])
+sys.exit(128 - code if code < 0 else code)
