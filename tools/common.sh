@@ -598,7 +598,8 @@ copy_shared_dotfiles() {
 	cp "$PROFILE_DIR/dotfiles/.inputrc" "$HOME/.inputrc"
 	cp "$PROFILE_DIR/dotfiles/bin/json_formatter.py" "$HOME/.local/bin/json_formatter.py"
 	cp "$PROFILE_DIR/dotfiles/bin/work-proxy" "$HOME/.local/bin/work-proxy"
-	chmod +x "$HOME/.local/bin/json_formatter.py" "$HOME/.local/bin/work-proxy"
+	cp "$PROFILE_DIR/dotfiles/bin/title-prefix" "$HOME/.local/bin/title-prefix"
+	chmod +x "$HOME/.local/bin/json_formatter.py" "$HOME/.local/bin/work-proxy" "$HOME/.local/bin/title-prefix"
 }
 
 configure_espanso_matches() {

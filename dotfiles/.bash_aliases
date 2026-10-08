@@ -1435,6 +1435,18 @@ magpie_mirror() {
 		~/.ssh/aws_key_dublin.pem
 }
 
+# Prefix Claude/Codex tab titles with the launch directory.
+# Falls back to the plain command without a terminal or the wrapper.
+_title_prefixed() {
+	if [ -t 0 ] && [ -t 1 ] && [ -t 2 ] && type -P "$1" >/dev/null && type -P title-prefix >/dev/null; then
+		title-prefix "$@"
+		return
+	fi
+	command "$@"
+}
+claude() { _title_prefixed claude "$@"; }
+codex() { _title_prefixed codex "$@"; }
+
 # Fun
 alias yolo='claude --dangerously-skip-permissions'
 alias yodex='codex --dangerously-bypass-approvals-and-sandbox'
