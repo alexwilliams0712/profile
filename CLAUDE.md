@@ -17,6 +17,8 @@ The entry point resolves its own directory, so the caller's working directory is
 irrelevant. A clean `main` checkout advances by fast-forward only; local changes,
 local commits and other branches are preserved. It then dispatches to
 `tools/setup_macos.sh` or `tools/setup_ubuntu.sh`.
+An interactive run over SSH outside tmux or screen asks for confirmation first,
+because package upgrades can restart `sshd` or `tailscaled` and drop the session.
 
 Ubuntu binary installers target amd64 and arm64; individual upstream applications
 may support only amd64 and report that limitation. Espanso selects the X11 or

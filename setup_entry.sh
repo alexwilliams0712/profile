@@ -4,6 +4,7 @@ profile_setup_run() {
 	local os_name
 	local branch
 	local worktree_status
+	local reply
 	local ID VERSION_ID
 	cd -- "$1" || return 1
 	os_name="$(uname)" || return 1
@@ -12,6 +13,16 @@ profile_setup_run() {
 	if [ "$(id -u)" -eq 0 ]; then
 		printf 'Error: run setup as your normal user; privileged steps use sudo.\n' >&2
 		return 1
+	fi
+	# Package upgrades can restart sshd or tailscaled and drop this session mid-install.
+	if [ -n "${SSH_CONNECTION:-}" ] && [ -z "${TMUX:-}" ] && [ -z "${STY:-}" ] && [ -t 0 ]; then
+		printf 'Warning: setup over SSH can be cut off by its own package upgrades.\n'
+		printf 'Run it inside tmux to survive a dropped connection. Continue anyway? [y/N] '
+		read -r reply
+		case "$reply" in
+		[Yy]*) ;;
+		*) return 1 ;;
+		esac
 	fi
 	case "$os_name" in
 	Darwin) ;;
