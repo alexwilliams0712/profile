@@ -1462,6 +1462,7 @@ alias yodex='codex --dangerously-bypass-approvals-and-sandbox'
 # tmux_yolo/tmux_yodex <project> — attach to a persistent AI tmux session on the
 # project's machine, creating it (and resuming a conversation) when absent.
 # Projects and hosts live in Syncthing's dotfiles folder so all machines agree.
+# --projects lists the mapped projects.
 TMUX_AI_CONFIG="$HOME/dotfiles/tmux_ai"
 
 _tmux_ai_names() {
@@ -1503,12 +1504,7 @@ _tmux_ai_add() {
 		echo "No hosts listed in $TMUX_AI_CONFIG/hosts" >&2
 		return 1
 	fi
-	echo "'$name' is not mapped yet. Choose its host:"
-	local PS3="Host: "
-	select host in "${hosts[@]}"; do
-		[ -n "$host" ] && break
-	done
-	[ -n "$host" ] || return 1
+	host=$(gum choose --header "'$name' is not mapped yet. Choose its host:" "${hosts[@]}") || return 1
 	# shellcheck disable=SC2088 # The tilde is expanded on the target host.
 	read -e -r -p "Path on $host: " -i "~/CODE/git/" path || return 1
 	if [[ ! $path =~ ^(~/|/)[A-Za-z0-9_./-]+$ ]]; then
@@ -1522,8 +1518,16 @@ _tmux_ai_add() {
 
 _tmux_ai() {
 	local tool=$1 name=$2 host path
+	if [ "$name" = --projects ]; then
+		if [ ! -f "$TMUX_AI_CONFIG/projects" ]; then
+			echo "No projects mapped yet; $TMUX_AI_CONFIG/projects is missing (has Syncthing synced?)" >&2
+			return 1
+		fi
+		awk '!/^[[:space:]]*(#|$)/ { printf "%-16s %-20s %s\n", $1, $2, $3 }' "$TMUX_AI_CONFIG/projects"
+		return
+	fi
 	if [[ ! $name =~ ^[A-Za-z0-9_-]+$ ]]; then
-		echo "Usage: tmux_$tool <project>  (letters, digits, _ and - only)" >&2
+		echo "Usage: tmux_$tool <project>|--projects  (letters, digits, _ and - only)" >&2
 		return 1
 	fi
 	read -r host path < <(_tmux_ai_lookup "$name")
@@ -1553,7 +1557,7 @@ tmux_yolo() { _tmux_ai yolo "$@"; }
 tmux_yodex() { _tmux_ai yodex "$@"; }
 
 _tmux_ai_complete() {
-	mapfile -t COMPREPLY < <(compgen -W "$(_tmux_ai_names projects)" -- "${COMP_WORDS[COMP_CWORD]}")
+	mapfile -t COMPREPLY < <(compgen -W "--projects $(_tmux_ai_names projects)" -- "${COMP_WORDS[COMP_CWORD]}")
 }
 complete -F _tmux_ai_complete tmux_yolo tmux_yodex
 
