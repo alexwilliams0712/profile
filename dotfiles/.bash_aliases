@@ -1451,6 +1451,104 @@ codex() { _title_prefixed codex "$@"; }
 alias yolo='claude --dangerously-skip-permissions'
 alias yodex='codex --dangerously-bypass-approvals-and-sandbox'
 
+# tmux_yolo/tmux_yodex <project> — attach to a persistent AI tmux session on the
+# project's machine, creating it (and resuming a conversation) when absent.
+# Projects and hosts live in Syncthing's dotfiles folder so all machines agree.
+TMUX_AI_CONFIG="$HOME/dotfiles/tmux_ai"
+
+_tmux_ai_names() {
+	awk '!/^[[:space:]]*(#|$)/ { print $1 }' "$TMUX_AI_CONFIG/$1" 2>/dev/null
+}
+
+_tmux_ai_lookup() {
+	awk -v n="$1" '$1 == n { print $2, $3; exit }' "$TMUX_AI_CONFIG/projects" 2>/dev/null
+}
+
+# Tailscale names match the SSH targets; macOS `hostname -s` does not.
+_tmux_ai_is_self() {
+	local self
+	self=$(tailscale status --peers=false 2>/dev/null | awk 'NR == 1 { print $2 }')
+	[ "$1" = "${self:-$(hostname -s)}" ]
+}
+
+# Prints a shell script that fails unless the mapped path exists where it runs.
+# Paths are validated on entry, so double quotes suffice; ~ expands on the target.
+_tmux_ai_cd_check() {
+	local dir="\"$1\""
+	[[ $1 == \~/* ]] && dir="\"\$HOME/${1#\~/}\""
+	echo "dir=$dir; [ -d \"\$dir\" ] || { echo \"$1 does not exist on \$(hostname -s)\" >&2; exit 1; }"
+}
+
+_tmux_ai_run() {
+	if _tmux_ai_is_self "$1"; then
+		bash -c "$2"
+		return
+	fi
+	# shellcheck disable=SC2029 # The script is built to run remotely.
+	ssh "$1" "$2"
+}
+
+_tmux_ai_add() {
+	local name=$1 hosts host path
+	mapfile -t hosts < <(_tmux_ai_names hosts)
+	if [ ${#hosts[@]} -eq 0 ]; then
+		echo "No hosts listed in $TMUX_AI_CONFIG/hosts" >&2
+		return 1
+	fi
+	echo "'$name' is not mapped yet. Choose its host:"
+	local PS3="Host: "
+	select host in "${hosts[@]}"; do
+		[ -n "$host" ] && break
+	done
+	[ -n "$host" ] || return 1
+	# shellcheck disable=SC2088 # The tilde is expanded on the target host.
+	read -e -r -p "Path on $host: " -i "~/CODE/git/" path || return 1
+	if [[ ! $path =~ ^(~/|/)[A-Za-z0-9_./-]+$ ]]; then
+		echo "Path must start with ~/ or / and contain no spaces or shell characters" >&2
+		return 1
+	fi
+	_tmux_ai_run "$host" "$(_tmux_ai_cd_check "$path")" || return
+	mkdir -p "$TMUX_AI_CONFIG"
+	printf '%-16s %-20s %s\n' "$name" "$host" "$path" >>"$TMUX_AI_CONFIG/projects"
+}
+
+_tmux_ai() {
+	local tool=$1 name=$2 host path
+	if [[ ! $name =~ ^[A-Za-z0-9_-]+$ ]]; then
+		echo "Usage: tmux_$tool <project>  (letters, digits, _ and - only)" >&2
+		return 1
+	fi
+	read -r host path < <(_tmux_ai_lookup "$name")
+	if [ -z "$host" ]; then
+		_tmux_ai_add "$name" || return
+		read -r host path < <(_tmux_ai_lookup "$name")
+	fi
+	local session="$tool-$name" resume="$tool --resume"
+	[ "$tool" = yodex ] && resume="yodex resume"
+	# The alias runs inside the session's interactive shell, which outlives it.
+	local script
+	script="tmux has-session -t '=$session' 2>/dev/null || { $(_tmux_ai_cd_check "$path")
+tmux new-session -d -s '$session' -c \"\$dir\" && tmux send-keys -t '=$session:' '$resume' Enter; } || exit"
+	if ! _tmux_ai_is_self "$host"; then
+		ssh -t "$host" "$script
+exec tmux attach -t '=$session'"
+		return
+	fi
+	bash -c "$script" || return
+	if [ -n "$TMUX" ]; then
+		tmux switch-client -t "=$session"
+		return
+	fi
+	tmux attach -t "=$session"
+}
+tmux_yolo() { _tmux_ai yolo "$@"; }
+tmux_yodex() { _tmux_ai yodex "$@"; }
+
+_tmux_ai_complete() {
+	mapfile -t COMPREPLY < <(compgen -W "$(_tmux_ai_names projects)" -- "${COMP_WORDS[COMP_CWORD]}")
+}
+complete -F _tmux_ai_complete tmux_yolo tmux_yodex
+
 function laughing_at_idiots() {
 	# sudo apt-get install -y fswebcam imagemagick
 	(
