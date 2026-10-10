@@ -1519,7 +1519,11 @@ _tmux_ai_add() {
 _tmux_ai() {
 	local tool=$1 name=$2 host path
 	if [ "$name" = --projects ]; then
-		awk '!/^[[:space:]]*(#|$)/ { printf "%-16s %-20s %s\n", $1, $2, $3 }' "$TMUX_AI_CONFIG/projects" 2>/dev/null
+		if [ ! -f "$TMUX_AI_CONFIG/projects" ]; then
+			echo "No projects mapped yet; $TMUX_AI_CONFIG/projects is missing (has Syncthing synced?)" >&2
+			return 1
+		fi
+		awk '!/^[[:space:]]*(#|$)/ { printf "%-16s %-20s %s\n", $1, $2, $3 }' "$TMUX_AI_CONFIG/projects"
 		return
 	fi
 	if [[ ! $name =~ ^[A-Za-z0-9_-]+$ ]]; then
