@@ -23,8 +23,10 @@ select_hosts() {
 	self=$(self_name)
 	others=$(awk -v self="$self" '!/^[[:space:]]*(#|$)/ && $1 != self { print $1 }' "$hosts_file")
 	[ -n "$others" ] || return 0
+	# All start selected, so enter runs everywhere and x drops a machine.
 	# shellcheck disable=SC2086 # One host name per word.
-	gum choose --no-limit --header "Also run setup on (space selects, enter confirms):" $others |
+	gum choose --no-limit --selected="$(printf '%s' "$others" | tr '\n' ',')" \
+		--header "Also run setup on (x toggles, enter confirms):" $others |
 		tr '\n' ' '
 }
 
@@ -42,12 +44,19 @@ run_hosts() {
 	fi
 	# PROFILE_SETUP_LOCAL_ONLY stops each run from offering machines again.
 	local setup="PROFILE_SETUP_LOCAL_ONLY=1 bash -c 'source setup_entry.sh'"
-	tmux new-session -d -s "$session" -c "$repo_dir" "$setup" || return 1
-	# Keep failed panes open so their errors stay readable.
+	local pane
+	pane=$(tmux new-session -d -P -F '#{pane_id}' -s "$session" -c "$repo_dir" "$setup") || return 1
+	tmux set-option -p -t "$pane" @host "$(self_name)"
+	# Keep failed panes open so their errors stay readable. Every pane waits for
+	# input, so a click must be able to move between them.
 	tmux set-option -t "$session" remain-on-exit on
+	tmux set-option -t "$session" mouse on
+	tmux set-option -w -t "$session" pane-border-status top
+	tmux set-option -w -t "$session" pane-border-format ' #{@host} '
 	for host in "$@"; do
 		remote="cd ~/'$rel_dir' && tmux new-session -A -s $session \"$setup\" \\; set status off"
-		tmux split-window -t "$session" "ssh -t $host $(printf '%q' "$remote")"
+		pane=$(tmux split-window -P -F '#{pane_id}' -t "$session" "ssh -t $host $(printf '%q' "$remote")")
+		tmux set-option -p -t "$pane" @host "$host"
 	done
 	tmux set-window-option -t "$session" main-pane-width 50%
 	tmux select-layout -t "$session" main-vertical
