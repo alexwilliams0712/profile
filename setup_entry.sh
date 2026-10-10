@@ -87,6 +87,14 @@ profile_setup_run() {
 profile_setup_main() {
 	local repo_dir
 	repo_dir="$(cd -- "$(dirname -- "$1")" && pwd -P)" || return 1
+	local remote_hosts
+	# Offer other machines on repeat installs; their runs take a tmux layout.
+	if [ -z "${PROFILE_SETUP_LOCAL_ONLY:-}" ] && [ -t 0 ] &&
+		remote_hosts="$(bash "$repo_dir/setup_remote.sh" --select)" && [ -n "$remote_hosts" ]; then
+		unset -f profile_setup_run profile_setup_main
+		bash "$repo_dir/setup_remote.sh" "$remote_hosts"
+		return
+	fi
 	local state_home
 	local log_dir
 	local log_file
