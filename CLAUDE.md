@@ -20,6 +20,13 @@ local commits and other branches are preserved. It then dispatches to
 An interactive run over SSH outside tmux or screen asks for confirmation first,
 because package upgrades can restart `sshd` or `tailscaled` and drop the session.
 
+On repeat installs, an interactive run offers the other machines in the
+Syncthing-shared `~/dotfiles/tmux_ai/hosts` list. Choosing any starts
+`setup_remote.sh`: one tmux window with this machine on the left and each chosen
+machine on the right, all running in parallel. Each remote run uses its own tmux
+session, so package upgrades cannot cut it off. `PROFILE_SETUP_LOCAL_ONLY=1`
+disables the offer, and the fan-out sets it so runs never offer machines again.
+
 Ubuntu binary installers target amd64 and arm64; individual upstream applications
 may support only amd64 and report that limitation. Espanso selects the X11 or
 Wayland package from the desktop session and defers setup when no desktop is
@@ -65,8 +72,8 @@ again; never cache or broker the administrator password in setup code.
 ## Linting Shell Scripts
 
 ```bash
-shellcheck tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh tools/macos_helpers.sh setup_entry.sh
-shfmt -d tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh tools/macos_helpers.sh setup_entry.sh
+shellcheck tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh tools/macos_helpers.sh setup_entry.sh setup_remote.sh
+shfmt -d tools/setup_macos.sh tools/setup_ubuntu.sh tools/common.sh tools/macos_helpers.sh setup_entry.sh setup_remote.sh
 ```
 
 ## Architecture
