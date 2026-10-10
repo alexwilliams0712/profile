@@ -259,7 +259,7 @@ clean_broken_repos() {
 }
 
 with_package_lock_retry() {
-	local output started=$SECONDS status
+	local output started=$SECONDS status holder
 	local -a statuses
 	output=$(mktemp) || return 1
 	while true; do
@@ -275,6 +275,14 @@ with_package_lock_retry() {
 		fi
 		if ((status == 0 || SECONDS - started >= 300)) ||
 			! command grep -Eq 'Could not get lock .*([Rr]esource temporarily unavailable|held by process)|Unable to acquire .*lock.*another process|dpkg: error: .*lock.*(locked by|another process)' "$output"; then
+			rm -f "$output"
+			return "$status"
+		fi
+		# A dropped SSH session can leave apt suspended; it never releases the lock.
+		holder=$(command grep -Eo 'held by process [0-9]+' "$output" | tail -n 1)
+		holder=${holder##* }
+		if [ -n "$holder" ] && [[ "$(ps -o stat= -p "$holder" 2>/dev/null)" == *T* ]]; then
+			printf 'Stopped process %s holds the package lock. End it with "sudo kill -KILL %s", then rerun setup.\n' "$holder" "$holder" >&2
 			rm -f "$output"
 			return "$status"
 		fi
