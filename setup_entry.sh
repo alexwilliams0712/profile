@@ -223,6 +223,9 @@ profile_setup_main() {
 		return "$setup_status"
 	fi
 
+	if [ -n "${PROFILE_SETUP_NO_SHELL:-}" ]; then
+		return 0
+	fi
 	# Start the replacement login shell only after tee has closed the log.
 	bash -l 9>&-
 }

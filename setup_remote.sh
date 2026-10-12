@@ -38,23 +38,27 @@ run_hosts() {
 		echo "Error: $repo_dir is not under \$HOME, so its remote path is unknown." >&2
 		return 1
 	fi
+	# A session with no live panes is a finished run kept for its errors.
+	local clear_finished="tmux list-panes -s -t '=$session' -F '#{pane_dead}' 2>/dev/null | grep -qx 0 || tmux kill-session -t '=$session' 2>/dev/null"
+	bash -c "$clear_finished"
 	if tmux has-session -t "=$session" 2>/dev/null; then
 		echo "Error: setup is already running; attach with: tmux attach -t $session" >&2
 		return 1
 	fi
 	# PROFILE_SETUP_LOCAL_ONLY stops each run from offering machines again.
-	local setup="PROFILE_SETUP_LOCAL_ONLY=1 bash -c 'source setup_entry.sh'"
+	# PROFILE_SETUP_NO_SHELL lets each pane close once its setup succeeds.
+	local setup="PROFILE_SETUP_LOCAL_ONLY=1 PROFILE_SETUP_NO_SHELL=1 bash -c 'source setup_entry.sh'"
 	local pane
 	pane=$(tmux new-session -d -P -F '#{pane_id}' -s "$session" -c "$repo_dir" "$setup") || return 1
 	tmux set-option -p -t "$pane" @host "$(self_name)"
-	# Keep failed panes open so their errors stay readable. Every pane waits for
-	# input, so a click must be able to move between them.
-	tmux set-option -t "$session" remain-on-exit on
+	# Keep failed panes open so their errors stay readable; the session ends
+	# when every run succeeds. Panes wait for input, so a click must move between them.
+	tmux set-option -t "$session" remain-on-exit failed
 	tmux set-option -t "$session" mouse on
 	tmux set-option -w -t "$session" pane-border-status top
 	tmux set-option -w -t "$session" pane-border-format ' #{@host} '
 	for host in "$@"; do
-		remote="cd ~/'$rel_dir' && tmux new-session -A -s $session \"$setup\" \\; set status off"
+		remote="cd ~/'$rel_dir' || exit; $clear_finished; tmux new-session -A -s $session \"$setup\" \\; set status off \\; set remain-on-exit failed"
 		pane=$(tmux split-window -P -F '#{pane_id}' -t "$session" "ssh -t $host $(printf '%q' "$remote")")
 		tmux set-option -p -t "$pane" @host "$host"
 	done

@@ -26,6 +26,9 @@ Syncthing-shared `~/dotfiles/tmux_ai/hosts` list. Choosing any starts
 machine on the right, all running in parallel. Each remote run uses its own tmux
 session, so package upgrades cannot cut it off. `PROFILE_SETUP_LOCAL_ONLY=1`
 disables the offer, and the fan-out sets it so runs never offer machines again.
+The fan-out also sets `PROFILE_SETUP_NO_SHELL=1`, so a successful pane closes
+instead of starting a login shell; failed panes stay open for their errors.
+The session ends once every run succeeds, and a rerun clears a finished one.
 
 Ubuntu binary installers target amd64 and arm64; individual upstream applications
 may support only amd64 and report that limitation. Espanso selects the X11 or
