@@ -1536,10 +1536,12 @@ _tmux_ai() {
 		read -r host path < <(_tmux_ai_lookup "$name")
 	fi
 	local session="$tool-$name" start
-	# Claude's resume picker stalls when the directory has no conversations.
+	# Resume pickers stall when the directory has no conversations.
 	# shellcheck disable=SC2016 # Expanded on the target host.
 	start='cmd=yolo; ls "$HOME/.claude/projects/$(printf %s "$dir" | tr -c A-Za-z0-9 -)"/*.jsonl >/dev/null 2>&1 && cmd="yolo --resume"'
-	[ "$tool" = yodex ] && start='cmd="yodex resume"'
+	# Codex records each session's directory on the first line of its log.
+	# shellcheck disable=SC2016 # Expanded on the target host.
+	[ "$tool" = yodex ] && start='cmd=yodex; find "${CODEX_HOME:-$HOME/.codex}/sessions" -name "*.jsonl" -exec head -qn1 {} + 2>/dev/null | grep -qF "\"cwd\":\"$dir\"" && cmd="yodex resume"'
 	# The alias runs inside the session's interactive shell, which outlives it.
 	local script
 	script="tmux has-session -t '=$session' 2>/dev/null || { $(_tmux_ai_cd_check "$path")
