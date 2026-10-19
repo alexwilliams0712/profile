@@ -718,6 +718,22 @@ install_redis_insight() {
 	github_install_deb "https://github.com/redis/RedisInsight/releases/download/${version}/Redis-Insight-linux-amd64.deb"
 }
 
+install_obsidian() {
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		log "Obsidian .deb not available for arm64, skipping"
+		return 0
+	fi
+	local version
+	version=$(github_latest_tag "obsidianmd/obsidian-releases") || return 1
+	version="${version#v}"
+	if [ "$(dpkg-query -W -f='${Version}' obsidian 2>/dev/null)" = "$version" ]; then
+		log "Obsidian ${version} already installed, skipping"
+		return 0
+	fi
+	log "Downloading Obsidian ${version}"
+	github_install_deb "https://github.com/obsidianmd/obsidian-releases/releases/download/v${version}/obsidian_${version}_amd64.deb"
+}
+
 install_aws_cli() (
 	local install_dir
 	install_dir=$(mktemp -d)
@@ -837,6 +853,7 @@ main() {
 		install_lazydocker
 		install_dust
 		install_redis_insight
+		install_obsidian
 		install_ai
 		apt_upgrader
 	)
