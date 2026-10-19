@@ -774,7 +774,11 @@ install_tailscale() {
 	fi
 	run_apt_installer https://tailscale.com/install.sh sh
 	sudo tailscale set --ssh --stateful-filtering
-	sudo tailscale up
+	# `tailscale up` otherwise blocks forever waiting for browser login.
+	if ! tailscale status >/dev/null 2>&1; then
+		log "Tailscale login: open the URL below within 5 minutes."
+		sudo tailscale up --timeout=5m
+	fi
 	sudo ufw deny ssh
 }
 
