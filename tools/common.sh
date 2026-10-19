@@ -600,6 +600,22 @@ copy_shared_dotfiles() {
 	cp "$PROFILE_DIR/dotfiles/bin/work-proxy" "$HOME/.local/bin/work-proxy"
 	cp "$PROFILE_DIR/dotfiles/bin/title-prefix" "$HOME/.local/bin/title-prefix"
 	chmod +x "$HOME/.local/bin/json_formatter.py" "$HOME/.local/bin/work-proxy" "$HOME/.local/bin/title-prefix"
+	configure_cargo_registry
+}
+
+# Fetch short-lived CodeArtifact tokens for the private Cargo registry on demand.
+# ~/.personal may be a Syncthing-shared symlink, so append rather than replace it.
+configure_cargo_registry() {
+	local variable=CARGO_REGISTRIES_LOW_OBSERVABLE_TECHNOLOGY_CREDENTIAL_PROVIDER
+	if grep -qs "^export $variable=" "$HOME/.personal"; then
+		return 0
+	fi
+	if [ -s "$HOME/.personal" ] && [ -n "$(tail -c 1 "$HOME/.personal")" ]; then
+		printf '\n' >>"$HOME/.personal"
+	fi
+	printf "export %s='%s'\n" "$variable" \
+		'cargo:token-from-stdout aws codeartifact get-authorization-token --domain lo-tech --domain-owner 836575683393 --region eu-west-1 --query authorizationToken --output text' \
+		>>"$HOME/.personal"
 }
 
 configure_espanso_matches() {
