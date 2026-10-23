@@ -5,13 +5,14 @@ Sorts object keys, aligns colons, packs scalar arrays wide, and PRESERVES
 comments. Parses json and json5 natively (no json5->json pre-pass), so //
 and /* */ comments survive on both.
 
-Usage: json_formatter.py <file> [line_width]
+Usage: json_formatter.py [--width N] <file>...
+Rewrites only changed files and prints their paths.
 """
 
 import json
 import sys
 
-LINE_WIDTH = int(sys.argv[2]) if len(sys.argv) > 2 else 80
+LINE_WIDTH = 80
 
 
 class Tok:
@@ -331,14 +332,7 @@ def align_json(node, indent=0):
     return "\n".join(lines)
 
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: json_formatter.py <file> [line_width]", file=sys.stderr)
-        return 1
-
-    with open(sys.argv[1], "r") as f:
-        text = f.read()
-
+def format_text(text):
     parser = Parser(tokenize(text))
     header = parser.comments()
     root = parser.parse_value()
@@ -347,10 +341,35 @@ def main():
     out = list(header)
     out.append(align_json(root, 0))
     out.extend(footer)
+    return "\n".join(out) + "\n"
 
-    with open(sys.argv[1], "w") as f:
-        f.write("\n".join(out) + "\n")
-    return 0
+
+def main():
+    global LINE_WIDTH
+    args = sys.argv[1:]
+    if args[:1] == ["--width"] and len(args) > 1:
+        LINE_WIDTH = int(args[1])
+        args = args[2:]
+    if not args:
+        print("Usage: json_formatter.py [--width N] <file>...", file=sys.stderr)
+        return 1
+
+    failed = False
+    for path in args:
+        try:
+            with open(path, "r") as f:
+                text = f.read()
+            formatted = format_text(text)
+        except (OSError, ValueError, AssertionError, IndexError) as e:
+            print(f"{path}: {e}", file=sys.stderr)
+            failed = True
+            continue
+        if formatted == text:
+            continue
+        with open(path, "w") as f:
+            f.write(formatted)
+        print(path)
+    return int(failed)
 
 
 if __name__ == "__main__":
