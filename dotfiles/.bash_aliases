@@ -306,67 +306,58 @@ function apt_upgrader() {
 
 alias file_counter="find . -maxdepth 1 -type f | sed -n 's/..*\.//p' | sort | uniq -c"
 
+# Counts files per extension in each subdirectory, from one find pass.
 filecount_table() {
-	# Default to current directory if no argument provided
 	local search_dir="${1:-.}"
-
-	# Get all unique file extensions
-	local all_extensions=$(find "$search_dir" -type f | awk -F. '{print $NF}' | tr '[:upper:]' '[:lower:]' | sort -u)
-
-	# Create arrays to store column widths
-	declare -A max_width
-	max_width["dir"]=9 # "Directory" has 9 characters
-
-	# Initialize extension widths
-	for ext in $all_extensions; do
-		max_width["$ext"]=${#ext}
-	done
-
-	# Find the maximum width needed for each directory name
-	while read dir; do
-		dir_name=$(echo "$dir" | sed "s|^$search_dir/||")
-		if [ ${#dir_name} -gt ${max_width["dir"]} ]; then
-			max_width["dir"]=${#dir_name}
-		fi
-	done < <(find "$search_dir" -mindepth 1 -type d | sort)
-
-	# Find the maximum width needed for each count
-	for ext in $all_extensions; do
-		while read dir; do
-			count=$(find "$dir" -maxdepth 1 -type f -name "*.$ext" -o -name "*.$(echo $ext | tr '[:lower:]' '[:upper:]')" | wc -l)
-			if [ ${#count} -gt ${max_width["$ext"]} ]; then
-				max_width["$ext"]=${#count}
-			fi
-		done < <(find "$search_dir" -mindepth 1 -type d | sort)
-	done
-
-	# Print table header with proper padding
-	printf "| %-${max_width["dir"]}s " "Directory"
-	for ext in $all_extensions; do
-		printf "| %-${max_width["$ext"]}s " "$ext"
-	done
-	echo "|"
-
-	# Print header separator with proper width
-	printf "| %s " "$(printf '%0.s-' $(seq 1 ${max_width["dir"]}))"
-	for ext in $all_extensions; do
-		printf "| %s " "$(printf '%0.s-' $(seq 1 ${max_width["$ext"]}))"
-	done
-	echo "|"
-
-	# For each subdirectory
-	find "$search_dir" -mindepth 1 -type d | sort | while read dir; do
-		# Print directory name without the search_dir prefix
-		dir_name=$(echo "$dir" | sed "s|^$search_dir/||")
-		printf "| %-${max_width["dir"]}s " "$dir_name"
-
-		# For each extension, count files in this directory
-		for ext in $all_extensions; do
-			count=$(find "$dir" -maxdepth 1 -type f -name "*.$ext" -o -name "*.$(echo $ext | tr '[:lower:]' '[:upper:]')" | wc -l)
-			printf "| %-${max_width["$ext"]}s " "$count"
-		done
-		echo "|"
-	done
+	search_dir="${search_dir%/}"
+	find "$search_dir" -mindepth 1 \( -type d -exec printf 'd\t%s\n' {} + \) -o \( -type f -exec printf 'f\t%s\n' {} + \) |
+		sort |
+		awk -F '\t' -v root="$search_dir" '
+			$1 == "d" { dirs[++dir_count] = $2; next }
+			{
+				base = $2
+				sub(/.*\//, "", base)
+				if (!match(base, /\.[^.]+$/)) next
+				ext = tolower(substr(base, RSTART + 1))
+				parent = substr($2, 1, length($2) - length(base) - 1)
+				count[parent, ext]++
+				if (!(ext in seen)) { seen[ext] = 1; exts[++ext_count] = ext }
+			}
+			END {
+				for (i = 2; i <= ext_count; i++)
+					for (j = i; j > 1 && exts[j - 1] > exts[j]; j--) {
+						tmp = exts[j]; exts[j] = exts[j - 1]; exts[j - 1] = tmp
+					}
+				width["dir"] = 9
+				for (d = 1; d <= dir_count; d++) {
+					names[d] = substr(dirs[d], length(root) + 2)
+					if (length(names[d]) > width["dir"]) width["dir"] = length(names[d])
+				}
+				for (e = 1; e <= ext_count; e++) {
+					width[exts[e]] = length(exts[e])
+					for (d = 1; d <= dir_count; d++) {
+						n = count[dirs[d], exts[e]] + 0
+						if (length(n) > width[exts[e]]) width[exts[e]] = length(n)
+					}
+				}
+				line = cell(width["dir"], "Directory")
+				rule = "| " dashes(width["dir"]) " "
+				for (e = 1; e <= ext_count; e++) {
+					line = line cell(width[exts[e]], exts[e])
+					rule = rule "| " dashes(width[exts[e]]) " "
+				}
+				print line "|"
+				print rule "|"
+				for (d = 1; d <= dir_count; d++) {
+					line = cell(width["dir"], names[d])
+					for (e = 1; e <= ext_count; e++)
+						line = line cell(width[exts[e]], count[dirs[d], exts[e]] + 0)
+					print line "|"
+				}
+			}
+			function cell(w, value) { return sprintf("| %-" w "s ", value) }
+			function dashes(n,   s) { s = ""; while (n-- > 0) s = s "-"; return s }
+		'
 }
 
 # Rust
@@ -1326,54 +1317,31 @@ _formatter_run_quiet() {
 	return "$status"
 }
 
-_formatter_file_signature() {
-	local file="./${1#./}"
-
-	if [ ! -f "$file" ]; then
-		printf 'missing\n'
-		return 0
-	fi
-
-	# POSIX cksum is available on both macOS and Ubuntu. Reading through stdin
-	# keeps the signature independent of how the file path is written.
-	cksum <"$file"
+# Prints "<checksum> <size> <path>" per existing file, in one process.
+_formatter_signatures() {
+	[ $# -gt 0 ] || return 0
+	cksum -- "$@" 2>/dev/null
 }
 
-_formatter_run_file() {
-	local file="$1"
-	local before after
-	local status
-	shift
-
-	before="$(_formatter_file_signature "$file")" || return 1
-
-	_formatter_run_quiet "$@"
-	status=$?
-	after="$(_formatter_file_signature "$file")" || return 1
-	if [ "$before" != "$after" ]; then
-		log "$file"
-	fi
-	return "$status"
-}
-
+# Callers declare _formatter_snapshot_paths and the associative array
+# _formatter_snapshot_signatures as locals.
 _formatter_snapshot_files() {
-	local file
-
-	_formatter_snapshot_paths=()
+	local sum size file
+	mapfile -t _formatter_snapshot_paths < <(_fmt_files "$@")
 	_formatter_snapshot_signatures=()
-	while IFS= read -r file; do
-		_formatter_snapshot_paths+=("$file")
-		_formatter_snapshot_signatures+=("$(_formatter_file_signature "$file")")
-	done < <(_fmt_files "$@")
+	while read -r sum size file; do
+		_formatter_snapshot_signatures[$file]="$sum $size"
+	done < <(_formatter_signatures "${_formatter_snapshot_paths[@]}")
 }
 
 _formatter_log_snapshot_changes() {
-	local file after index
-
-	for index in "${!_formatter_snapshot_paths[@]}"; do
-		file="${_formatter_snapshot_paths[index]}"
-		after="$(_formatter_file_signature "$file")" || continue
-		if [ "${_formatter_snapshot_signatures[index]}" != "$after" ]; then
+	local sum size file
+	local -A after=()
+	while read -r sum size file; do
+		after[$file]="$sum $size"
+	done < <(_formatter_signatures "${_formatter_snapshot_paths[@]}")
+	for file in "${_formatter_snapshot_paths[@]}"; do
+		if [ "${_formatter_snapshot_signatures[$file]:-}" != "${after[$file]:-}" ]; then
 			log "$file"
 		fi
 	done
@@ -1381,39 +1349,45 @@ _formatter_log_snapshot_changes() {
 
 # Set JSON_LINE_WIDTH to control max line width for simple arrays (default: 80)
 formatter_json() {
-	local line_width="${JSON_LINE_WIDTH:-80}"
+	local files=() file
+	mapfile -t files < <(_fmt_files '*.json' '*.json5')
+	[ ${#files[@]} -gt 0 ] || return 0
 
-	_fmt_files '*.json' '*.json5' | while read -r file; do
-		local before after
-		before="$(_formatter_file_signature "$file")" || continue
-
-		# Reformat in place: sort keys, align colons, pack scalar arrays
-		# wide, and PRESERVE comments. Parses json and json5 natively (no
-		# json5->json pre-pass), so // and /* */ comments survive on both.
-		# Heavy lifting lives in ~/.local/bin/json_formatter.py (copied by setup).
-		_formatter_run_quiet python3 "$HOME/.local/bin/json_formatter.py" "$file" "$line_width" || {
-			if command -v jq &>/dev/null; then
-				jq -S '.' "$file" >"$file.tmp" && mv "$file.tmp" "$file"
-			fi
-		}
-		after="$(_formatter_file_signature "$file")" || continue
-		if [ "$before" != "$after" ]; then
-			log "$file"
-		fi
+	# Reformat in place: sort keys, align colons, pack scalar arrays
+	# wide, and PRESERVE comments. Parses json and json5 natively (no
+	# json5->json pre-pass), so // and /* */ comments survive on both.
+	# Heavy lifting lives in ~/.local/bin/json_formatter.py (copied by setup).
+	# One run for every file: each python3 start costs ~0.25 s in pyenv's shim.
+	if command -v python3 &>/dev/null; then
+		command python3 "$HOME/.local/bin/json_formatter.py" --width "${JSON_LINE_WIDTH:-80}" "${files[@]}" |
+			while IFS= read -r file; do
+				log "$file"
+			done
+		return "${PIPESTATUS[0]}"
+	fi
+	command -v jq &>/dev/null || return 1
+	for file in "${files[@]}"; do
+		jq -S '.' "$file" >"$file.tmp" && mv "$file.tmp" "$file"
 	done
 }
 
 formatter_sql() {
-	_fmt_files '*.sql' | while read -r file; do
-		_formatter_run_file "$file" pg_format --keyword-case=2 --type-case=2 --comma-break --no-extra-line --inplace "$file"
-	done
+	local _formatter_snapshot_paths=()
+	local -A _formatter_snapshot_signatures=()
+	_formatter_snapshot_files '*.sql'
+	[ ${#_formatter_snapshot_paths[@]} -gt 0 ] || return 0
+	_formatter_run_quiet pg_format --keyword-case=2 --type-case=2 --comma-break --no-extra-line --inplace "${_formatter_snapshot_paths[@]}"
+	_formatter_log_snapshot_changes
 }
 
 formatter_shell() {
-	_fmt_files '*.sh' '.bashrc' '.bash_aliases' |
-		while read -r file; do
-			_formatter_run_file "$file" shfmt -w "$file"
-		done
+	local files=() file
+	mapfile -t files < <(_fmt_files '*.sh' '.bashrc' '.bash_aliases')
+	[ ${#files[@]} -gt 0 ] || return 0
+	shfmt -l -w "${files[@]}" | while IFS= read -r file; do
+		log "$file"
+	done
+	return "${PIPESTATUS[0]}"
 }
 
 alias ti='terraform init'
@@ -1424,7 +1398,7 @@ alias taaa='terraform apply --auto-approve'
 
 formatter() {
 	local _formatter_snapshot_paths=()
-	local _formatter_snapshot_signatures=()
+	local -A _formatter_snapshot_signatures=()
 
 	# Keep these in the foreground so interactive shells do not print job IDs
 	# and completion notices around the formatter's own timestamped output.
@@ -1453,9 +1427,9 @@ formatter() {
 	fi
 
 	# Terraform (terraform fmt)
-	if find . -name "*.tf" | grep -q .; then
-		if command -v terraform &>/dev/null; then
-			_formatter_snapshot_files '*.tf'
+	if command -v terraform &>/dev/null; then
+		_formatter_snapshot_files '*.tf'
+		if [ ${#_formatter_snapshot_paths[@]} -gt 0 ]; then
 			_formatter_run_quiet terraform fmt --recursive
 			_formatter_log_snapshot_changes
 		fi
@@ -1532,10 +1506,11 @@ _tmux_ai_lookup() {
 }
 
 # Tailscale names match the SSH targets; macOS `hostname -s` does not.
+# The name is cached per shell because `tailscale status` takes ~0.25 s.
 _tmux_ai_is_self() {
-	local self
-	self=$(tailscale status --peers=false 2>/dev/null | awk 'NR == 1 { print $2 }')
-	[ "$1" = "${self:-$(hostname -s)}" ]
+	[ -n "${_TMUX_AI_SELF:-}" ] ||
+		_TMUX_AI_SELF=$(tailscale status --peers=false 2>/dev/null | awk 'NR == 1 { print $2 }')
+	[ "$1" = "${_TMUX_AI_SELF:-$(hostname -s)}" ]
 }
 
 # Prints a shell script that fails unless the mapped path exists where it runs.
