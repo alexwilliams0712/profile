@@ -370,22 +370,44 @@ filecount_table() {
 }
 
 # Rust
-function carclean() {
-	local root="$PWD"
-	local directory cargo_output removed_line amount directory_name
-	local index=0 failed=0 directory_width=9 amount_width=14
-	local directories=() amounts=() cargo_outputs=()
+# Waits until fewer than PARALLEL_JOBS (default 8) background jobs are running.
+_throttle_jobs() {
+	while (($(jobs -rp | wc -l) >= ${PARALLEL_JOBS:-8})); do
+		wait -n
+	done
+}
 
-	for directory in "$root"/*/; do
-		[ -d "$directory" ] || continue
+# Runs in a subshell so the background jobs print no job-control notices.
+function carclean() (
+	local directory removed_line amount index output_dir
+	local failed=0 directory_width=9 amount_width=14
+	local directories=() amounts=()
+	output_dir="$(mktemp -d)" || return 1
+	trap 'rm -rf "$output_dir"' EXIT
+
+	for directory in "$PWD"/*/; do
 		[ -f "$directory/Cargo.toml" ] || continue
+		index=${#directories[@]}
+		directories[index]="$(basename "${directory%/}")"
+		# Without a target directory there is nothing to clean.
+		[ -d "$directory/target" ] || continue
 
-		directory_name="$(basename "${directory%/}")"
-		directories[index]="$directory_name"
+		_throttle_jobs
+		(
+			cd "$directory" && cargo clean >"$output_dir/$index.log" 2>&1
+			echo "$?" >"$output_dir/$index.status"
+		) &
+	done
+	wait
 
-		if cargo_output=$(cd "$directory" && cargo clean 2>&1); then
-			cargo_outputs[index]="$cargo_output"
-			removed_line=$(printf '%s\n' "${cargo_outputs[index]}" | \grep 'Removed ' | tail -n 1 || true)
+	for index in "${!directories[@]}"; do
+		if [ ! -f "$output_dir/$index.status" ]; then
+			amount="0 B"
+		elif [ "$(<"$output_dir/$index.status")" != 0 ]; then
+			amount="ERROR"
+			failed=1
+		else
+			removed_line=$(\grep 'Removed ' "$output_dir/$index.log" | tail -n 1)
 			if [[ "$removed_line" =~ ,[[:space:]]+([^[:space:]]+)[[:space:]]+total ]]; then
 				amount="${BASH_REMATCH[1]}"
 			elif [[ "$removed_line" =~ Removed[[:space:]]+0[[:space:]]+files? ]]; then
@@ -393,16 +415,11 @@ function carclean() {
 			else
 				amount="Unknown"
 			fi
-		else
-			cargo_outputs[index]="$cargo_output"
-			amount="ERROR"
-			failed=1
 		fi
 
 		amounts[index]="$amount"
-		((${#directory_name} > directory_width)) && directory_width=${#directory_name}
+		((${#directories[index]} > directory_width)) && directory_width=${#directories[index]}
 		((${#amount} > amount_width)) && amount_width=${#amount}
-		index=$((index + 1))
 	done
 
 	printf '| %-*s | %-*s |\n' "$directory_width" "Directory" "$amount_width" "Amount cleaned"
@@ -411,8 +428,14 @@ function carclean() {
 		printf '| %-*s | %-*s |\n' "$directory_width" "${directories[index]}" "$amount_width" "${amounts[index]}"
 	done
 
+	for index in "${!directories[@]}"; do
+		[ "${amounts[index]}" = "ERROR" ] || continue
+		printf '\n%s:\n' "${directories[index]}"
+		cat "$output_dir/$index.log"
+	done
+
 	return "$failed"
-}
+)
 
 function clippy() {
 	local current_toolchain=$(rustup show active-toolchain | cut -d '-' -f1)
@@ -760,40 +783,75 @@ function mkdir_cd() {
 ##
 alias git_compress="git gc --aggressive --prune=now"
 
+# Hard-resets to origin's default branch, discarding local changes on it.
+# An optional argument names the branch and skips the lookup.
 function gitthefuckout() {
 	print_function_name
-	git ls-remote --exit-code --heads origin main >/dev/null 2>&1
-	if [ $? -eq 0 ]; then
-		git fetch origin && git reset --hard origin/main && git checkout main
-	else
-		git fetch origin && git reset --hard origin/master && git checkout master
+	local branch="${1:-}"
+	if [ -z "$branch" ]; then
+		branch=$(git ls-remote --symref origin HEAD | awk '$1 == "ref:" && $3 == "HEAD" { sub("refs/heads/", "", $2); print $2 }')
 	fi
-	git pull
+	if [ -z "$branch" ]; then
+		echo "Cannot resolve the default branch of origin."
+		return 1
+	fi
+	git fetch origin && git checkout -f -B "$branch" "origin/$branch"
 }
 
-function attackoftheclones() {
+# Runs in a subshell so the background jobs print no job-control notices.
+function attackoftheclones() (
 	print_function_name
-	# Get the organization name from the function argument or basename of dir
-	if [ -z "$1" ]; then
-		ORG_NAME="$(basename $(pwd))"
-	else
-		ORG_NAME="$1"
-	fi
+	local org="${1:-$(basename "$PWD")}"
+	local listing name branch index output_dir failed=0 name_width=10
+	local names=() actions=() results=()
+	listing=$(gh repo list "$org" --limit 1000 --json name,defaultBranchRef --jq '.[] | [.name, (.defaultBranchRef.name // "")] | @tsv') || return 1
+	output_dir="$(mktemp -d)" || return 1
+	trap 'rm -rf "$output_dir"' EXIT
 
-	# Clone or pull each repository
-	for REPO_NAME in $(gh repo list "${ORG_NAME}" --json=name --limit 1000 | jq -r '.[].name'); do
-		echo -e "\033[1;33mChecking: ${REPO_NAME}\033[0m"
-		if [ -d "$REPO_NAME" ]; then
-			echo "Repository already exists: $REPO_NAME"
-			cd "$REPO_NAME"
-			gitthefuckout
-			cd ..
+	while IFS=$'\t' read -r name branch; do
+		[ -n "$name" ] || continue
+		index=${#names[@]}
+		names[index]="$name"
+		_throttle_jobs
+		if [ -d "$name" ]; then
+			actions[index]="reset"
+			(
+				cd "$name" && gitthefuckout "$branch" >"$output_dir/$index.log" 2>&1
+				echo "$?" >"$output_dir/$index.status"
+			) &
 		else
-			echo "Cloning repository: ${ORG_NAME}/${REPO_NAME}"
-			gh repo clone ${ORG_NAME}/${REPO_NAME}
+			actions[index]="clone"
+			(
+				gh repo clone "$org/$name" >"$output_dir/$index.log" 2>&1
+				echo "$?" >"$output_dir/$index.status"
+			) &
 		fi
+	done <<<"$listing"
+	wait
+
+	for index in "${!names[@]}"; do
+		results[index]="OK"
+		if [ "$(<"$output_dir/$index.status")" != 0 ]; then
+			results[index]="FAILED"
+			failed=1
+		fi
+		((${#names[index]} > name_width)) && name_width=${#names[index]}
 	done
-}
+
+	printf '| %-*s | %-6s | %-6s |\n' "$name_width" "Repository" "Action" "Result"
+	printf '|-%s-|--------|--------|\n' "$(printf '%*s' "$name_width" '' | tr ' ' '-')"
+	for index in "${!names[@]}"; do
+		printf '| %-*s | %-6s | %-6s |\n' "$name_width" "${names[index]}" "${actions[index]}" "${results[index]}"
+	done
+
+	for index in "${!names[@]}"; do
+		[ "${results[index]}" = "FAILED" ] || continue
+		printf '\n%s:\n' "${names[index]}"
+		cat "$output_dir/$index.log"
+	done
+
+	return "$failed"
+)
 
 alias multipull="find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} pull \;"
 
