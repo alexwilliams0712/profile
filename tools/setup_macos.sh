@@ -509,6 +509,51 @@ install_tailscale() {
 	fi
 }
 
+# Inbound access is Tailscale only: no open LAN ports and no global IPv6 address.
+# A separate pf config and launchd job survive macOS rewriting /etc/pf.conf.
+configure_firewall() {
+	local conf=/etc/pf.tailscale-only.conf
+	local label=tech.lo.pf-tailscale-only
+	local plist="/Library/LaunchDaemons/$label.plist"
+	local service
+	# Enabling this without a working tailnet could lock out remote access.
+	if ! tailscale status >/dev/null 2>&1; then
+		log "Tailscale is not connected. Skipping firewall lockdown."
+		return 0
+	fi
+	run_sudo /usr/bin/tee "$conf" >/dev/null <<'EOF'
+phys = "{ en0 en1 en2 en3 en4 en5 en6 en7 en8 bridge0 ap1 }"
+ts4 = "100.64.0.0/10"
+ts6 = "fd7a:115c:a1e0::/48"
+set skip on lo0
+block in all
+pass out all flags any keep state
+# Tailnet source addresses are not valid on physical interfaces.
+block drop in quick on $phys inet from $ts4 to any
+block drop in quick on $phys inet6 from $ts6 to any
+pass in quick inet from $ts4 to $ts4 flags any keep state
+pass in quick inet6 from $ts6 to $ts6 flags any keep state
+pass in quick proto udp to any port 41641 keep state
+pass in quick inet6 proto icmp6 icmp6-type { neighbrsol neighbradv routeradv } keep state
+EOF
+	run_sudo /usr/bin/tee "$plist" >/dev/null <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>$label</string>
+<key>ProgramArguments</key><array><string>/sbin/pfctl</string><string>-E</string><string>-f</string><string>$conf</string></array>
+<key>RunAtLoad</key><true/>
+</dict></plist>
+EOF
+	run_sudo /sbin/pfctl -nf "$conf"
+	run_sudo /bin/launchctl bootout "system/$label" 2>/dev/null || true
+	run_sudo /bin/launchctl bootstrap system "$plist"
+	networksetup -listallnetworkservices | tail -n +2 | sed 's/^\*//' | while IFS= read -r service; do
+		[ "$service" = Tailscale ] && continue
+		run_sudo /usr/sbin/networksetup -setv6off "$service" </dev/null
+	done
+}
+
 install_webtools() {
 	# shfmt, shellcheck, and k9s are installed via Homebrew
 	curl -sS https://webi.sh/awless | sh
@@ -547,6 +592,7 @@ main() {
 		setup_vscode
 		install_espanso
 		install_tailscale
+		configure_firewall
 		install_terraform
 		install_webtools
 		install_syncthing

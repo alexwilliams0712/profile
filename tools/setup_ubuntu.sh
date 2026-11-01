@@ -779,7 +779,25 @@ install_tailscale() {
 		log "Tailscale login: open the URL below within 5 minutes."
 		sudo tailscale up --timeout=5m
 	fi
-	sudo ufw deny ssh
+}
+
+# Inbound access is Tailscale only: no open LAN ports and no global IPv6 address.
+configure_firewall() {
+	local dev
+	# Enabling this without a working tailnet could lock out remote access.
+	if ! tailscale status >/dev/null 2>&1; then
+		log "Tailscale is not connected. Skipping firewall lockdown."
+		return 0
+	fi
+	sudo ufw default deny incoming
+	sudo ufw default allow outgoing
+	sudo ufw allow in on tailscale0
+	sudo ufw allow 41641/udp comment 'tailscale direct path'
+	sudo ufw --force enable
+	for dev in $(ip -6 -o addr show scope global | awk '$2 != "tailscale0" { print $2 }' | sort -u); do
+		sudo nmcli connection modify "$(nmcli -g GENERAL.CONNECTION device show "$dev")" ipv6.method disabled
+		sudo nmcli device reapply "$dev"
+	done
 }
 
 install_font() (
@@ -840,6 +858,7 @@ main() {
 		install_node
 		install_go
 		install_tailscale
+		configure_firewall
 		install_aws_cli
 		install_terraform
 		install_speedtest
