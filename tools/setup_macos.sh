@@ -528,6 +528,10 @@ ts6 = "fd7a:115c:a1e0::/48"
 set skip on lo0
 block in all
 pass out all flags any keep state
+# DHCP replies are broadcast, so they never match the outbound request's state.
+pass in quick proto udp from any port 67 to any port 68
+pass in quick inet6 proto udp from any port 547 to any port 546
+pass in quick inet proto icmp all icmp-type { unreach, timex }
 # Tailnet source addresses are not valid on physical interfaces.
 block drop in quick on $phys inet from $ts4 to any
 block drop in quick on $phys inet6 from $ts6 to any
