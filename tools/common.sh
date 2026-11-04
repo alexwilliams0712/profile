@@ -596,6 +596,7 @@ copy_shared_dotfiles() {
 	cp "$PROFILE_DIR/dotfiles/.prettierrc" "$HOME/.prettierrc"
 	cp "$PROFILE_DIR/dotfiles/.bash_aliases" "$HOME/.bash_aliases"
 	cp "$PROFILE_DIR/dotfiles/.inputrc" "$HOME/.inputrc"
+	cp "$PROFILE_DIR/dotfiles/.tmux.conf" "$HOME/.tmux.conf"
 	cp "$PROFILE_DIR/dotfiles/bin/json_formatter.py" "$HOME/.local/bin/json_formatter.py"
 	cp "$PROFILE_DIR/dotfiles/bin/work-proxy" "$HOME/.local/bin/work-proxy"
 	cp "$PROFILE_DIR/dotfiles/bin/title-prefix" "$HOME/.local/bin/title-prefix"
