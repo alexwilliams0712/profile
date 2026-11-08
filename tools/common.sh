@@ -49,10 +49,12 @@ run_sudo() {
 		sudo_command -n "$@"
 	else
 		# The spinner would redraw over the password prompt, and callers often
-		# discard stdout, so stop it and report on stderr.
+		# discard stdout, so stop it and prompt on a clear line above the grid.
 		setup_progress_stop_spinner
-		log "Administrator approval is required to continue." >&2
-		sudo_command "$@"
+		if [ "${SETUP_PROGRESS_PINNED:-0}" -eq 1 ]; then
+			setup_progress_write "\033[$((SETUP_PROGRESS_ROWS - SETUP_PROGRESS_FOOTER_ROWS));1H\n"
+		fi
+		sudo_command -p $'\033[1;38;2;217;162;75m>>> Setup paused: enter the administrator password for %u:\033[0m ' "$@"
 	fi
 }
 
@@ -347,8 +349,10 @@ setup_progress_begin_step() {
 	SETUP_PROGRESS_STATES[SETUP_PROGRESS_CURRENT]=run
 	setup_progress_render 0
 	(
-		local tick=0
-		while kill -0 "$parent_pid" 2>/dev/null; do
+		local tick=0 stopping=0
+		# Finish the current frame on TERM, so the cursor is always restored.
+		trap 'stopping=1' TERM
+		while [ "$stopping" -eq 0 ] && kill -0 "$parent_pid" 2>/dev/null; do
 			sleep 0.2
 			tick=$((tick + 1))
 			if [ $((tick % 5)) -eq 0 ]; then
@@ -366,6 +370,10 @@ setup_progress_stop_spinner() {
 	fi
 	kill "$SETUP_PROGRESS_SPINNER_PID" 2>/dev/null || true
 	wait "$SETUP_PROGRESS_SPINNER_PID" 2>/dev/null || true
+	# A step subshell cannot wait for its parent's spinner, so poll instead.
+	while kill -0 "$SETUP_PROGRESS_SPINNER_PID" 2>/dev/null; do
+		sleep 0.05
+	done
 	SETUP_PROGRESS_SPINNER_PID=""
 }
 
