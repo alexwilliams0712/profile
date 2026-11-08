@@ -44,6 +44,7 @@ brew "shfmt"
 tap "teamookla/speedtest", trusted: { formula: "speedtest" }
 brew "speedtest"
 brew "sqlite3"
+brew "switchaudio-osx"
 brew "syncthing"
 brew "tcl-tk"
 brew "tmux"
