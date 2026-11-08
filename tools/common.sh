@@ -48,7 +48,10 @@ run_sudo() {
 	if sudo_command -n -v 2>/dev/null; then
 		sudo_command -n "$@"
 	else
-		log "Administrator approval is required to continue."
+		# The spinner would redraw over the password prompt, and callers often
+		# discard stdout, so stop it and report on stderr.
+		setup_progress_stop_spinner
+		log "Administrator approval is required to continue." >&2
 		sudo_command "$@"
 	fi
 }
