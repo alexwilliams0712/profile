@@ -557,6 +557,33 @@ configure_gnome() {
 	fi
 }
 
+install_vitals() (
+	# Vitals is not in the Ubuntu archive; extensions.gnome.org is its upstream.
+	if ! command -v gnome-shell >/dev/null 2>&1; then
+		log "GNOME Shell not installed; skipping Vitals."
+		return 0
+	fi
+	local uuid=Vitals@CoreCoding.com shell_version enabled install_dir
+	apt_get install -y gir1.2-gtop-2.0 lm-sensors || return
+	# GNOME Shell updates installed extensions itself.
+	if [ ! -d "$HOME/.local/share/gnome-shell/extensions/$uuid" ]; then
+		shell_version=$(gnome-shell --version | grep -oE '[0-9]+' | head -n 1)
+		install_dir=$(mktemp -d) || return
+		trap 'rm -rf "$install_dir"' EXIT
+		curl -fsSL "https://extensions.gnome.org/download-extension/${uuid}.shell-extension.zip?shell_version=${shell_version}" \
+			-o "$install_dir/vitals.zip" || return
+		gnome-extensions install "$install_dir/vitals.zip" || return
+		log "Log out and back in to load Vitals."
+	fi
+	# `gnome-extensions enable` rejects extensions the running shell has not loaded.
+	enabled=$(gsettings get org.gnome.shell enabled-extensions)
+	case $enabled in
+	*"'$uuid'"*) ;;
+	"@as []") gsettings set org.gnome.shell enabled-extensions "['$uuid']" ;;
+	*) gsettings set org.gnome.shell enabled-extensions "${enabled%]}, '$uuid']" ;;
+	esac
+)
+
 configure_gnome_sizing() {
 	# Text and cursor sizes are global, so size for the lowest-resolution
 	# connected screen. 4K panels run at 100% monitor scale because
@@ -871,6 +898,7 @@ main() {
 		install_ghostty
 		configure_locale
 		configure_gnome
+		install_vitals
 		install_delta
 		install_lazygit
 		install_lazydocker
