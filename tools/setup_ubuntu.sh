@@ -563,30 +563,25 @@ install_vitals() (
 		log "GNOME Shell not installed; skipping Vitals."
 		return 0
 	fi
-	local uuid=Vitals@CoreCoding.com shell_version info latest installed="" enabled install_dir
+	local uuid=Vitals@CoreCoding.com shell_version enabled install_dir
 	apt_get install -y gir1.2-gtop-2.0 lm-sensors || return
-	shell_version=$(gnome-shell --version | grep -oE '[0-9]+' | head -n 1)
-	info=$(curl -fsSL "https://extensions.gnome.org/extension-info/?uuid=${uuid}&shell_version=${shell_version}") || return
-	latest=$(jq -r .version <<<"$info")
-	installed=$(jq -r '.version // empty' "$HOME/.local/share/gnome-shell/extensions/$uuid/metadata.json" 2>/dev/null || true)
-	if [ "$installed" = "$latest" ]; then
-		log "Vitals ${latest} already installed"
-	else
-		log "Installing Vitals ${latest} for GNOME Shell ${shell_version} (have: ${installed:-none})"
+	# GNOME Shell updates installed extensions itself.
+	if [ ! -d "$HOME/.local/share/gnome-shell/extensions/$uuid" ]; then
+		shell_version=$(gnome-shell --version | grep -oE '[0-9]+' | head -n 1)
 		install_dir=$(mktemp -d) || return
 		trap 'rm -rf "$install_dir"' EXIT
-		curl -fsSL "https://extensions.gnome.org$(jq -r .download_url <<<"$info")" -o "$install_dir/vitals.zip" || return
-		gnome-extensions install --force "$install_dir/vitals.zip" || return
+		curl -fsSL "https://extensions.gnome.org/download-extension/${uuid}.shell-extension.zip?shell_version=${shell_version}" \
+			-o "$install_dir/vitals.zip" || return
+		gnome-extensions install "$install_dir/vitals.zip" || return
+		log "Log out and back in to load Vitals."
 	fi
-	# Writing the setting directly works before GNOME Shell has loaded a new
-	# extension, unlike `gnome-extensions enable` on Wayland.
+	# `gnome-extensions enable` rejects extensions the running shell has not loaded.
 	enabled=$(gsettings get org.gnome.shell enabled-extensions)
 	case $enabled in
 	*"'$uuid'"*) ;;
 	"@as []") gsettings set org.gnome.shell enabled-extensions "['$uuid']" ;;
 	*) gsettings set org.gnome.shell enabled-extensions "${enabled%]}, '$uuid']" ;;
 	esac
-	[ -n "$installed" ] || log "Log out and back in to load Vitals."
 )
 
 configure_gnome_sizing() {
