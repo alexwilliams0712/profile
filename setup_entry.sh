@@ -57,17 +57,19 @@ profile_setup_run() {
 		;;
 	esac
 
-	# Only advance an untouched main checkout; local work always takes priority.
+	# Only advance main without local changes; local work always takes priority.
+	# Untracked files do not count, and git refuses to overwrite one.
 	# Apple's git launcher needs Command Line Tools before it can inspect a repo.
 	if { [ "$os_name" != "Darwin" ] || xcode-select -p &>/dev/null; } &&
 		command -v git >/dev/null 2>&1 &&
 		branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)" &&
 		[ "$branch" = main ] &&
-		worktree_status="$(git status --porcelain 2>/dev/null)" &&
+		worktree_status="$(git status --porcelain --untracked-files=no 2>/dev/null)" &&
 		[ -z "$worktree_status" ]; then
 		if GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' git fetch origin main; then
 			if git merge-base --is-ancestor HEAD FETCH_HEAD; then
-				git merge --ff-only FETCH_HEAD || return 1
+				git merge --ff-only FETCH_HEAD ||
+					echo "Warning: could not update main, continuing with local copy."
 			else
 				echo "Keeping local checkout: main has local commits."
 			fi

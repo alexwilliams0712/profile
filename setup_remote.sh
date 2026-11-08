@@ -49,9 +49,9 @@ run_hosts() {
 	# PROFILE_SETUP_LOCAL_ONLY stops each run from offering machines again.
 	# PROFILE_SETUP_NO_SHELL lets each pane close once its setup succeeds.
 	local setup="PROFILE_SETUP_LOCAL_ONLY=1 PROFILE_SETUP_NO_SHELL=1 bash -c 'source setup_entry.sh'"
-	local pane
-	pane=$(tmux new-session -d -P -F '#{pane_id}' -s "$session" -c "$repo_dir" "$setup") || return 1
-	tmux set-option -p -t "$pane" @host "$(self_name)"
+	local pane main_pane
+	main_pane=$(tmux new-session -d -P -F '#{pane_id}' -s "$session" -c "$repo_dir" "$setup") || return 1
+	tmux set-option -p -t "$main_pane" @host "$(self_name)"
 	# Keep failed panes open so their errors stay readable; the session ends
 	# when every run succeeds. Panes wait for input, so a click must move between them.
 	tmux set-option -t "$session" remain-on-exit failed
@@ -59,17 +59,19 @@ run_hosts() {
 	tmux set-option -w -t "$session" pane-border-status top
 	tmux set-option -w -t "$session" pane-border-format ' #{@host} '
 	for host in "$@"; do
-		remote="cd ~/'$rel_dir' || exit; $clear_finished; tmux new-session -A -s $session \"$setup\" \\; set status off \\; set remain-on-exit failed"
+		remote="cd ~/'$rel_dir' || exit; $clear_finished; tmux new-session -A -s $session \"$setup\" \\; set status off \\; set remain-on-exit failed \\; set detach-on-destroy on"
 		pane=$(tmux split-window -P -F '#{pane_id}' -t "$session" "ssh -t $host $(printf '%q' "$remote")")
 		tmux set-option -p -t "$pane" @host "$host"
 	done
 	tmux set-window-option -t "$session" main-pane-width 50%
 	tmux select-layout -t "$session" main-vertical
-	tmux select-pane -t "$session:.0"
+	tmux select-pane -t "$main_pane"
 	if [ -n "${TMUX:-}" ]; then
 		tmux switch-client -t "=$session"
 		return
 	fi
+	# Return to this terminal, not another session, once every run succeeds.
+	tmux set-option -t "$session" detach-on-destroy on
 	tmux attach -t "=$session"
 }
 
