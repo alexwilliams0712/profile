@@ -557,6 +557,38 @@ configure_gnome() {
 	fi
 }
 
+install_vitals() (
+	# Vitals is not in the Ubuntu archive; extensions.gnome.org is its upstream.
+	if ! command -v gnome-shell >/dev/null 2>&1; then
+		log "GNOME Shell not installed; skipping Vitals."
+		return 0
+	fi
+	local uuid=Vitals@CoreCoding.com shell_version info latest installed="" enabled install_dir
+	apt_get install -y gir1.2-gtop-2.0 lm-sensors || return
+	shell_version=$(gnome-shell --version | grep -oE '[0-9]+' | head -n 1)
+	info=$(curl -fsSL "https://extensions.gnome.org/extension-info/?uuid=${uuid}&shell_version=${shell_version}") || return
+	latest=$(jq -r .version <<<"$info")
+	installed=$(jq -r '.version // empty' "$HOME/.local/share/gnome-shell/extensions/$uuid/metadata.json" 2>/dev/null || true)
+	if [ "$installed" = "$latest" ]; then
+		log "Vitals ${latest} already installed"
+	else
+		log "Installing Vitals ${latest} for GNOME Shell ${shell_version} (have: ${installed:-none})"
+		install_dir=$(mktemp -d) || return
+		trap 'rm -rf "$install_dir"' EXIT
+		curl -fsSL "https://extensions.gnome.org$(jq -r .download_url <<<"$info")" -o "$install_dir/vitals.zip" || return
+		gnome-extensions install --force "$install_dir/vitals.zip" || return
+	fi
+	# Writing the setting directly works before GNOME Shell has loaded a new
+	# extension, unlike `gnome-extensions enable` on Wayland.
+	enabled=$(gsettings get org.gnome.shell enabled-extensions)
+	case $enabled in
+	*"'$uuid'"*) ;;
+	"@as []") gsettings set org.gnome.shell enabled-extensions "['$uuid']" ;;
+	*) gsettings set org.gnome.shell enabled-extensions "${enabled%]}, '$uuid']" ;;
+	esac
+	[ -n "$installed" ] || log "Log out and back in to load Vitals."
+)
+
 configure_gnome_sizing() {
 	# Text and cursor sizes are global, so size for the lowest-resolution
 	# connected screen. 4K panels run at 100% monitor scale because
@@ -871,6 +903,7 @@ main() {
 		install_ghostty
 		configure_locale
 		configure_gnome
+		install_vitals
 		install_delta
 		install_lazygit
 		install_lazydocker
