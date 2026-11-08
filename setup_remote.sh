@@ -27,7 +27,7 @@ select_hosts() {
 	# shellcheck disable=SC2086 # One host name per word.
 	gum choose --no-limit --selected="$(printf '%s' "$others" | tr '\n' ',')" \
 		--header "Also run setup on (x toggles, enter confirms):" $others |
-		tr '\n' ' '
+		paste -sd ' ' -
 }
 
 run_hosts() {
@@ -38,8 +38,9 @@ run_hosts() {
 		echo "Error: $repo_dir is not under \$HOME, so its remote path is unknown." >&2
 		return 1
 	fi
-	# A session with no live panes is a finished run kept for its errors.
-	local clear_finished="tmux list-panes -s -t '=$session' -F '#{pane_dead}' 2>/dev/null | grep -qx 0 || tmux kill-session -t '=$session' 2>/dev/null"
+	# Without a running setup script, the session is a finished run: failed
+	# panes kept for their errors, or a login shell left by an older version.
+	local clear_finished="pgrep -f 'tools/setup_(macos|ubuntu).sh' >/dev/null || tmux kill-session -t '=$session' 2>/dev/null"
 	bash -c "$clear_finished"
 	if tmux has-session -t "=$session" 2>/dev/null; then
 		echo "Error: setup is already running; attach with: tmux attach -t $session" >&2
