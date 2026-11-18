@@ -40,6 +40,9 @@ stopping another package manager or deleting repository definitions. Downloaded
 archives are unpacked in private temporary directories. Failed VS Code extensions
 and Flatpak applications count as failed steps, while later steps still run.
 
+Ubuntu setup refuses tailscaled restarts until the next reboot, so a tailscale
+upgrade cannot drop Tailscale SSH sessions; the new version starts at boot.
+
 Ubuntu performs one full upgrade at the end; individual installers refresh APT
 only for repository setup. Terraform, Node configuration, Go tools and completion
 reporting are shared. Matching Go/Terraform installs avoid redundant downloads;
