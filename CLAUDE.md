@@ -24,7 +24,8 @@ On repeat installs, an interactive run offers the other machines in the
 Syncthing-shared `~/dotfiles/tmux_ai/hosts` list. Choosing any starts
 `setup_remote.sh`: one tmux window with this machine on the left and each chosen
 machine on the right, all running in parallel. Each remote run uses its own tmux
-session, so package upgrades cannot cut it off. `PROFILE_SETUP_LOCAL_ONLY=1`
+session, so package upgrades cannot cut it off. If an upgrade restarts
+tailscaled or sshd, the pane reconnects to that session. `PROFILE_SETUP_LOCAL_ONLY=1`
 disables the offer, and the fan-out sets it so runs never offer machines again.
 The fan-out also sets `PROFILE_SETUP_NO_SHELL=1`, so a successful pane closes
 instead of starting a login shell; failed panes stay open for their errors.
@@ -39,9 +40,6 @@ APT operations retry actual lock contention for up to five minutes, without
 stopping another package manager or deleting repository definitions. Downloaded
 archives are unpacked in private temporary directories. Failed VS Code extensions
 and Flatpak applications count as failed steps, while later steps still run.
-
-Ubuntu setup refuses tailscaled restarts until the next reboot, so a tailscale
-upgrade cannot drop Tailscale SSH sessions; the new version starts at boot.
 
 Ubuntu performs one full upgrade at the end; individual installers refresh APT
 only for repository setup. Terraform, Node configuration, Go tools and completion

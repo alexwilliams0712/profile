@@ -810,17 +810,6 @@ install_node() {
 	configure_node
 }
 
-# Restarting tailscaled drops every Tailscale SSH session, including remote setup panes.
-# The runtime drop-in refuses manual restarts, such as package upgrades, until reboot.
-# A new tailscale package then takes effect at the next boot.
-defer_tailscaled_restarts() {
-	local dir=/run/systemd/system/tailscaled.service.d
-	systemctl is-active --quiet tailscaled || return 0
-	sudo mkdir -p "$dir"
-	printf '[Unit]\nRefuseManualStop=yes\n' | sudo tee "$dir/defer-restart.conf" >/dev/null
-	sudo systemctl daemon-reload
-}
-
 install_tailscale() {
 	if [ -n "${SSH_CONNECTION:-}${SSH_CLIENT:-}${SSH_TTY:-}" ]; then
 		log "Skipping Tailscale installation over SSH."
@@ -888,7 +877,6 @@ main() {
 
 	failed_functions=()
 	local remaining_steps=(
-		defer_tailscaled_restarts
 		set_git_config
 		install_apt_packages
 		ssh_stuff
