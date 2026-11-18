@@ -573,6 +573,27 @@ install_syncthing() {
 	fi
 }
 
+install_battery_monitor() {
+	local repo=alexwilliams0712/battery-monitor label=com.alexwilliams0712.battery-monitor
+	local version plist="$HOME/Library/LaunchAgents/com.alexwilliams0712.battery-monitor.plist"
+	version=$(github_latest_tag "$repo") || return 1
+	# No signed macOS build is published; cargo skips the build when this tag is installed.
+	cargo install --locked --git "https://github.com/$repo" --tag "$version" || return
+	mkdir -p "$HOME/Library/LaunchAgents"
+	cat >"$plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>$label</string>
+<key>ProgramArguments</key><array><string>$HOME/.cargo/bin/battery-monitor</string></array>
+<key>RunAtLoad</key><true/>
+</dict></plist>
+EOF
+	launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+	launchctl bootstrap "gui/$(id -u)" "$plist"
+	log "If the menu bar shows no devices, allow battery-monitor in Privacy & Security > Input Monitoring"
+}
+
 main() {
 	# A fresh mac needs CLT before git can read the existing identity. On a
 	# configured mac, collect the two optional values first, then check updates.
@@ -600,6 +621,7 @@ main() {
 		install_terraform
 		install_webtools
 		install_syncthing
+		install_battery_monitor
 		install_ai
 	)
 	local setup_steps=(
