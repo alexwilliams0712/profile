@@ -761,6 +761,22 @@ install_obsidian() {
 	github_install_deb "https://github.com/obsidianmd/obsidian-releases/releases/download/v${version}/obsidian_${version}_amd64.deb"
 }
 
+install_battery_monitor() {
+	if [ "$ARCHITECTURE" = "arm64" ]; then
+		log "battery-monitor .deb not available for arm64, skipping"
+		return 0
+	fi
+	local version
+	version=$(github_latest_tag "alexwilliams0712/battery-monitor") || return 1
+	version="${version#v}"
+	if [ "$(dpkg-query -W -f='${Version}' battery-monitor 2>/dev/null)" = "${version}-1" ]; then
+		log "battery-monitor ${version} already installed, skipping"
+		return 0
+	fi
+	log "Downloading battery-monitor ${version}"
+	github_install_deb "https://github.com/alexwilliams0712/battery-monitor/releases/download/v${version}/battery-monitor_${version}-1_amd64.deb"
+}
+
 install_aws_cli() (
 	local install_dir
 	install_dir=$(mktemp -d)
@@ -905,6 +921,7 @@ main() {
 		install_dust
 		install_redis_insight
 		install_obsidian
+		install_battery_monitor
 		install_ai
 		apt_upgrader
 	)
