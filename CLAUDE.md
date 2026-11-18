@@ -24,7 +24,8 @@ On repeat installs, an interactive run offers the other machines in the
 Syncthing-shared `~/dotfiles/tmux_ai/hosts` list. Choosing any starts
 `setup_remote.sh`: one tmux window with this machine on the left and each chosen
 machine on the right, all running in parallel. Each remote run uses its own tmux
-session, so package upgrades cannot cut it off. `PROFILE_SETUP_LOCAL_ONLY=1`
+session, so package upgrades cannot cut it off. If an upgrade restarts
+tailscaled or sshd, the pane reconnects to that session. `PROFILE_SETUP_LOCAL_ONLY=1`
 disables the offer, and the fan-out sets it so runs never offer machines again.
 The fan-out also sets `PROFILE_SETUP_NO_SHELL=1`, so a successful pane closes
 instead of starting a login shell; failed panes stay open for their errors.

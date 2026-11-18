@@ -58,9 +58,17 @@ run_hosts() {
 	tmux set-option -t "$session" mouse on
 	tmux set-option -w -t "$session" pane-border-status top
 	tmux set-option -w -t "$session" pane-border-format ' #{@host} '
+	# A remote tailscaled or sshd restart drops the connection, not the remote run.
+	# Reattach until the run ends. A successful run leaves no session to attach to.
+	# A connection lost within 30s never started a run, so it fails without retrying.
+	local reattach="tmux attach -t '=$session' 2>/dev/null || exit 0"
+	# shellcheck disable=SC2016 # Expanded by the pane's shell.
+	# One line, so `printf %q` avoids $'' quoting that tmux's shell may not parse.
+	local connect='start=$SECONDS; ssh -t "$1" "$2"; status=$?; while [ "$status" -eq 255 ] && [ $((SECONDS - start)) -gt 30 ]; do echo "Connection to $1 lost; reconnecting in 5s..."; sleep 5; ssh -o ConnectTimeout=10 -t "$1" "$3"; status=$?; done; exit "$status"'
 	for host in "$@"; do
 		remote="cd ~/'$rel_dir' || exit; $clear_finished; tmux new-session -A -s $session \"$setup\" \\; set status off \\; set remain-on-exit failed \\; set detach-on-destroy on"
-		pane=$(tmux split-window -P -F '#{pane_id}' -t "$session" "ssh -t $host $(printf '%q' "$remote")")
+		pane=$(tmux split-window -P -F '#{pane_id}' -t "$session" \
+			"bash -c $(printf '%q ' "$connect" bash "$host" "$remote" "$reattach")")
 		tmux set-option -p -t "$pane" @host "$host"
 	done
 	tmux set-window-option -t "$session" main-pane-width 50%
